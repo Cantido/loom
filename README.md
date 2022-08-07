@@ -1,6 +1,6 @@
 # Loom
 
-**TODO: Add description**
+An event store for event-sourced applications.
 
 ## Installation
 
