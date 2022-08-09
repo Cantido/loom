@@ -1,4 +1,10 @@
 defmodule Loom.Event do
-  @enforce_keys [:type]
-  defstruct [:type, extensions: %{}]
+  use Ecto.Schema
+
+  @primary_key {:id, :binary_id, [autogenerate: true]}
+  schema "loom_events" do
+    field :type, :string
+    field :stream_id, :string
+    field :revision, :integer
+  end
 end

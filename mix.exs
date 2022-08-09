@@ -14,6 +14,7 @@ defmodule Loom.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
+      mod: {Loom.Application, []},
       extra_applications: [:logger]
     ]
   end
@@ -21,7 +22,8 @@ defmodule Loom.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:cloudevents, "~> 0.4.0"}
+      {:cloudevents, "~> 0.4.0"},
+      {:etso, "~> 1.1.0"}
     ]
   end
 end
