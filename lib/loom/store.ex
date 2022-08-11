@@ -36,7 +36,7 @@ defmodule Loom.Store do
         :ok ->
           case File.write(event_path, Cloudevents.to_json(event), [:exclusive]) do
             :ok ->
-              retry_all_link(event_path, dir)
+              {:ok, _all_revision} = retry_all_link(event_path, dir)
               {:ok, next_revision}
 
             {:error, :eexist} ->
