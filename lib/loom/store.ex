@@ -4,15 +4,6 @@ defmodule Loom.Store do
 
   Events belong to streams, which are lists of events.
   """
-  alias Loom.Event
-
-  import Ecto.Query
-
-  defstruct [streams: %{}]
-
-  def new do
-    %__MODULE__{}
-  end
 
   @doc """
   Append an event to an event stream.
@@ -22,27 +13,27 @@ defmodule Loom.Store do
   - `:expected_revision` - The current revision of the stream you expect.
   This function will return `{:error, :revision_mismatch}` if the stream's current revision does not match.
   Can be an integer, or `:no_stream`, which asserts that the stream does not exist, or `:stream_exists`, which asserts that a stream with events already exists.
-
-  ## Examples
-
-      iex> event = %Loom.Event{type: "io.github.cantido.myevent"}
-      ...> Loom.Store.append("my-stream", event)
-
-      iex> event = %Loom.Event{type: "io.github.cantido.myevent"}
-      ...> Loom.Store.append("my-stream", event, expected_revision: 1)
-      {:error, :revision_mismatch}
   """
   def append(stream_id, event, opts \\ []) do
-    repo = Keyword.get(opts, :repo, Loom.ETS)
+    dir = Keyword.fetch!(opts, :root_dir)
 
-    current_revision = last_revision(stream_id, repo: repo)
+    current_revision = last_revision(stream_id, root_dir: dir)
     expected_revision = Keyword.get(opts, :expected_revision, current_revision)
 
     if revision_match?(current_revision, expected_revision) do
       next_revision = current_revision + 1
-      event = %{event | stream_id: stream_id, revision: next_revision}
 
-      repo.insert(event)
+      if next_revision == 1 do
+        File.mkdir_p!(Path.join([dir, "streams", stream_id]))
+      end
+
+      event_path = Path.join([dir, "events", event.id <> ".json"])
+      link_path = Path.join([dir, "streams", stream_id, Integer.to_string(next_revision) <> ".json"])
+
+      File.write!(event_path, Cloudevents.to_json(event))
+      File.ln_s!(event_path, link_path)
+
+      {:ok, next_revision}
     else
       {:error, :revision_mismatch}
     end
@@ -67,26 +58,17 @@ defmodule Loom.Store do
 
   @doc """
   Returns the most recent revision of the stream.
-
-  ## Examples
-
-      iex> event = %Loom.Event{type: "io.github.cantido.myevent"}
-      ...> Loom.Store.append!("my-stream", event)
-      ...> Loom.Store.last_revision("my-stream")
-      1
   """
   def last_revision(stream_id, opts \\ []) do
-    repo = Keyword.get(opts, :repo, Loom.ETS)
+    dir = Keyword.fetch!(opts, :root_dir)
 
-    repo.all(
-      from e in Event,
-      where: e.stream_id == ^stream_id,
-      order_by: [asc: e.revision],
-      limit: 1
-    )
-    |> case do
-      [last] -> last.revision
-      [] -> 0
+    stream_dir = Path.join([dir, "streams", stream_id])
+
+    if File.exists?(stream_dir) do
+      File.ls!(stream_dir)
+      |> Enum.count()
+    else
+      0
     end
   end
 
@@ -97,46 +79,48 @@ defmodule Loom.Store do
 
   - `:direction` - when `:forward`, the first element in the returned list is the earliest event that occurred. When `:backward`, the first element is the latest. Default: `:forward`.
   - `:from_revision` - the revision to start the list from, as an integer. Can also be `:start`, which starts the list from the earliest revision, or `:end`, which starts the list at the latest. You must set this to `:end` when `:direction` is set to `:backwards`. Default: `:start`
-
-  ## Examples
-
-      iex> event1 = %Loom.Event{type: "event-one"}
-      ...> event2 = %Loom.Event{type: "event-two"}
-      ...> Loom.Store.append!("my-stream", event1)
-      ...> Loom.Store.append!("my-stream", event2)
-      ...> Loom.Store.read("my-stream") |> Enum.map(&(&1.type))
-      ["event-one", "event-two"]
-      iex> Loom.Store.read("my-stream", direction: :backward, from_revision: :end) |> Enum.map(&(&1.type))
-      ["event-two", "event-one"]
-      iex> Loom.Store.read("my-stream", from_revision: 1) |> Enum.map(&(&1.type))
-      ["event-two"]
-
   """
   def read(stream_id, opts \\ []) do
-    repo = Keyword.get(opts, :repo, Loom.ETS)
+    dir = Keyword.fetch!(opts, :root_dir)
     direction = Keyword.get(opts, :direction, :forward)
     from_revision = Keyword.get(opts, :from_revision, :start)
 
-    from(e in Event)
-    |> where([e], e.stream_id == ^stream_id)
-    |> where_within_revision(direction, from_revision)
-    |> order_by_direction(direction)
-    |> repo.all()
+    stream_dir = Path.join([dir, "streams", stream_id])
+
+    File.ls!(stream_dir)
+    |> sort_filter(direction, from_revision)
+    |> Task.async_stream(fn revision ->
+      Path.join(stream_dir, revision)
+      |> File.read_link!()
+      |> File.read!()
+    end)
+    |> Stream.map(fn {:ok, event} -> Cloudevents.from_json!(event) end)
   end
 
-  defp where_within_revision(query, :forward, :start), do: query
-  defp where_within_revision(query, :backward, :end), do: query
-  defp where_within_revision(query, direction, from_revision) do
-    case direction do
-      :forward -> where(query, [e], e.revision > ^from_revision)
-      :backward -> where(query, [e], e.revision < ^from_revision)
-      end
+  defp sort_filter(_events, :forward, :end), do: []
+  defp sort_filter(_events, :backward, :start), do: []
+
+  defp sort_filter(events, :forward, :start) do
+    Enum.sort_by(events, &revision_from_filename/1)
   end
 
-  defp order_by_direction(query, direction) do
-    case direction do
-      :forward -> order_by(query, [e], [asc: e.revision])
-      :backward -> order_by(query, [e], [desc: e.revision])
-    end
+  defp sort_filter(events, :backward, :end) do
+    Enum.sort_by(events, &revision_from_filename/1, :desc)
+  end
+
+  defp sort_filter(events, :forward, n) do
+    Enum.sort_by(events, &revision_from_filename/1)
+    |> Enum.drop(n)
+  end
+
+  defp sort_filter(events, :backward, n) do
+    Enum.sort_by(events, &revision_from_filename/1, :desc)
+    |> Enum.drop(n)
+  end
+
+  defp revision_from_filename(filename) do
+    Path.rootname(filename, ".json")
+    |> Path.basename()
+    |> String.to_integer()
   end
 end
