@@ -28,12 +28,33 @@ defmodule Loom.Store do
       end
 
       event_path = Path.join([dir, "events", event.id <> ".json"])
-      link_path = Path.join([dir, "streams", stream_id, Integer.to_string(next_revision) <> ".json"])
 
-      File.write!(event_path, Cloudevents.to_json(event))
-      File.ln_s!(event_path, link_path)
+      link_path =
+        Path.join([dir, "streams", stream_id, Integer.to_string(next_revision) <> ".json"])
 
-      {:ok, next_revision}
+      case File.ln_s(event_path, link_path) do
+        :ok ->
+          case File.write(event_path, Cloudevents.to_json(event), [:exclusive]) do
+            :ok ->
+              {:ok, next_revision}
+
+            {:error, :eexist} ->
+              {:ok, next_revision}
+
+            err ->
+              err
+          end
+
+        {:error, :eexist} ->
+          if revision_match?(next_revision, expected_revision) do
+            append(stream_id, event, opts)
+          else
+            {:error, :revision_mismatch}
+          end
+
+        err ->
+          err
+      end
     else
       {:error, :revision_mismatch}
     end

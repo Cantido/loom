@@ -43,6 +43,14 @@ defmodule Loom.StoreTest do
       {:ok, event} = Cloudevents.from_map(%{type: "test.setup.event", specversion: "1.0", source: "loom", id: "mismatched"})
       {:error, :revision_mismatch} = Store.append("test-stream", event, expected_revision: 2, root_dir: tmp_dir)
     end
+
+    @tag :tmp_dir
+    test "appending an event that has already been inserted", %{tmp_dir: tmp_dir} do
+      {:ok, event} = Cloudevents.from_map(%{type: "test.duplicate.event", specversion: "1.0", source: "loom", id: "first"})
+      {:ok, 2} = Store.append("test-stream", event, root_dir: tmp_dir)
+
+      assert File.ls!(Path.join(tmp_dir, "events")) == ["first.json"]
+    end
   end
 
   describe "read" do
