@@ -6,6 +6,7 @@ defmodule Loom.StoreTest do
   setup %{tmp_dir: tmp_dir} do
     File.mkdir_p!(Path.join(tmp_dir, "events"))
     File.mkdir_p!(Path.join(tmp_dir, "streams"))
+    File.mkdir_p!(Path.join([tmp_dir, "streams", "$all"]))
 
     :ok
   end
@@ -18,6 +19,17 @@ defmodule Loom.StoreTest do
       {:ok, _} = Store.append("test-stream", event, root_dir: dir)
 
       expected_event_path = Path.join([dir, "events", "first.json"])
+
+      assert File.exists?(expected_event_path)
+    end
+
+    @tag :tmp_dir
+    test "creates a file in the $all dir", %{tmp_dir: dir} do
+      {:ok, event} = Cloudevents.from_map(%{type: "test.event", specversion: "1.0", source: "loom", id: "first"})
+
+      {:ok, _} = Store.append("test-stream", event, root_dir: dir)
+
+      expected_event_path = Path.join([dir, "streams", "$all", "1.json"])
 
       assert File.exists?(expected_event_path)
     end

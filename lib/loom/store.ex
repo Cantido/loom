@@ -36,6 +36,7 @@ defmodule Loom.Store do
         :ok ->
           case File.write(event_path, Cloudevents.to_json(event), [:exclusive]) do
             :ok ->
+              retry_all_link(event_path, dir)
               {:ok, next_revision}
 
             {:error, :eexist} ->
@@ -57,6 +58,30 @@ defmodule Loom.Store do
       end
     else
       {:error, :revision_mismatch}
+    end
+  end
+
+  defp retry_all_link(event_path, root_dir) do
+    current_revision = last_revision("$all", root_dir: root_dir)
+    do_retry_all_link(event_path, root_dir, current_revision, 0, 10)
+  end
+
+  defp do_retry_all_link(event_path, root_dir, current_revision, attempt_count, max_attempts) do
+    if attempt_count >= max_attempts do
+      raise "Attempted #{max_attempts} times to create a link in $all but they all failed."
+    end
+
+    next_revision = current_revision + 1
+    link_path =
+      Path.join([root_dir, "streams", "$all", Integer.to_string(next_revision) <> ".json"])
+
+    case File.ln_s(event_path, link_path) do
+      :ok ->
+        {:ok, next_revision}
+      {:error, :eexist} ->
+        do_retry_all_link(event_path, root_dir, next_revision, attempt_count + 1, max_attempts)
+      err ->
+        err
     end
   end
 
