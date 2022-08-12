@@ -4,6 +4,9 @@ defmodule Loom.Store do
 
   Events belong to streams, which are lists of events.
   """
+  use Nebulex.Caching
+
+  alias Loom.Cache
 
   @type stream_id :: String.t()
   @type event_id :: String.t()
@@ -33,12 +36,9 @@ defmodule Loom.Store do
 
       case retry_stream_link(dir, event_path, stream_id, &revision_match?(&1, expected_revision)) do
         {:ok, written_revision} ->
-          case File.write(event_path, Cloudevents.to_json(event), [:exclusive]) do
+          case write_event(event_path, event) do
             :ok ->
               {:ok, _all_revision} = retry_stream_link(dir, event_path, "$all")
-              {:ok, written_revision}
-
-            {:error, :eexist} ->
               {:ok, written_revision}
 
             err ->
@@ -50,6 +50,18 @@ defmodule Loom.Store do
       end
     else
       {:error, :revision_mismatch}
+    end
+  end
+
+  defp write_event(event_path, event) do
+    case File.write(event_path, Cloudevents.to_json(event), [:exclusive]) do
+      :ok ->
+        Cache.put(event_path, event)
+        :ok
+      {:error, :eexist} ->
+        :ok
+      err ->
+        err
     end
   end
 
@@ -145,9 +157,15 @@ defmodule Loom.Store do
 
     Task.async_stream(revision_range, fn revision ->
       event_path(dir, stream_id, revision)
-      |> File.read!()
+      |> read_event()
     end)
-    |> Stream.map(fn {:ok, event} -> Cloudevents.from_json!(event) end)
+    |> Stream.map(fn {:ok, event} -> event end)
+  end
+
+  @decorate cacheable(cache: Cache, key: event_path)
+  defp read_event(event_path) do
+    File.read!(event_path)
+    |> Cloudevents.from_json!()
   end
 
   @spec events_path(Path.t()) :: Path.t()
