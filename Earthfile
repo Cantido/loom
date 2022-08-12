@@ -14,6 +14,6 @@ deps:
 check:
   FROM +deps
 
-  COPY --dir config/ lib/ test/ ./
+  COPY --dir lib/ test/ ./
 
   RUN mix test
