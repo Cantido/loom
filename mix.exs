@@ -22,7 +22,7 @@ defmodule Loom.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:cloudevents, "~> 0.4.0"},
+      {:cloudevents, "~> 0.5.1"},
       {:decorator, "~> 1.4"},
       {:nebulex, "~> 2.4"}
     ]
