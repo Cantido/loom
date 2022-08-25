@@ -48,6 +48,17 @@ defmodule Loom.StoreTest do
     end
 
     @tag :tmp_dir
+    test "www-encodes event IDs", %{tmp_dir: dir} do
+      {:ok, event} = Cloudevents.from_map(%{type: "test.event", specversion: "1.0", source: "loom", id: "weird&*"})
+
+      {:ok, 1} = Store.append(dir, "test-stream", event)
+
+      expected_event_path = Path.join([dir, "events", "loom", "weird%26%2A.json"])
+
+      assert File.exists?(expected_event_path)
+    end
+
+    @tag :tmp_dir
     test "www-encodes source names", %{tmp_dir: dir} do
       {:ok, event} = Cloudevents.from_map(%{type: "test.event", specversion: "1.0", source: "https://example.com", id: "first"})
 

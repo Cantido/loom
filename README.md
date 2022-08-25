@@ -4,6 +4,7 @@ A filesystem-based event store.
 
 Events are JSON-encoded according to the CloudEvents spec and stored at `events/<event-source>/<event-id>.json`.
 When an event is appended to a stream, a symlink is created at `streams/<stream-id>/<revsion-number>.json`.
+Event source and ID values are encoded in "x-www-form-urlencoded" form so they are safe for URLs and filesystems.
 
 ## Installation
 
