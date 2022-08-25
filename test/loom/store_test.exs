@@ -3,10 +3,13 @@ defmodule Loom.StoreTest do
   doctest Loom.Store
   alias Loom.Store
 
-  setup %{tmp_dir: tmp_dir} do
-    File.mkdir_p!(Path.join(tmp_dir, "events"))
-    File.mkdir_p!(Path.join(tmp_dir, "streams"))
-    File.mkdir_p!(Path.join([tmp_dir, "streams", "$all"]))
+  setup context do
+    if Map.has_key?(context, :tmp_dir) do
+      tmp_dir = context.tmp_dir
+      File.mkdir_p!(Path.join(tmp_dir, "events"))
+      File.mkdir_p!(Path.join(tmp_dir, "streams"))
+      File.mkdir_p!(Path.join([tmp_dir, "streams", "$all"]))
+    end
 
     :ok
   end

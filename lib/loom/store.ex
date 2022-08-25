@@ -174,40 +174,93 @@ defmodule Loom.Store do
     |> Cloudevents.from_json!()
   end
 
+  @doc """
+  Returns the root of the global path for events.
+
+  ## Examples
+
+      iex> Loom.Store.events_path("/apps/loom")
+      "/apps/loom/events"
+  """
   @spec events_path(Path.t()) :: Path.t()
   def events_path(root_dir) do
     Path.join([root_dir, "events"])
   end
 
+  @doc """
+  Returns the root of the path for events published by a single event source.
+
+  ## Examples
+
+      iex> Loom.Store.event_source_path("/apps/loom", "myapp")
+      "/apps/loom/events/myapp"
+  """
   @spec event_source_path(Path.t(), event_source) :: Path.t()
   def event_source_path(root_dir, event_source) do
     events_path(root_dir)
     |> Path.join(URI.encode_www_form(event_source))
   end
 
+  @doc """
+  Returns the path that an event with the given source and ID is written to.
+
+  ## Examples
+
+      iex> Loom.Store.event_path("/apps/loom", "myapp", "000001")
+      "/apps/loom/events/myapp/000001.json"
+  """
   @spec event_path(Path.t(), event_source, event_id) :: Path.t()
   def event_path(root_dir, event_source, event_id) do
     event_source_path(root_dir, event_source)
     |> Path.join(URI.encode_www_form(event_id) <> ".json")
   end
 
-  @spec event_path(Path.t(), stream_id(), revision()) :: Path.t()
+  @doc """
+  Returns the path for an event at the given stream ID and revision number.
+
+  This reads the revision link from the filesystem and will raise if the revision does not exist.
+  """
+  @spec event_path_for_revision(Path.t(), stream_id(), revision()) :: Path.t()
   def event_path_for_revision(root_dir, stream_id, revision) do
     stream_revision_path(root_dir, stream_id, revision)
     |> File.read_link!()
   end
 
+  @doc """
+  Returns the path containing all stream directories.
+
+  ## Examples
+
+      iex> Loom.Store.streams_path("/apps/loom")
+      "/apps/loom/streams"
+  """
   @spec streams_path(Path.t()) :: Path.t()
   def streams_path(root_dir) do
     Path.join(root_dir, "streams")
   end
 
+  @doc """
+  Returns the path containing all revisions for a specific stream.
+
+  ## Examples
+
+      iex> Loom.Store.stream_path("/apps/loom", "abc123")
+      "/apps/loom/streams/abc123"
+  """
   @spec stream_path(Path.t(), stream_id()) :: Path.t()
   def stream_path(root_dir, stream_id) do
     streams_path(root_dir)
     |> Path.join(stream_id)
   end
 
+  @doc """
+  Returns the path for a specific event in a given stream.
+
+  ## Examples
+
+      iex> Loom.Store.stream_revision_path("/apps/loom", "abc123", 420)
+      "/apps/loom/streams/abc123/420.json"
+  """
   @spec stream_revision_path(Path.t(), stream_id(), revision()) :: Path.t()
   def stream_revision_path(root_dir, stream_id, revision) do
     stream_path(root_dir, stream_id)
