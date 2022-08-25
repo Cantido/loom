@@ -46,6 +46,17 @@ defmodule Loom.StoreTest do
       assert File.exists?(expected_link_path)
       assert File.lstat!(expected_link_path).type == :symlink
     end
+
+    @tag :tmp_dir
+    test "www-encodes source names", %{tmp_dir: dir} do
+      {:ok, event} = Cloudevents.from_map(%{type: "test.event", specversion: "1.0", source: "https://example.com", id: "first"})
+
+      {:ok, 1} = Store.append(dir, "test-stream", event)
+
+      expected_event_path = Path.join([dir, "events", "https%3A%2F%2Fexample.com", "first.json"])
+
+      assert File.exists?(expected_event_path)
+    end
   end
 
   describe "append/4 when the stream has events in it" do
