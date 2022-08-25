@@ -10,6 +10,7 @@ defmodule Loom.Store do
 
   @type stream_id :: String.t()
   @type event_id :: String.t()
+  @type event_source :: String.t()
   @type revision :: non_neg_integer()
 
   @doc """
@@ -32,7 +33,12 @@ defmodule Loom.Store do
         File.mkdir_p!(stream_directory)
       end
 
-      event_path = event_path(dir, event.id)
+      source_directory = event_source_path(dir, event.source)
+      unless File.exists?(source_directory) do
+        File.mkdir_p!(source_directory)
+      end
+
+     event_path = event_path(dir, event.source, event.id)
 
       case retry_stream_link(dir, event_path, stream_id, &revision_match?(&1, expected_revision)) do
         {:ok, written_revision} ->
@@ -156,7 +162,7 @@ defmodule Loom.Store do
       end
 
     Task.async_stream(revision_range, fn revision ->
-      event_path(dir, stream_id, revision)
+      event_path_for_revision(dir, stream_id, revision)
       |> read_event()
     end)
     |> Stream.map(fn {:ok, event} -> event end)
@@ -173,14 +179,20 @@ defmodule Loom.Store do
     Path.join([root_dir, "events"])
   end
 
-  @spec event_path(Path.t(), event_id) :: Path.t()
-  def event_path(root_dir, event_id) do
+  @spec event_source_path(Path.t(), event_source) :: Path.t()
+  def event_source_path(root_dir, event_source) do
     events_path(root_dir)
+    |> Path.join(event_source)
+  end
+
+  @spec event_path(Path.t(), event_source, event_id) :: Path.t()
+  def event_path(root_dir, event_source, event_id) do
+    event_source_path(root_dir, event_source)
     |> Path.join(event_id <> ".json")
   end
 
   @spec event_path(Path.t(), stream_id(), revision()) :: Path.t()
-  def event_path(root_dir, stream_id, revision) do
+  def event_path_for_revision(root_dir, stream_id, revision) do
     stream_revision_path(root_dir, stream_id, revision)
     |> File.read_link!()
   end

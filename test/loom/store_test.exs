@@ -18,7 +18,7 @@ defmodule Loom.StoreTest do
 
       {:ok, 1} = Store.append(dir, "test-stream", event)
 
-      expected_event_path = Path.join([dir, "events", "first.json"])
+      expected_event_path = Path.join([dir, "events", "loom", "first.json"])
 
       assert File.exists?(expected_event_path)
     end
@@ -73,7 +73,7 @@ defmodule Loom.StoreTest do
       {:ok, event} = Cloudevents.from_map(%{type: "test.setup.event", specversion: "1.0", source: "loom", id: "mismatched"})
       {:error, :revision_mismatch} = Store.append(tmp_dir, "test-stream", event, expected_revision: 2)
 
-      event_path = Path.join([tmp_dir, "events", "mismatched.json"])
+      event_path = Path.join([tmp_dir, "events", "loom", "mismatched.json"])
       link_path = Path.join([tmp_dir, "streams", "test-stream", "2.json"])
 
       refute File.exists?(event_path)
@@ -85,7 +85,7 @@ defmodule Loom.StoreTest do
       {:ok, event} = Cloudevents.from_map(%{type: "test.duplicate.event", specversion: "1.0", source: "loom", id: "first"})
       {:ok, 2} = Store.append(tmp_dir, "test-stream", event)
 
-      assert File.ls!(Path.join(tmp_dir, "events")) == ["first.json"]
+      assert File.ls!(Path.join([tmp_dir, "events", "loom"])) == ["first.json"]
     end
   end
 
