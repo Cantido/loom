@@ -2,7 +2,71 @@ defmodule Loom.Store do
   @moduledoc """
   Loom's event store.
 
-  Events belong to streams, which are lists of events.
+  Events belong to streams, which are lists of events, usually correlating to a specific aggregate.
+
+  All events are represented by `Cloudevents` structs.
+
+  ## Writing and reading events
+
+  Write a new event to the store with the `append/4` function.
+  This will return an `:ok` tuple with the revision number of that event.
+  You can then read the event stream with `read/3`, which returns a `Stream` containing the requested events.
+
+      iex> root_dir = System.tmp_dir!() |> Path.join(to_string(:rand.uniform(1_000_000)))
+      iex> Loom.Store.init(root_dir)
+      iex> {:ok, event} = Cloudevents.from_map(%{type: "com.example.event", specversion: "1.0", source: "loom", id: "a-uuid"})
+      iex> Loom.Store.append(root_dir, "my-stream-1", event)
+      {:ok, 1}
+      iex> Loom.Store.read(root_dir, "my-stream-1") |> Enum.at(0) |> Map.get(:id)
+      "a-uuid"
+
+  ## Filesystem structure
+
+  Events are written as JSON blobs to the `events` directory, inside the given `root_dir`.
+  A soft link is also created in the `streams` directory in `root_dir`, named after the current stream revision, and pointing to that event.
+  There is also a special stream named `$all` that contains every event appended to the store.
+
+  For example, the directory structure would look like this after calling `append/4` with five different events.
+
+  ```
+  /my/app/dir
+  ├── events
+  │   ├── my-source-1
+  │   │   ├── 5add8700-5a01-46f3-a8c0-8315bb019909.json
+  │   │   └── cd4ae630-f17b-480b-956b-c7c5d71a5590.json
+  │   └── my-source-2
+  │       ├── c0ca5952-a22a-41a6-b865-5ce692e6736e.json
+  │       ├── 300d57fe-330b-45dc-aa81-90611cd0ae95.json
+  │       └── 7e805bb4-f9b5-48ef-9b25-35ca1879552c.json
+  └── streams
+      ├── $all
+      │   ├── 1.json
+      │   ├── 2.json
+      │   ├── 3.json
+      │   ├── 4.json
+      │   └── 5.json
+      ├── my-stream-1
+      │   ├── 1.json
+      │   ├── 2.json
+      │   └── 3.json
+      ├── my-stream-2
+      │   └── 1.json
+      └── my-stream-3
+          └── 1.json
+  ```
+
+  In this directory, we have two event sources, `my-source-1` and `my-source-2`,
+  and four streams, `$all`, `my-stream-1`, `my-stream-2`, and `my-stream-3`.
+
+  Navigate the event store's filesystem using these functions:
+
+  - `events_path/1`
+  - `event_source_path/2`
+  - `event_path/3`
+  - `event_path_for_revision/3`
+  - `streams_path/1`
+  - `stream_path/2`
+  - `stream_revision_path/3`
   """
   use Nebulex.Caching
 
@@ -12,6 +76,11 @@ defmodule Loom.Store do
   @type event_id :: String.t()
   @type event_source :: String.t()
   @type revision :: non_neg_integer()
+
+  def init(root_dir) do
+    File.mkdir_p!(events_path(root_dir))
+    File.mkdir_p!(stream_path(root_dir, "$all"))
+  end
 
   @doc """
   Append an event to an event stream.

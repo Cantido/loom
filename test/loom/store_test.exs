@@ -6,9 +6,7 @@ defmodule Loom.StoreTest do
   setup context do
     if Map.has_key?(context, :tmp_dir) do
       tmp_dir = context.tmp_dir
-      File.mkdir_p!(Path.join(tmp_dir, "events"))
-      File.mkdir_p!(Path.join(tmp_dir, "streams"))
-      File.mkdir_p!(Path.join([tmp_dir, "streams", "$all"]))
+      Loom.Store.init(tmp_dir)
     end
 
     :ok
