@@ -20,10 +20,11 @@ defmodule LoomWeb.Router do
     get "/", PageController, :index
   end
 
-  # Other scopes may use custom stacks.
-  # scope "/api", LoomWeb do
-  #   pipe_through :api
-  # end
+  scope "/api", LoomWeb do
+    pipe_through :api
+
+    resources "/events", EventController, except: [:new, :edit]
+  end
 
   # Enables LiveDashboard only for development
   #
