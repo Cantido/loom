@@ -18,13 +18,29 @@ defmodule StoreBench do
     :ok
   end
 
-  bench "read event", [params: random_written(bench_context)] do
+  bench "read event (cache hit)", [params: random_cached(bench_context)] do
     {dir, stream_id} = params
     _ = Loom.Store.read(dir, stream_id)
     :ok
   end
 
-  defp random_written(root_dir) do
+  bench "read event (cache miss)", [params: random_uncached(bench_context)] do
+    {dir, stream_id} = params
+    _ = Loom.Store.read(dir, stream_id)
+    :ok
+  end
+
+  defp random_uncached(root_dir) do
+    event = random_event()
+
+    Loom.Store.append(root_dir, "stream-1", event)
+    path = Loom.Store.event_path(root_dir, event.source, event.id)
+    Loom.Cache.delete(path)
+
+    {root_dir, "stream-1"}
+  end
+
+  defp random_cached(root_dir) do
     event = random_event()
 
     Loom.Store.append(root_dir, "stream-1", event)
