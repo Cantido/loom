@@ -7,7 +7,6 @@ defmodule Loom.Application do
   def start(_type, _args) do
     children = [
       Loom.Cache,
-      Loom.Repo,
       LoomWeb.Telemetry,
       {Phoenix.PubSub, name: Loom.PubSub},
       LoomWeb.Endpoint

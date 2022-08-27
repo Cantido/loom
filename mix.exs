@@ -32,6 +32,7 @@ defmodule Loom.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
+      {:benchfella, "~> 0.3.0"},
       {:cloudevents, "~> 0.6.1"},
       {:decorator, "~> 1.4"},
       {:nebulex, "~> 2.4"},
@@ -50,7 +51,8 @@ defmodule Loom.MixProject do
       {:telemetry_poller, "~> 1.0"},
       {:gettext, "~> 0.18"},
       {:jason, "~> 1.2"},
-      {:plug_cowboy, "~> 2.5"}
+      {:plug_cowboy, "~> 2.5"},
+      {:uniq, "~> 0.5.1", only: :dev}
     ]
   end
 
