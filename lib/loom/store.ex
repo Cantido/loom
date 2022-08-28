@@ -206,6 +206,14 @@ defmodule Loom.Store do
     read_event(path)
   end
 
+  def list_streams(root_dir) do
+    case File.ls(streams_path(root_dir)) do
+      {:ok, streams} -> streams
+      {:error, :enoent} -> []
+      err -> raise err
+    end
+  end
+
   @doc """
   Returns events from a stream.
 

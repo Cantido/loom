@@ -7,9 +7,6 @@ defmodule LoomWeb.EventControllerTest do
     type: "com.example.event",
     specversion: "1.0"
   }
-  @update_attrs %{
-    id: "some updated id"
-  }
   @invalid_attrs %{id: nil}
 
   setup do
@@ -30,13 +27,8 @@ defmodule LoomWeb.EventControllerTest do
 
   describe "create event" do
     test "renders event when data is valid", %{conn: conn} do
-      conn = post(conn, Routes.event_path(conn, :create), event: @create_attrs, stream_id: "ohayo")
+      conn = post(conn, Routes.stream_path(conn, :create, "ohayo"), event: @create_attrs)
       assert %{"id" => "some id"} = json_response(conn, 201)
-    end
-
-    test "renders errors when data is invalid", %{conn: conn} do
-      conn = post(conn, Routes.event_path(conn, :create), event: @invalid_attrs)
-      assert json_response(conn, 422)["errors"] != %{}
     end
   end
 
