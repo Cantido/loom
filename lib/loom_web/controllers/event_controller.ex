@@ -41,6 +41,7 @@ defmodule LoomWeb.EventController do
       |> put_resp_content_type("application/cloudevents+json")
       |> put_resp_header("etag", ~s("#{etag}"))
       |> put_resp_header("last-modified", last_modified)
+      |> put_resp_header("cache-control", "public, max-age=31536000, immutable")
       |> render("show.json", event: event)
     end
   end

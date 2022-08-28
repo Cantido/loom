@@ -67,6 +67,17 @@ defmodule LoomWeb.EventControllerTest do
       assert Timex.before?(last_modified, Timex.now())
     end
 
+    test "includes a cache-control header", %{conn: conn} do
+      event = Cloudevents.from_map!(%{specversion: "1.0", id: "12345", source: "loom-web-show-event-test", type: "com.example.event"})
+
+      {:ok, _revision} = Loom.Store.append("tmp", "test-stream", event)
+
+      conn = get(conn, Routes.event_path(conn, :show, "loom-web-show-event-test", "12345"))
+
+      assert [header] = get_resp_header(conn, "cache-control")
+      assert header == "public, max-age=31536000, immutable"
+    end
+
     test "returns 404 when event does not exist", %{conn: conn} do
       conn = get(conn, Routes.event_path(conn, :show, "loom-web-show-event-test", "12345"))
 
