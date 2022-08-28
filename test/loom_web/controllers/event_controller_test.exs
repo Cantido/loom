@@ -78,6 +78,18 @@ defmodule LoomWeb.EventControllerTest do
       assert header == "public, max-age=31536000, immutable"
     end
 
+    test "returns 304 if the etag is the same", %{conn: conn} do
+      event = Cloudevents.from_map!(%{specversion: "1.0", id: "12345", source: "loom-web-show-event-test", type: "com.example.event"})
+      etag = Base.encode16(:crypto.hash(:sha256, Cloudevents.to_json(event)))
+
+      {:ok, _revision} = Loom.Store.append("tmp", "test-stream", event)
+
+      conn = put_req_header(conn, "if-none-match", ~s("#{etag}"))
+      conn = get(conn, Routes.event_path(conn, :show, "loom-web-show-event-test", "12345"))
+
+      assert json_response(conn, 304) == %{}
+    end
+
     test "returns 404 when event does not exist", %{conn: conn} do
       conn = get(conn, Routes.event_path(conn, :show, "loom-web-show-event-test", "12345"))
 

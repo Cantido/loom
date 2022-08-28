@@ -36,13 +36,21 @@ defmodule LoomWeb.EventController do
          {:ok, stat} <- Store.stat("tmp", source, id) do
       etag = Base.encode16(:crypto.hash(:sha256, Cloudevents.to_json(event)))
       last_modified = Timex.format!(stat.mtime, "{RFC1123z}")
-      conn
-      |> put_status(:ok)
-      |> put_resp_content_type("application/cloudevents+json")
-      |> put_resp_header("etag", ~s("#{etag}"))
-      |> put_resp_header("last-modified", last_modified)
-      |> put_resp_header("cache-control", "public, max-age=31536000, immutable")
-      |> render("show.json", event: event)
+      if_none_match = List.first get_req_header(conn, "if-none-match")
+
+      if if_none_match == ~s("#{etag}") do
+        conn
+        |> put_status(:not_modified)
+        |> json(%{})
+      else
+        conn
+        |> put_status(:ok)
+        |> put_resp_content_type("application/cloudevents+json")
+        |> put_resp_header("etag", ~s("#{etag}"))
+        |> put_resp_header("last-modified", last_modified)
+        |> put_resp_header("cache-control", "public, max-age=31536000, immutable")
+        |> render("show.json", event: event)
+      end
     end
   end
 end
