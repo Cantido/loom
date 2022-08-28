@@ -35,6 +35,7 @@ defmodule Loom.MixProject do
       {:benchfella, "~> 0.3.0"},
       {:cloudevents, "~> 0.6.1"},
       {:decorator, "~> 1.4"},
+      {:ex_doc, "~> 0.27", only: :dev, runtime: false},
       {:nebulex, "~> 2.4"},
       {:phoenix, "~> 1.6.11"},
       {:phoenix_ecto, "~> 4.4"},
