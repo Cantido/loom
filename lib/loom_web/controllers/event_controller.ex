@@ -35,14 +35,14 @@ defmodule LoomWeb.EventController do
     with {:ok, event} <- Store.fetch("tmp", source, id),
          {:ok, stat} <- Store.stat("tmp", source, id) do
       etag = Base.encode16(:crypto.hash(:sha256, Cloudevents.to_json(event)))
-      last_modified = Timex.format!(stat.mtime, "{RFC1123z}")
-      if_none_match = List.first get_req_header(conn, "if-none-match")
 
-      if if_none_match == ~s("#{etag}") do
+      if not_modified?(conn, etag, stat.mtime) do
         conn
         |> put_status(:not_modified)
         |> json(%{})
       else
+        last_modified = Timex.format!(stat.mtime, "{RFC1123z}")
+
         conn
         |> put_status(:ok)
         |> put_resp_content_type("application/cloudevents+json")
@@ -52,5 +52,18 @@ defmodule LoomWeb.EventController do
         |> render("show.json", event: event)
       end
     end
+  end
+
+  defp not_modified?(conn, etag, last_modified) do
+    if_none_match = List.first get_req_header(conn, "if-none-match")
+    if_modified_since =
+      if if_mod_header = List.first(get_req_header(conn, "if-modified-since")) do
+        Timex.parse!(if_mod_header, "{RFC1123}")
+      end
+
+    matches_etag? = if_none_match == ~s("#{etag}")
+    matches_timestamp? = not is_nil(if_modified_since) and Timex.before?(last_modified, if_modified_since)
+
+    matches_etag? or matches_timestamp?
   end
 end

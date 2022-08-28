@@ -90,6 +90,19 @@ defmodule LoomWeb.EventControllerTest do
       assert json_response(conn, 304) == %{}
     end
 
+    test "returns 304 if the modified time is before the if-modified-since header", %{conn: conn} do
+      event = Cloudevents.from_map!(%{specversion: "1.0", id: "12345", source: "loom-web-show-event-test", type: "com.example.event"})
+
+      {:ok, _revision} = Loom.Store.append("tmp", "test-stream", event)
+
+      if_modified_since = Timex.format!(Timex.shift(Timex.now, seconds: 1), "{RFC1123}")
+
+      conn = put_req_header(conn, "if-modified-since", if_modified_since)
+      conn = get(conn, Routes.event_path(conn, :show, "loom-web-show-event-test", "12345"))
+
+      assert json_response(conn, 304) == %{}
+    end
+
     test "returns 404 when event does not exist", %{conn: conn} do
       conn = get(conn, Routes.event_path(conn, :show, "loom-web-show-event-test", "12345"))
 
