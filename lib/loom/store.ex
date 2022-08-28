@@ -251,6 +251,7 @@ defmodule Loom.Store do
            {:ok, json} <- Cloudevents.from_json(data) do
         {:ok, json}
       else
+        {:error, :enoent} -> {:error, :not_found}
         err -> err
       end
     end

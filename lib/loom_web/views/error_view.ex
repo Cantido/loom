@@ -10,7 +10,7 @@ defmodule LoomWeb.ErrorView do
   def template_not_found(template, _assigns) do
     msg = Phoenix.Controller.status_message_from_template(template)
     if String.ends_with?(template, ".json") do
-      %{errors: [msg]}
+      %{errors: [%{title: msg}]}
     else
       msg
     end

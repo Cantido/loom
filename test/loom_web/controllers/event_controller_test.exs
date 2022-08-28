@@ -13,6 +13,8 @@ defmodule LoomWeb.EventControllerTest do
   @invalid_attrs %{id: nil}
 
   setup do
+    File.rm_rf("tmp")
+    Loom.Cache.delete_all()
     Loom.Store.init("tmp")
 
     on_exit fn ->
@@ -47,6 +49,12 @@ defmodule LoomWeb.EventControllerTest do
       conn = get(conn, Routes.event_path(conn, :show, "loom-web-show-event-test", "12345"))
 
       assert json_response(conn, 200) == Cloudevents.to_json(event) |> Jason.decode!()
+    end
+
+    test "returns 404 when event does not exist", %{conn: conn} do
+      conn = get(conn, Routes.event_path(conn, :show, "loom-web-show-event-test", "12345"))
+
+      assert json_response(conn, 404)["errors"] == [%{"title" => "Not Found"}]
     end
   end
 end
