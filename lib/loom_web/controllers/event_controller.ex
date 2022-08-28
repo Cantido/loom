@@ -33,9 +33,11 @@ defmodule LoomWeb.EventController do
 
   def show(conn, %{"source" => source, "id" => id}) do
     with {:ok, event} <- Store.fetch("tmp", source, id) do
+      etag = Base.encode16(:crypto.hash(:sha256, Cloudevents.to_json(event)))
       conn
       |> put_status(:ok)
       |> put_resp_content_type("application/cloudevents+json")
+      |> put_resp_header("etag", ~s("#{etag}"))
       |> render("show.json", event: event)
     end
   end
