@@ -7,7 +7,8 @@ defmodule LoomWeb.EventController do
 
   def create(conn, %{"event" => event_params, "stream_id" => stream_id}) do
     with {:ok, event} <- Cloudevents.from_map(event_params),
-         {:ok, _revision} <- Store.append("tmp", stream_id, event)do
+         {:ok, root_dir} <- Application.fetch_env(:loom, :root_dir),
+         {:ok, _revision} <- Store.append(root_dir, stream_id, event)do
       conn
       |> put_status(:created)
       |> put_resp_content_type("application/cloudevents+json")
@@ -24,7 +25,8 @@ defmodule LoomWeb.EventController do
   end
 
   def stream(conn, %{"stream_id" => id}) do
-    events = Store.read("tmp", id) |> Enum.to_list()
+    {:ok, root_dir} = Application.fetch_env(:loom, :root_dir)
+    events = Store.read(root_dir, id) |> Enum.to_list()
 
     conn
     |> put_resp_content_type("application/cloudevents-batch+json")
@@ -32,8 +34,9 @@ defmodule LoomWeb.EventController do
   end
 
   def show(conn, %{"source" => source, "id" => id}) do
-    with {:ok, event} <- Store.fetch("tmp", source, id),
-         {:ok, stat} <- Store.stat("tmp", source, id) do
+    with {:ok, root_dir} <- Application.fetch_env(:loom, :root_dir),
+         {:ok, event} <- Store.fetch(root_dir, source, id),
+         {:ok, stat} <- Store.stat(root_dir, source, id) do
       etag = Base.encode16(:crypto.hash(:sha256, Cloudevents.to_json(event)))
 
       if not_modified?(conn, etag, stat.mtime) do

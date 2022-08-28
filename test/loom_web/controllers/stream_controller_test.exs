@@ -2,12 +2,11 @@ defmodule LoomWeb.StreamControllerTest do
   use LoomWeb.ConnCase
 
   setup do
-    File.rm_rf("tmp")
-    Loom.Cache.delete_all()
-    Loom.Store.init("tmp")
-
+    root_dir = Application.fetch_env!(:loom, :root_dir)
+    Loom.Store.delete_all(root_dir)
+    Loom.Store.init(root_dir)
     on_exit fn ->
-      File.rm_rf("tmp")
+      Loom.Store.delete_all(root_dir)
     end
 
     :ok

@@ -82,6 +82,12 @@ defmodule Loom.Store do
     File.mkdir_p!(stream_path(root_dir, "$all"))
   end
 
+  def delete_all(root_dir) do
+    Cache.delete_all()
+    _ = File.rm_rf(root_dir)
+    init(root_dir)
+  end
+
   @doc """
   Append an event to an event stream.
 

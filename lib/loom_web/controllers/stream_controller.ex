@@ -6,7 +6,7 @@ defmodule LoomWeb.StreamController do
   action_fallback LoomWeb.FallbackController
 
   def index(conn, _params) do
-    streams = Store.list_streams("tmp")
+    streams = Store.list_streams(Application.fetch_env!(:loom, :root_dir))
     render(conn, "index.json", streams: streams)
   end
 end
