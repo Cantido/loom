@@ -29,7 +29,7 @@ defmodule LoomWeb.EventControllerTest do
   describe "create event" do
     test "renders event when data is valid", %{conn: conn} do
       conn = post(conn, Routes.event_path(conn, :create), event: @create_attrs, stream_id: "ohayo")
-      assert %{"id" => "some id"} = json_response(conn, 201)["data"]
+      assert %{"id" => "some id"} = json_response(conn, 201)
     end
 
     test "renders errors when data is invalid", %{conn: conn} do
@@ -42,11 +42,11 @@ defmodule LoomWeb.EventControllerTest do
     test "renders an event", %{conn: conn} do
       event = Cloudevents.from_map!(%{specversion: "1.0", id: "12345", source: "loom-web-show-event-test", type: "com.example.event"})
 
-      {:ok, revision} = Loom.Store.append("tmp", "test-stream", event)
+      {:ok, _revision} = Loom.Store.append("tmp", "test-stream", event)
 
-      conn = get(conn, Routes.event_path(conn, :show, "12345"))
+      conn = get(conn, Routes.event_path(conn, :show, "loom-web-show-event-test", "12345"))
 
-      assert json_response(conn, 200)["data"]["id"] == "12345"
+      assert json_response(conn, 200) == Cloudevents.to_json(event) |> Jason.decode!()
     end
   end
 end

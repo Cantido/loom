@@ -23,7 +23,8 @@ defmodule LoomWeb.Router do
   scope "/api", LoomWeb do
     pipe_through :api
 
-    resources "/events", EventController, only: [:create, :show]
+    resources "/events", EventController, only: [:create]
+    get "/events/:source/:id", EventController, :show
 
   end
 

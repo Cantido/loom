@@ -200,6 +200,12 @@ defmodule Loom.Store do
     end
   end
 
+
+  def fetch(dir, source, event_id) do
+    path = event_path(dir, source, event_id)
+    read_event(path)
+  end
+
   @doc """
   Returns events from a stream.
 
@@ -234,13 +240,20 @@ defmodule Loom.Store do
       event_path_for_revision(dir, stream_id, revision)
       |> read_event()
     end)
-    |> Stream.map(fn {:ok, event} -> event end)
+    |> Stream.map(fn {:ok, {:ok, event}} -> event end)
   end
 
-  @decorate cacheable(cache: Cache, key: event_path)
   defp read_event(event_path) do
-    File.read!(event_path)
-    |> Cloudevents.from_json!()
+    if Cache.has_key?(event_path) do
+      {:ok, Cache.get!(event_path)}
+    else
+      with {:ok, data} <- File.read(event_path),
+           {:ok, json} <- Cloudevents.from_json(data) do
+        {:ok, json}
+      else
+        err -> err
+      end
+    end
   end
 
   @doc """

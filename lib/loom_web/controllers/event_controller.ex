@@ -22,10 +22,11 @@ defmodule LoomWeb.EventController do
     |> render(:"422", errors: %{})
   end
 
-  def show(conn, %{"id" => id}) do
+  def show(conn, %{"source" => source, "id" => id}) do
+    {:ok, event} = Store.fetch("tmp", source, id)
     conn
     |> put_status(:ok)
-    |> render("show.json", event: %{id: id})
+    |> render("show.json", event: event)
 
   end
 end
