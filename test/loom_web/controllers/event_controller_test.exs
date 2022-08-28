@@ -87,7 +87,10 @@ defmodule LoomWeb.EventControllerTest do
       conn = put_req_header(conn, "if-none-match", ~s("#{etag}"))
       conn = get(conn, Routes.event_path(conn, :show, "loom-web-show-event-test", "12345"))
 
-      assert json_response(conn, 304) == %{}
+      assert response(conn, 304) == ""
+
+      assert [header] = get_resp_header(conn, "cache-control")
+      assert header == "public, max-age=31536000, immutable"
     end
 
     test "returns 304 if the modified time is before the if-modified-since header", %{conn: conn} do
@@ -100,7 +103,9 @@ defmodule LoomWeb.EventControllerTest do
       conn = put_req_header(conn, "if-modified-since", if_modified_since)
       conn = get(conn, Routes.event_path(conn, :show, "loom-web-show-event-test", "12345"))
 
-      assert json_response(conn, 304) == %{}
+      assert response(conn, 304) == ""
+      assert [header] = get_resp_header(conn, "cache-control")
+      assert header == "public, max-age=31536000, immutable"
     end
 
     test "returns 404 when event does not exist", %{conn: conn} do

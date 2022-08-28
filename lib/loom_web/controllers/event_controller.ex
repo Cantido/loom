@@ -38,8 +38,8 @@ defmodule LoomWeb.EventController do
 
       if not_modified?(conn, etag, stat.mtime) do
         conn
-        |> put_status(:not_modified)
-        |> json(%{})
+        |> put_resp_header("cache-control", "public, max-age=31536000, immutable")
+        |> resp(:not_modified, "")
       else
         last_modified = Timex.format!(stat.mtime, "{RFC1123z}")
 
