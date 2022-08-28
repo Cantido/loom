@@ -10,7 +10,8 @@ defmodule LoomWeb.EventController do
          {:ok, _revision} <- Store.append("tmp", stream_id, event)do
       conn
       |> put_status(:created)
-      #|> put_resp_header("location", Routes.stream_revision_path(conn, :show, event))
+      |> put_resp_content_type("application/cloudevents+json")
+      |> put_resp_header("location", Routes.event_path(conn, :show, event.source, event.id))
       |> render("show.json", event: event)
     end
   end
@@ -26,6 +27,7 @@ defmodule LoomWeb.EventController do
     with {:ok, event} <- Store.fetch("tmp", source, id) do
       conn
       |> put_status(:ok)
+      |> put_resp_content_type("application/cloudevents+json")
       |> render("show.json", event: event)
     end
   end
