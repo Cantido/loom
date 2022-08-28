@@ -23,7 +23,8 @@ defmodule LoomWeb.Router do
   scope "/api", LoomWeb do
     pipe_through :api
 
-    resources "/events", EventController, except: [:new, :edit]
+    resources "/events", EventController, only: [:create, :show]
+
   end
 
   # Enables LiveDashboard only for development

@@ -37,4 +37,16 @@ defmodule LoomWeb.EventControllerTest do
       assert json_response(conn, 422)["errors"] != %{}
     end
   end
+
+  describe "show event" do
+    test "renders an event", %{conn: conn} do
+      event = Cloudevents.from_map!(%{specversion: "1.0", id: "12345", source: "loom-web-show-event-test", type: "com.example.event"})
+
+      {:ok, revision} = Loom.Store.append("tmp", "test-stream", event)
+
+      conn = get(conn, Routes.event_path(conn, :show, "12345"))
+
+      assert json_response(conn, 200)["data"]["id"] == "12345"
+    end
+  end
 end

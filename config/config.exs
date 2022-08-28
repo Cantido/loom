@@ -8,7 +8,7 @@
 import Config
 
 config :loom,
-  ecto_repos: [Loom.Repo]
+  ecto_repos: []
 
 # Configures the endpoint
 config :loom, LoomWeb.Endpoint,

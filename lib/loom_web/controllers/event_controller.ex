@@ -21,4 +21,11 @@ defmodule LoomWeb.EventController do
     |> put_view(LoomWeb.ErrorView)
     |> render(:"422", errors: %{})
   end
+
+  def show(conn, %{"id" => id}) do
+    conn
+    |> put_status(:ok)
+    |> render("show.json", event: %{id: id})
+
+  end
 end
