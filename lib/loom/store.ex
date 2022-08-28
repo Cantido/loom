@@ -267,6 +267,11 @@ defmodule Loom.Store do
     end
   end
 
+  def stat(dir, source, id) do
+    event_path(dir, source, id)
+    |> File.stat()
+  end
+
   @doc """
   Returns the root of the global path for events.
 

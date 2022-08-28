@@ -32,12 +32,15 @@ defmodule LoomWeb.EventController do
   end
 
   def show(conn, %{"source" => source, "id" => id}) do
-    with {:ok, event} <- Store.fetch("tmp", source, id) do
+    with {:ok, event} <- Store.fetch("tmp", source, id),
+         {:ok, stat} <- Store.stat("tmp", source, id) do
       etag = Base.encode16(:crypto.hash(:sha256, Cloudevents.to_json(event)))
+      last_modified = Timex.format!(stat.mtime, "{RFC1123z}")
       conn
       |> put_status(:ok)
       |> put_resp_content_type("application/cloudevents+json")
       |> put_resp_header("etag", ~s("#{etag}"))
+      |> put_resp_header("last-modified", last_modified)
       |> render("show.json", event: event)
     end
   end
