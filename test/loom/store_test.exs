@@ -125,5 +125,18 @@ defmodule Loom.StoreTest do
 
       assert Enum.to_list(events) == [first_event, second_event]
     end
+
+    @tag :tmp_dir
+    test "limit", %{tmp_dir: tmp_dir} do
+      {:ok, first_event} = Cloudevents.from_map(%{type: "test.event", specversion: "1.0", source: "loom", id: "first"})
+      {:ok, second_event} = Cloudevents.from_map(%{type: "test.event", specversion: "1.0", source: "loom", id: "second"})
+
+      {:ok, 1} = Store.append(tmp_dir, "test-stream", first_event)
+      {:ok, 2} = Store.append(tmp_dir, "test-stream", second_event)
+
+      events = Store.read(tmp_dir, "test-stream", direction: :forward, from_revision: :start, limit: 1)
+
+      assert Enum.to_list(events) == [first_event]
+    end
   end
 end

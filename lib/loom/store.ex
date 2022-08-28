@@ -221,26 +221,28 @@ defmodule Loom.Store do
 
   - `:direction` - when `:forward`, the first element in the returned list is the earliest event that occurred. When `:backward`, the first element is the latest. Default: `:forward`.
   - `:from_revision` - the revision to start the list from, as an integer. Can also be `:start`, which starts the list from the earliest revision, or `:end`, which starts the list at the latest. You must set this to `:end` when `:direction` is set to `:backwards`. Default: `:start`
+  - `:limit` - the maximum number of events to return. Default: `1000`, and cannot be set higher.
   """
   def read(dir, stream_id, opts \\ []) do
     direction = Keyword.get(opts, :direction, :forward)
     from_revision = Keyword.get(opts, :from_revision, :start)
+    limit = Keyword.get(opts, :limit, 1_000) |> min(1_000)
 
     revision_range =
       case {direction, from_revision} do
         {:forward, :end} -> []
         {:forward, :start} ->
-          range_end = last_revision(dir, stream_id)
+          range_end = min(last_revision(dir, stream_id), limit)
           1..range_end
         {:forward, range_start} ->
-          range_end = last_revision(dir, stream_id)
+          range_end = min(last_revision(dir, stream_id), range_start + limit)
           range_start..range_end
         {:backward, :start} -> []
         {:backward, :end} ->
-          range_start = last_revision(dir, stream_id)
+          range_start = min(last_revision(dir, stream_id), limit)
           range_start..0
         {:backward, range_start} ->
-          range_end = last_revision(dir, stream_id)
+          range_end = max(last_revision(dir, stream_id), range_start - limit)
           range_start..range_end
       end
 
