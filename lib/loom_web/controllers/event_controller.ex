@@ -23,6 +23,14 @@ defmodule LoomWeb.EventController do
     |> render(:"422", errors: %{})
   end
 
+  def stream(conn, %{"stream_id" => id}) do
+    events = Store.read("tmp", id) |> Enum.to_list()
+
+    conn
+    |> put_resp_content_type("application/cloudevents-batch+json")
+    |> render("stream.json", events: events)
+  end
+
   def show(conn, %{"source" => source, "id" => id}) do
     with {:ok, event} <- Store.fetch("tmp", source, id) do
       conn

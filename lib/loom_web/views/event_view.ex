@@ -6,6 +6,10 @@ defmodule LoomWeb.EventView do
     render_many(events, EventView, "event.json")
   end
 
+  def render("stream.json", %{events: events}) do
+    render_many(events, EventView, "event.json")
+  end
+
   def render("show.json", %{event: event}) do
     render_one(event, EventView, "event.json")
   end

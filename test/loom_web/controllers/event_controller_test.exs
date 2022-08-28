@@ -27,7 +27,7 @@ defmodule LoomWeb.EventControllerTest do
 
   describe "create event" do
     test "renders event when data is valid", %{conn: conn} do
-      conn = post(conn, Routes.stream_path(conn, :create, "ohayo"), event: @create_attrs)
+      conn = post(conn, Routes.event_path(conn, :create), event: @create_attrs, stream_id: "ohayo")
       assert %{"id" => "some id"} = json_response(conn, 201)
     end
   end
@@ -47,6 +47,20 @@ defmodule LoomWeb.EventControllerTest do
       conn = get(conn, Routes.event_path(conn, :show, "loom-web-show-event-test", "12345"))
 
       assert json_response(conn, 404)["errors"] == [%{"title" => "Not Found"}]
+    end
+  end
+
+  describe "show stream" do
+    test "returns all events in a stream", %{conn: conn} do
+      event1 = Cloudevents.from_map!(%{id: "uuid-1", source: "store-show-test", type: "com.example.event", specversion: "1.0"})
+      event2 = Cloudevents.from_map!(%{id: "uuid-2", source: "store-show-test", type: "com.example.event", specversion: "1.0"})
+
+      {:ok, 1} = Loom.Store.append("tmp", "my-stream", event1)
+      {:ok, 2} = Loom.Store.append("tmp", "my-stream", event2)
+
+      conn = get(conn, Routes.event_path(conn, :stream), stream_id: "my-stream")
+
+      assert [actual_event1, actual_event2] = json_response(conn, 200)
     end
   end
 end
