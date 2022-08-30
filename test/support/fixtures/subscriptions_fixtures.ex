@@ -13,7 +13,9 @@ defmodule Loom.SubscriptionsFixtures do
       |> Enum.into(%{
         token: "some token",
         type: "some type",
-        url: "https://example.com/event_hook"
+        url: "https://example.com/event_hook",
+        validated: true,
+        allowed_rate: 100
       })
       |> Loom.Subscriptions.create_webhook()
 

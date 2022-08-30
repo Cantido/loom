@@ -23,7 +23,7 @@ defmodule Loom.SubscriptionsTest do
     end
 
     test "create_webhook/1 with valid data creates a webhook" do
-      valid_attrs = %{token: "some token", type: "some type", url: "https://example.com/event_hook"}
+      valid_attrs = %{token: "some token", type: "some type", url: "https://example.com/event_hook", validated: true}
 
       assert {:ok, %Webhook{} = webhook} = Subscriptions.create_webhook(valid_attrs)
       assert webhook.token == "some token"
@@ -70,7 +70,9 @@ defmodule Loom.SubscriptionsTest do
       webhook_attrs = %{
         token: "some token",
         type: "com.example.event",
-        url: "https://example.com/events/hook"
+        url: "https://example.com/events/hook",
+        validated: true,
+        allowed_rate: 100
       }
 
       test_pid = self()
@@ -98,5 +100,61 @@ defmodule Loom.SubscriptionsTest do
 
       assert_receive ^test_ref
     end
+
+    @tag :tmp_dir
+    test "a webhook is not triggered when it is not yet validated", %{tmp_dir: tmp_dir} do
+      webhook_attrs = %{
+        token: "some token",
+        type: "com.example.event",
+        url: "https://example.com/events/hook",
+        validated: false
+      }
+
+
+      mock(fn
+        %{method: :put} -> flunk "This webhook shouldn't have been published to"
+      end)
+
+
+      Oban.Testing.with_testing_mode(:manual, fn ->
+        {:ok, _} = Subscriptions.create_webhook(webhook_attrs)
+      end)
+
+      event = Cloudevents.from_map!(%{id: "webhook-request-event", source: "webhook-tests", type: "com.example.event", specversion: "1.0"})
+      Loom.Store.init(tmp_dir)
+      {:ok, _} = Loom.Store.append(tmp_dir, "test-stream", event)
+    end
+
+    test "a webhook is validated before being created" do
+      webhook_attrs = %{
+        token: "some token",
+        type: "com.example.event",
+        url: "https://example.com/events/hook"
+      }
+
+      test_pid = self()
+      test_ref = make_ref()
+
+      mock(fn %{method: :options} ->
+        send test_pid, test_ref
+
+        %Tesla.Env{status: 200, headers: [{"allow", "POST"}]}
+      end)
+
+
+      {:ok, %{id: id}} = Subscriptions.create_webhook(webhook_attrs)
+
+      # We're in a test and Oban is set to inline jobs, so the validation was run synchronously after creating the webhook
+
+      # But we do have to fetch the webhook again, since create_webhook only returns the webhook it created, before the job ran
+
+      assert_receive ^test_ref
+
+      webhook = Subscriptions.get_webhook!(id)
+
+      assert webhook.validated
+
+    end
+
   end
 end

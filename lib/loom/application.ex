@@ -16,7 +16,13 @@ defmodule Loom.Application do
     ]
 
     opts = [strategy: :one_for_one, name: Loom.Supervisor]
-    Supervisor.start_link(children, opts)
+    case Supervisor.start_link(children, opts) do
+      {:ok, pid} ->
+        Application.put_env(:loom, :webhook_request_origin, LoomWeb.Endpoint.host())
+        {:ok, pid}
+      err ->
+        err
+    end
   end
 
   @impl true

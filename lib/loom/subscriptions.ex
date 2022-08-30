@@ -55,6 +55,16 @@ defmodule Loom.Subscriptions do
     %Webhook{}
     |> Webhook.changeset(attrs)
     |> Repo.insert()
+    |> case do
+      {:ok, webhook} ->
+        unless webhook.validated do
+          %{webhook_id: webhook.id}
+          |> Loom.Subscriptions.ValidationWorker.new()
+          |> Oban.insert!()
+        end
+        {:ok, webhook}
+      err -> err
+    end
   end
 
   @doc """
@@ -105,7 +115,7 @@ defmodule Loom.Subscriptions do
   end
 
   def send_webhooks(event, stream, revision) do
-    webhooks = Loom.Repo.all(from w in Webhook, where: w.type == ^event.type)
+    webhooks = Loom.Repo.all(from w in Webhook, where: w.type == ^event.type, where: w.validated)
     Logger.info("Got #{Enum.count(webhooks)} webhooks for type #{event.type}")
 
     event_json = Cloudevents.to_json(event)

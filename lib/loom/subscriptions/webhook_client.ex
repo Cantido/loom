@@ -1,6 +1,11 @@
 defmodule Loom.Subscriptions.WebhookClient do
   use Tesla
 
+  def validate(webhook) do
+    origin = Application.fetch_env!(:loom, :webhook_request_origin)
+    options(webhook.url, headers: [{"webhook-request-origin", origin}])
+  end
+
   def push(webhook, event_json, stream, revision) do
     headers = [
       {"x-loom-stream", stream},

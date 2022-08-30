@@ -8,7 +8,8 @@ defmodule LoomWeb.WebhookControllerTest do
   @create_attrs %{
     token: "some token",
     type: "some type",
-    url: "some url"
+    url: "some url",
+    validated: true,
   }
   @update_attrs %{
     token: "some updated token",
