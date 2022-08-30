@@ -8,7 +8,11 @@
 import Config
 
 config :loom,
-  ecto_repos: []
+  ecto_repos: [Loom.Repo]
+
+config :loom, Loom.Repo,
+  migration_primary_key: [type: :binary_id],
+  migration_timestamps: [type: :utc_datetime_usec]
 
 # Configures the endpoint
 config :loom, LoomWeb.Endpoint,
@@ -16,6 +20,14 @@ config :loom, LoomWeb.Endpoint,
   render_errors: [view: LoomWeb.ErrorView, accepts: ~w(html json), layout: false],
   pubsub_server: Loom.PubSub,
   live_view: [signing_salt: "s5k+OXb6"]
+
+config :loom, Oban,
+  repo: Loom.Repo,
+  plugins: [Oban.Plugins.Pruner],
+  queues: [
+    default: 10,
+    webhooks: 100
+  ]
 
 # Configures the mailer
 #
@@ -46,6 +58,8 @@ config :logger, :console,
 
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
+
+config :tesla, adapter: Tesla.Adapter.Finch
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.

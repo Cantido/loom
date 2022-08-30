@@ -16,6 +16,8 @@ config :loom, Loom.Repo,
   pool: Ecto.Adapters.SQL.Sandbox,
   pool_size: 10
 
+config :loom, Oban, testing: :inline
+
 # We don't run a server during test. If one is required,
 # you can enable the server option below.
 config :loom, LoomWeb.Endpoint,
@@ -26,8 +28,9 @@ config :loom, LoomWeb.Endpoint,
 # In test we don't send emails.
 config :loom, Loom.Mailer, adapter: Swoosh.Adapters.Test
 
-# Print only warnings and errors during test
-config :logger, level: :warn
+config :logger, level: :debug
 
 # Initialize plugs at runtime for faster test compilation
 config :phoenix, :plug_init_mode, :runtime
+
+config :tesla, adapter: Tesla.Mock

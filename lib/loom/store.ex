@@ -120,6 +120,9 @@ defmodule Loom.Store do
           case write_event(event_path, event) do
             :ok ->
               {:ok, _all_revision} = retry_stream_link(dir, event_path, "$all")
+
+              Loom.Subscriptions.send_webhooks(event, stream_id, written_revision)
+
               {:ok, written_revision}
 
             err ->

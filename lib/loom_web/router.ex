@@ -28,6 +28,8 @@ defmodule LoomWeb.Router do
     post "/events", EventController, :create
 
     get "/streams", StreamController, :index
+
+    resources "/webhooks", WebhookController, except: [:new, :edit]
   end
 
   # Enables LiveDashboard only for development

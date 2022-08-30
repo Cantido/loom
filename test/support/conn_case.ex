@@ -32,7 +32,7 @@ defmodule LoomWeb.ConnCase do
   end
 
   setup tags do
-#    Loom.DataCase.setup_sandbox(tags)
+    Loom.DataCase.setup_sandbox(tags)
     {:ok, conn: Phoenix.ConnTest.build_conn()}
   end
 end

@@ -7,9 +7,12 @@ defmodule Loom.Application do
   def start(_type, _args) do
     children = [
       Loom.Cache,
+      Loom.Repo,
       LoomWeb.Telemetry,
+      {Finch, name: Loom.Finch},
       {Phoenix.PubSub, name: Loom.PubSub},
-      LoomWeb.Endpoint
+      LoomWeb.Endpoint,
+      {Oban, Application.fetch_env!(:loom, Oban)}
     ]
 
     opts = [strategy: :one_for_one, name: Loom.Supervisor]
