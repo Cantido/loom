@@ -160,6 +160,38 @@ defmodule Loom.SubscriptionsTest do
 
     end
 
+    test "a webhook can be validated asynchronously" do
+      webhook_attrs = %{
+        token: "some token",
+        type: "com.example.event",
+        url: "https://example.com/events/hook"
+      }
+
+      test_pid = self()
+      test_ref = make_ref()
+
+      mock(fn %{method: :options} = env ->
+        send test_pid, {test_ref, Tesla.get_header(env, "webhook-request-callback")
+
+        %Tesla.Env{status: 200}
+      end)
+
+
+      {:ok, %{id: id} = webhook} = Subscriptions.create_webhook(webhook_attrs)
+
+      # We're in a test and Oban is set to inline jobs, so the validation was run synchronously after creating the webhook
+
+      # But we do have to fetch the webhook again, since create_webhook only returns the webhook it created, before the job ran
+
+      assert_receive {^test_ref, callback_url}
+
+      assert callback_url =~ "http://localhost/api/webhooks/#{id}/confirm"
+
+      {:ok, webhook} = Subscriptions.validate_webhook(webhook)
+
+      assert webhook.validated
+    end
+
     test "a webhook is cleaned up after an amount of time if it isn't validated" do
       webhook_attrs = %{
         token: "some token",

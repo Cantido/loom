@@ -135,4 +135,8 @@ defmodule Loom.Subscriptions do
       |> Oban.insert()
     end)
   end
+
+  def validate_webhook(%Webhook{} = webhook) do
+    update_webhook(webhook, %{validated: true})
+  end
 end
