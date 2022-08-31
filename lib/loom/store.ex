@@ -357,7 +357,7 @@ defmodule Loom.Store do
   @spec stream_path(Path.t(), stream_id()) :: Path.t()
   def stream_path(root_dir, stream_id) do
     streams_path(root_dir)
-    |> Path.join(stream_id)
+    |> Path.join(Zarex.sanitize(stream_id))
   end
 
   @doc """

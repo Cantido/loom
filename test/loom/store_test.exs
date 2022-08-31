@@ -69,6 +69,17 @@ defmodule Loom.StoreTest do
 
       assert File.exists?(expected_event_path)
     end
+
+    @tag :tmp_dir
+    test "sanitizes stream names", %{tmp_dir: dir} do
+      {:ok, event} = Cloudevents.from_map(%{type: "test.event", specversion: "1.0", source: "loom", id: "first"})
+
+      {:ok, 1} = Store.append(dir, "  what\ēver//wëird:user:înput:", event)
+
+      expected_event_path = Path.join([dir, "streams", "whatēverwëirduserînput", "first.json"])
+
+      assert File.exists?(expected_event_path)
+    end
   end
 
   describe "append/4 when the stream has events in it" do
