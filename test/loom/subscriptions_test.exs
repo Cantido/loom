@@ -135,10 +135,14 @@ defmodule Loom.SubscriptionsTest do
       test_pid = self()
       test_ref = make_ref()
 
-      mock(fn %{method: :options} ->
+      mock(fn %{method: :options} = env ->
         send test_pid, test_ref
 
-        %Tesla.Env{status: 200, headers: [{"allow", "POST"}]}
+        origin = Tesla.get_header(env, "webhook-request-origin")
+
+        assert origin == "localhost"
+
+        %Tesla.Env{status: 200, headers: [{"webhook-allowed-origin", origin}, {"webhook-allowed-rate", 100}]}
       end)
 
 
