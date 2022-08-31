@@ -40,6 +40,26 @@ defmodule Loom.Subscriptions do
   def get_webhook!(id), do: Repo.get!(Webhook, id)
 
   @doc """
+  Gets a single webhook.
+
+  ## Examples
+
+      iex> get_webhook(123)
+      {:ok, %Webhook{}}
+
+      iex> get_webhook(456)
+      {:error, :not_found}
+
+  """
+  def get_webhook(id) do
+    if webhook = Repo.get(Webhook, id) do
+      {:ok, webhook}
+    else
+      {:error, :not_found}
+    end
+  end
+
+  @doc """
   Creates a webhook.
 
   ## Examples
