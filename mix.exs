@@ -37,6 +37,7 @@ defmodule Loom.MixProject do
       {:decorator, "~> 1.4"},
       {:ex_doc, "~> 0.27", only: :dev, runtime: false},
       {:finch, "~> 0.13.0"},
+      {:hammer, "~> 6.1"},
       {:nebulex, "~> 2.4"},
       {:phoenix, "~> 1.6.11"},
       {:phoenix_ecto, "~> 4.4"},
