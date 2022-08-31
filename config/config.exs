@@ -8,7 +8,8 @@
 import Config
 
 config :loom,
-  ecto_repos: [Loom.Repo]
+  ecto_repos: [Loom.Repo],
+  webhook_cleanup_timeout: :timer.minutes(24 * 60)
 
 config :loom, Loom.Repo,
   migration_primary_key: [type: :binary_id],

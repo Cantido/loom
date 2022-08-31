@@ -51,15 +51,20 @@ defmodule Loom.Subscriptions do
       {:error, %Ecto.Changeset{}}
 
   """
-  def create_webhook(attrs \\ %{}) do
+  def create_webhook(attrs \\ %{}, opts \\ []) do
     %Webhook{}
     |> Webhook.changeset(attrs)
     |> Repo.insert()
     |> case do
       {:ok, webhook} ->
         unless webhook.validated do
-          %{webhook_id: webhook.id}
-          |> Loom.Subscriptions.ValidationWorker.new()
+          args = %{webhook_id: webhook.id}
+
+          Loom.Subscriptions.ValidationWorker.new(args)
+          |> Oban.insert!()
+
+          cleanup_after = Keyword.get(opts, :cleanup_after, Application.fetch_env!(:loom, :webhook_cleanup_timeout))
+          Loom.Subscriptions.CleanupWorker.new(args, schedule_in: cleanup_after)
           |> Oban.insert!()
         end
         {:ok, webhook}
