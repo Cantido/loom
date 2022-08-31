@@ -319,7 +319,7 @@ defmodule Loom.Store do
   @spec event_path(Path.t(), event_source, event_id) :: Path.t()
   def event_path(root_dir, event_source, event_id) do
     event_source_path(root_dir, event_source)
-    |> Path.join(Zarex.sanitize(event_id) <> ".json")
+    |> Path.join(Zarex.sanitize(event_id, padding: 5) <> ".json")
   end
 
   @doc """
