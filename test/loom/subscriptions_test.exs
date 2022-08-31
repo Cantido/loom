@@ -171,7 +171,7 @@ defmodule Loom.SubscriptionsTest do
       test_ref = make_ref()
 
       mock(fn %{method: :options} = env ->
-        send test_pid, {test_ref, Tesla.get_header(env, "webhook-request-callback")
+        send test_pid, {test_ref, Tesla.get_header(env, "webhook-request-callback")}
 
         %Tesla.Env{status: 200}
       end)
