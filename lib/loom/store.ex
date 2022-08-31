@@ -199,7 +199,7 @@ defmodule Loom.Store do
   Returns the most recent revision of the stream.
   """
   def last_revision(dir, stream_id, _opts \\ []) do
-    stream_dir = Path.join([dir, "streams", stream_id])
+    stream_dir = stream_path(dir, stream_id)
 
     if File.exists?(stream_dir) do
       File.ls!(stream_dir)
