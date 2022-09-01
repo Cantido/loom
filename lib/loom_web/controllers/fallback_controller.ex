@@ -17,6 +17,6 @@ defmodule LoomWeb.FallbackController do
     conn
     |> put_status(:not_found)
     |> put_view(LoomWeb.ErrorView)
-    |> render(:"404", errors: [%{title: "Not Found"}])
+    |> render(:"404")
   end
 end

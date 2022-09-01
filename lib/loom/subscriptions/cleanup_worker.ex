@@ -3,6 +3,8 @@ defmodule Loom.Subscriptions.CleanupWorker do
 
   alias Loom.Subscriptions
 
+  require Logger
+
   @impl Oban.Worker
   def perform(%Oban.Job{args: %{"webhook_id" => id}}) do
     webhook = Subscriptions.get_webhook!(id)

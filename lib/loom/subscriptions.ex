@@ -84,8 +84,10 @@ defmodule Loom.Subscriptions do
           |> Oban.insert!()
 
           cleanup_after = Keyword.get(opts, :cleanup_after, Application.fetch_env!(:loom, :webhook_cleanup_timeout))
-          Loom.Subscriptions.CleanupWorker.new(args, schedule_in: cleanup_after)
-          |> Oban.insert!()
+          unless cleanup_after == :never do
+            Loom.Subscriptions.CleanupWorker.new(args, schedule_in: cleanup_after)
+            |> Oban.insert!()
+          end
         end
         {:ok, webhook}
       err -> err

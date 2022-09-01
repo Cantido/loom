@@ -7,10 +7,11 @@ defmodule LoomWeb.ErrorView do
   #   "Internal Server Error"
   # end
 
-  def template_not_found(template, _assigns) do
+  def template_not_found(template, assigns) do
     msg = Phoenix.Controller.status_message_from_template(template)
+
     if String.ends_with?(template, ".json") do
-      %{errors: [%{title: msg}]}
+      %{errors: Map.get(assigns, :errors, [%{title: msg}])}
     else
       msg
     end

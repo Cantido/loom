@@ -19,6 +19,7 @@ defmodule Loom.Application do
     case Supervisor.start_link(children, opts) do
       {:ok, pid} ->
         Application.put_env(:loom, :webhook_request_origin, LoomWeb.Endpoint.host())
+        Application.put_env(:loom, :webhook_request_callback, LoomWeb.Router.Helpers.webhook_confirm_url(LoomWeb.Endpoint, :confirm, ":webhook_id"))
         {:ok, pid}
       err ->
         err

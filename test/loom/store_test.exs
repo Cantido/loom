@@ -54,7 +54,7 @@ defmodule Loom.StoreTest do
 
       {:ok, 1} = Store.append(dir, "test-stream", event)
 
-      expected_event_path = Path.join([dir, "events", "loom", "whatēverwëirduserînput"])
+      expected_event_path = Path.join([dir, "events", "loom", "whatēverwëirduserînput.json"])
 
       assert File.exists?(expected_event_path)
     end
@@ -76,7 +76,7 @@ defmodule Loom.StoreTest do
 
       {:ok, 1} = Store.append(dir, "  what\ēver//wëird:user:înput:", event)
 
-      expected_event_path = Path.join([dir, "streams", "whatēverwëirduserînput", "first.json"])
+      expected_event_path = Path.join([dir, "streams", "whatēverwëirduserînput", "1.json"])
 
       assert File.exists?(expected_event_path)
     end

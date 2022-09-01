@@ -177,7 +177,7 @@ defmodule Loom.SubscriptionsTest do
       end)
 
 
-      {:ok, %{id: id} = webhook} = Subscriptions.create_webhook(webhook_attrs)
+      {:ok, %{id: id}} = Subscriptions.create_webhook(webhook_attrs, cleanup_after: :never)
 
       # We're in a test and Oban is set to inline jobs, so the validation was run synchronously after creating the webhook
 
@@ -185,9 +185,9 @@ defmodule Loom.SubscriptionsTest do
 
       assert_receive {^test_ref, callback_url}
 
-      assert callback_url =~ "http://localhost/api/webhooks/#{id}/confirm"
+      assert callback_url =~ "http://localhost:4002/api/webhooks/#{id}/confirm"
 
-      {:ok, webhook} = Subscriptions.validate_webhook(webhook)
+      {:ok, webhook} = Subscriptions.get_webhook!(id) |> Subscriptions.validate_webhook()
 
       assert webhook.validated
     end

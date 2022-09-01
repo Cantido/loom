@@ -9,7 +9,7 @@ defmodule LoomWeb.WebhookControllerTest do
     token: "some token",
     type: "some type",
     url: "some url",
-    validated: true,
+    validated: true
   }
   @update_attrs %{
     token: "some updated token",
@@ -83,6 +83,34 @@ defmodule LoomWeb.WebhookControllerTest do
       assert_error_sent 404, fn ->
         get(conn, Routes.webhook_path(conn, :show, webhook))
       end
+    end
+  end
+
+  describe "confirm webhook" do
+    setup [:create_webhook]
+
+    test "validates chosen webhook if the allowed-origin header is present", %{
+      conn: conn,
+      webhook: webhook
+    } do
+      conn = put_req_header(conn, "webhook-allowed-origin", LoomWeb.Endpoint.host())
+      conn = get(conn, Routes.webhook_confirm_path(conn, :confirm, webhook.id))
+      assert response(conn, 200)
+
+      webhook = Loom.Subscriptions.get_webhook!(webhook.id)
+      assert webhook.validated
+    end
+
+    test "does not validate the webhook if the allowed-origin header is not present", %{
+      conn: conn,
+      webhook: webhook
+    } do
+      Loom.Subscriptions.update_webhook(webhook, %{validated: false})
+      conn = get(conn, Routes.webhook_confirm_path(conn, :confirm, webhook.id))
+      assert response(conn, 400)
+
+      webhook = Loom.Subscriptions.get_webhook!(webhook.id)
+      refute webhook.validated
     end
   end
 

@@ -3,16 +3,11 @@ defmodule Loom.Subscriptions.ValidationWorker do
 
   alias Loom.Subscriptions
 
-  require Logger
-
   @impl Oban.Worker
   def perform(%Oban.Job{args: %{"webhook_id" => webhook_id}}) do
     webhook = Subscriptions.get_webhook!(webhook_id)
 
     {:ok, resp} = Loom.Subscriptions.WebhookClient.validate(webhook)
-
-    Logger.debug("Validator got resp: #{inspect resp, pretty: true}")
-
 
     origin_header = Tesla.get_header(resp, "webhook-allowed-origin")
     rate_limit_header = Tesla.get_header(resp, "webhook-allowed-rate")
@@ -24,5 +19,7 @@ defmodule Loom.Subscriptions.ValidationWorker do
       }
       Subscriptions.update_webhook(webhook, webhook_params)
     end
+
+    :ok
   end
 end
