@@ -121,7 +121,10 @@ defmodule Loom.Store do
             :ok ->
               {:ok, _all_revision} = retry_stream_link(dir, event_path, "$all")
 
+              # TODO: extract these into, you guessed it, event handlers!
+
               Loom.Subscriptions.send_webhooks(event, stream_id, written_revision)
+              LoomWeb.Endpoint.broadcast!("stream:" <> stream_id, "event", event)
 
               {:ok, written_revision}
 
