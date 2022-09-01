@@ -159,16 +159,16 @@ defmodule Loom.Subscriptions do
   end
 
   def validate_webhook(%Webhook{} = webhook, allowed_origin, opts \\ []) do
-    if valid_allowed_origin?(allowed_origin) do
+    expected_origin = Application.fetch_env!(:loom, :webhook_request_origin)
+
+    if allowed_origin in [expected_origin, "*"] do
       args = %{
         validated: true,
-        allowed_rate: Keyword.get(:allowed_rate, 120)
+        allowed_rate: Keyword.get(opts, :allowed_rate, 120)
       }
       update_webhook(webhook, args)
+    else
+      {:error, "WebHook-Allowed-Origin header must be equal to #{expected_origin} or *"}
     end
-  end
-
-  defp valid_allowed_origin?(origin) do
-    Application.fetch_env!(:loom, :webhook_allowed_origin) == origin
   end
 end

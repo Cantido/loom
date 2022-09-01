@@ -12,13 +12,9 @@ defmodule Loom.Subscriptions.ValidationWorker do
     origin_header = Tesla.get_header(resp, "webhook-allowed-origin")
     rate_limit_header = Tesla.get_header(resp, "webhook-allowed-rate")
 
-    if not is_nil(origin_header) and not is_nil(rate_limit_header) do
-      webhook_params = %{
-        validated: true,
-        allowed_rate: rate_limit_header
-      }
-      Subscriptions.update_webhook(webhook, webhook_params)
-    end
+    opts = if is_nil(rate_limit_header), do: [], else: [allowed_rate: rate_limit_header]
+
+    Subscriptions.validate_webhook(webhook, origin_header, opts)
 
     :ok
   end

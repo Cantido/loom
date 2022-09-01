@@ -187,7 +187,7 @@ defmodule Loom.SubscriptionsTest do
 
       assert callback_url =~ "http://localhost:4002/api/webhooks/#{id}/confirm"
 
-      {:ok, webhook} = Subscriptions.get_webhook!(id) |> Subscriptions.validate_webhook()
+      {:ok, webhook} = Subscriptions.get_webhook!(id) |> Subscriptions.validate_webhook("localhost")
 
       assert webhook.validated
     end

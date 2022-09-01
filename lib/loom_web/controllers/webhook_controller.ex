@@ -41,24 +41,18 @@ defmodule LoomWeb.WebhookController do
     end
   end
 
-  require Logger
-
   def confirm(conn, %{"webhook_id" => id}) do
     allowed_origin = get_req_header(conn, "webhook-allowed-origin")
-    valid_allowed_origin? = List.first(allowed_origin) == LoomWeb.Endpoint.host()
 
-    Logger.debug("valid? #{LoomWeb.Endpoint.host()} == #{inspect List.first(allowed_origin)} -> #{valid_allowed_origin?}")
-
-    if valid_allowed_origin? do
-      with {:ok, webhook} <- Subscriptions.get_webhook(id),
-           {:ok, %Webhook{} = webhook} <- Subscriptions.validate_webhook(webhook) do
-        render(conn, "show.json", webhook: webhook)
-      end
+    with {:ok, webhook} <- Subscriptions.get_webhook(id),
+         {:ok, %Webhook{} = webhook} <- Subscriptions.validate_webhook(webhook, List.first(allowed_origin)) do
+      render(conn, "show.json", webhook: webhook)
     else
-      conn
-      |> put_status(:bad_request)
-      |> put_view(LoomWeb.ErrorView)
-      |> render(:error, errors: [%{title: "WebHook-Allow-Origin header is required to validate webhook"}])
+      {:error, err} ->
+        conn
+        |> put_status(:bad_request)
+        |> put_view(LoomWeb.ErrorView)
+        |> render(:error, errors: [%{title: err}])
     end
   end
 end
