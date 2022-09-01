@@ -14,6 +14,9 @@ deps:
 check:
   FROM +deps
 
-  COPY --dir lib/ test/ ./
+  COPY docker-compose.yml .
+  COPY --dir lib/ test/ config/ priv/ ./
 
-  RUN mix test
+  WITH DOCKER --compose docker-compose.yml
+    RUN mix test
+  END
