@@ -153,8 +153,9 @@ defmodule Loom.Store do
   end
 
   defp retry_stream_link(root_dir, event_path, stream_id, revision_matcher \\ fn _ -> true end) do
+    max_attempts = Application.get_env(:loom, :write_retry_attemps, 1_000)
     current_revision = last_revision(root_dir, stream_id)
-    do_retry_stream_link(root_dir, event_path, stream_id, current_revision, revision_matcher, 0, 10)
+    do_retry_stream_link(root_dir, event_path, stream_id, current_revision, revision_matcher, 0, max_attempts)
   end
 
   defp do_retry_stream_link(root_dir, event_path, stream_id, current_revision, revision_matcher, attempt_count, max_attempts) do

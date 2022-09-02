@@ -19,4 +19,11 @@ defmodule LoomWeb.FallbackController do
     |> put_view(LoomWeb.ErrorView)
     |> render(:"404")
   end
+
+  def call(conn, _err) do
+    conn
+    |> put_status(:internal_server_error)
+    |> put_view(LoomWeb.ErrorView)
+    |> render(:"500")
+  end
 end

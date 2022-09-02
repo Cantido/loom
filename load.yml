@@ -1,0 +1,38 @@
+config:
+  target: "http://localhost:4000/api"
+  phases:
+    - duration: 60
+      arrivalRate: 250
+  processor: "./load-test-hooks.js"
+  variables:
+    eventType:
+      - com.github.pull_request.opened
+      - com.example.object.deleted.v2
+      - "  what\\ēver//wëird:user:înput:"
+    stream:
+      - 50024498-43af-4ecc-b299-0cff5beadb1d
+      - 4d008032-e114-47f6-bd30-87965cbef8ff
+      - "  what\\ēver//wëird:user:înput:"
+    source:
+      - https://github.com/Cantido
+      - mailto:cncf-wg-serverless@lists.cncf.io
+      - urn:uuid:6e8bc430-9c3a-11d9-9669-0800200c9a66
+      - /sensors/tn-1234567/alerts
+      - 1-555-123-4567
+      - "  what\\ēver//wëird:user:înput:"
+scenarios:
+  - name: Create event
+    flow:
+      - post:
+          url: "/events"
+          beforeRequest: uuid
+          qs:
+            stream_id: "{{ stream }}"
+          json:
+            event:
+              specversion: "1.0"
+              id: "{{ uuid }}"
+              source: "{{ source }}"
+              type: "{{ eventType }}"
+
+
