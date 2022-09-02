@@ -9,5 +9,7 @@ defmodule Loom.Repo.Migrations.CreateWebhooks do
 
       timestamps()
     end
+
+    create index("webhooks", [:type])
   end
 end
