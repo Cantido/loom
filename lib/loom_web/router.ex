@@ -29,6 +29,8 @@ defmodule LoomWeb.Router do
 
     get "/streams", StreamController, :index
 
+    resources "/subscriptions", SubscriptionController, except: [:new, :edit]
+
     resources "/webhooks", WebhookController, except: [:new, :edit] do
       get "/confirm", WebhookController, :confirm, as: :confirm
       post "/confirm", WebhookController, :confirm, as: :confirm

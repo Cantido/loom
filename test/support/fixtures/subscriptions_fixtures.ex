@@ -21,4 +21,24 @@ defmodule Loom.SubscriptionsFixtures do
 
     webhook
   end
+
+  @doc """
+  Generate a subscription.
+  """
+  def subscription_fixture(attrs \\ %{}) do
+    {:ok, subscription} =
+      attrs
+      |> Enum.into(%{
+        config: %{},
+        filters: [
+          %{dialect: "prefix", properties: "com.example."}
+        ],
+        protocol: "HTTP",
+        protocol_settings: %{method: "POST"},
+        sink: "http://example.com/event-processor"
+      })
+      |> Loom.Subscriptions.create_subscription()
+
+    subscription
+  end
 end
