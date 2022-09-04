@@ -29,11 +29,12 @@ defmodule Loom.SubscriptionsFixtures do
     {:ok, subscription} =
       attrs
       |> Enum.into(%{
+        config: %{},
         filters: [
-          %{"prefix" => %{"type" => "com.example."}}
+          %{dialect: "prefix", properties: "com.example."}
         ],
         protocol: "HTTP",
-        protocol_settings: %{"method" => "POST"},
+        protocol_settings: %{method: "POST"},
         sink: "http://example.com/event-processor"
       })
       |> Loom.Subscriptions.create_subscription()

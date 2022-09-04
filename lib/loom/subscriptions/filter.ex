@@ -33,29 +33,6 @@ defmodule Loom.Subscriptions.Filter do
     field :properties, {:array, :map}
   end
 
-  @doc """
-  Takes a map from the canonical JSON representation of a filter, and returns an Ecto changeset.
-
-  ## Examples
-
-      iex> cs = Filter.from_map(%Filter{}, %{"exact" => %{"type" => "com.example.event"}})
-      iex> cs.valid?
-      true
-
-      iex> cs = Filter.from_map(%Filter{}, %{"all" => [%{"prefix" => %{"type" => "com.example."}}, %{"exact" => %{"source" => "http://example.com/event-emitter"}}]})
-      iex> cs.valid?
-      true
-  """
-  def from_map(filter, map) do
-    [{dialect, properties}] = Map.to_list(map)
-    if is_list(properties) do
-      subfilters = Enum.map(properties, &from_map(%__MODULE__{}, &1))
-      changeset(filter, %{dialect: dialect, properties: subfilters})
-    else
-      changeset(filter, %{dialect: dialect, properties: [properties]})
-    end
-  end
-
   @doc false
   def changeset(%Filter{} = filter, attrs) do
     filter

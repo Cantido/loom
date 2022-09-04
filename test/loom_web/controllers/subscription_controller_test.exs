@@ -14,16 +14,16 @@ defmodule LoomWeb.SubscriptionControllerTest do
       %{prefix: %{type: "com.example."}}
     ],
     protocol: "HTTP",
-    protocol_settings: %{"method" => "POST"},
+    protocolsettings: %{method: "POST"},
     sink: "http://example.com/event-processor"
   }
   @update_attrs %{
     config: %{
-      data: "updated hello",
+      data: "updated hello"
       new_interval: 6
     },
     filters: [
-      %{suffix: %{type: ".created"}}
+      %{suffix: %{type: ".created"}
     ],
     protocol: "HTTP",
     protocol_settings: %{method: "GET"},
@@ -38,14 +38,14 @@ defmodule LoomWeb.SubscriptionControllerTest do
   describe "index" do
     test "lists all subscriptions", %{conn: conn} do
       conn = get(conn, Routes.subscription_path(conn, :index))
-      assert json_response(conn, 200)== []
+      assert json_response(conn, 200)["data"] == []
     end
   end
 
   describe "create subscription" do
     test "renders subscription when data is valid", %{conn: conn} do
       conn = post(conn, Routes.subscription_path(conn, :create), subscription: @create_attrs)
-      assert %{"id" => id} = json_response(conn, 201)
+      assert %{"id" => id} = json_response(conn, 201)["data"]
 
       conn = get(conn, Routes.subscription_path(conn, :show, id))
 
@@ -54,7 +54,7 @@ defmodule LoomWeb.SubscriptionControllerTest do
                "config" => %{"data" => "hello", "interval" => 5},
                "filters" => [%{"prefix" => %{"type" => "com.example."}}],
                "protocol" => "HTTP",
-               "protocolsettings" => %{"method" => "POST"},
+               "protocol_settings" => %{"method" => "POST"},
                "sink" => "http://example.com/event-processor"
              } = json_response(conn, 200)
     end
@@ -70,7 +70,7 @@ defmodule LoomWeb.SubscriptionControllerTest do
 
     test "renders subscription when data is valid", %{conn: conn, subscription: %Subscription{id: id} = subscription} do
       conn = put(conn, Routes.subscription_path(conn, :update, subscription), subscription: @update_attrs)
-      assert %{"id" => ^id} = json_response(conn, 200)
+      assert %{"id" => ^id} = json_response(conn, 200)["data"]
 
       conn = get(conn, Routes.subscription_path(conn, :show, id))
 
@@ -79,7 +79,7 @@ defmodule LoomWeb.SubscriptionControllerTest do
                "config" => %{"data" => "updated hello", "new_interval" => 6},
                "filters" => [%{"suffix" => %{"type" => ".created"}}],
                "protocol" => "HTTP",
-               "protocolsettings" => %{"method" => "GET"},
+               "protocol_settings" => %{"method" => "GET"},
                "sink" => "http://example.com/another-event-processor"
              } = json_response(conn, 200)
     end

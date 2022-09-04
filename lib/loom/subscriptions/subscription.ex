@@ -4,17 +4,15 @@ defmodule Loom.Subscriptions.Subscription do
 
   alias Loom.Subscriptions.Filter
 
-  @primary_key {:id, :binary_id, autogenerate: true}
-
   schema "subscriptions" do
-    field :config, :map, default: %{}
-    embeds_many :filters, Filter, on_replace: :delete
+    field :config, {:map, :string}
+    embeds_many :filters, Filter
     field :protocol, :string
-    field :protocol_settings, {:map, :string}, default: %{}
+    field :protocol_settings, {:map, :string}
     field :sink, :string
-    field :sink_credentials, {:map, :string}, default: %{}
+    field :sink_credentials, {:map, :string}
     field :source, :string
-    field :types, {:array, :string}, default: []
+    field :types, {:array, :string}
 
     timestamps()
   end
@@ -23,7 +21,7 @@ defmodule Loom.Subscriptions.Subscription do
   def changeset(subscription, attrs) do
     subscription
     |> cast(attrs, [:source, :types, :sink, :sink_credentials, :protocol, :protocol_settings, :config])
-    |> cast_embed(:filters, with: &Filter.from_map/2)
+    |> cast_embed(:filters)
     |> validate_required([:sink, :protocol])
   end
 end
