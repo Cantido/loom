@@ -1,9 +1,8 @@
 # Loom
 
-A filesystem-based event store.
+An event store database.
 
-Events are JSON-encoded according to the CloudEvents spec and stored at `events/<event-source>/<event-id>.json`.
-When an event is appended to a stream, a symlink is created at `streams/<stream-id>/<revsion-number>.json`.
+Loom implements the [CloudEvents specification](https://github.com/cloudevents/spec) for maximum compatibility with modern event-based systems.
 
 ## Installation
 
