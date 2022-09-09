@@ -23,8 +23,26 @@ defmodule LoomWeb.EventController do
     |> render(:"422", errors: %{})
   end
 
-  def stream(conn, %{"stream_id" => id}) do
-    events = Store.read(id) |> Enum.to_list()
+  def stream(conn, %{"stream_id" => id} = params) do
+    opts =
+      Map.take(params, ["limit", "from_revision", "direction"])
+      |> Map.new(fn {k, v} ->
+        {String.to_existing_atom(k), v}
+      end)
+      |> Map.update(:limit, 100, &String.to_integer/1)
+      |> Map.update(:from_revision, :start, fn rev ->
+        if rev in ["start", "end"] do
+          String.to_existing_atom(rev)
+        else
+          String.to_integer(rev)
+        end
+      end)
+      |> Map.update(:direction, :forward, fn dir ->
+        String.to_existing_atom(dir)
+      end)
+      |> Enum.to_list()
+
+    events = Store.read(id, opts) |> Enum.to_list()
 
     conn
     |> put_resp_content_type("application/cloudevents-batch+json")

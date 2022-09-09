@@ -122,6 +122,48 @@ defmodule LoomWeb.EventControllerTest do
       conn = get(conn, Routes.event_path(conn, :stream), stream_id: "store-show-test")
 
       assert [actual_event1, actual_event2] = json_response(conn, 200)
+      assert actual_event1["id"] == "uuid-1"
+      assert actual_event2["id"] == "uuid-2"
+    end
+
+    test "returns events in a stream when limited", %{conn: conn} do
+      event1 = Cloudevents.from_map!(%{id: "uuid-1", source: "store-limit-test", type: "com.example.event", specversion: "1.0"})
+      event2 = Cloudevents.from_map!(%{id: "uuid-2", source: "store-limit-test", type: "com.example.event", specversion: "1.0"})
+
+      {:ok, 1} = Loom.Store.append(event1)
+      {:ok, 2} = Loom.Store.append(event2)
+
+      conn = get(conn, Routes.event_path(conn, :stream), stream_id: "store-limit-test", limit: 1)
+
+      assert [actual_event1] = json_response(conn, 200)
+      assert actual_event1["id"]== "uuid-1"
+    end
+
+    test "returns the stream from a given point", %{conn: conn} do
+      event1 = Cloudevents.from_map!(%{id: "uuid-1", source: "store-from-revision-test", type: "com.example.event", specversion: "1.0"})
+      event2 = Cloudevents.from_map!(%{id: "uuid-2", source: "store-from-revision-test", type: "com.example.event", specversion: "1.0"})
+
+      {:ok, 1} = Loom.Store.append(event1)
+      {:ok, 2} = Loom.Store.append(event2)
+
+      conn = get(conn, Routes.event_path(conn, :stream), stream_id: "store-from-revision-test", from_revision: 2)
+
+      assert [actual_event1] = json_response(conn, 200)
+      assert actual_event1["id"]== "uuid-2"
+    end
+
+    test "returns the stream backwards", %{conn: conn} do
+      event1 = Cloudevents.from_map!(%{id: "uuid-1", source: "store-from-revision-test", type: "com.example.event", specversion: "1.0"})
+      event2 = Cloudevents.from_map!(%{id: "uuid-2", source: "store-from-revision-test", type: "com.example.event", specversion: "1.0"})
+
+      {:ok, 1} = Loom.Store.append(event1)
+      {:ok, 2} = Loom.Store.append(event2)
+
+      conn = get(conn, Routes.event_path(conn, :stream), stream_id: "store-from-revision-test", direction: "backward", from_revision: "end")
+
+      assert [actual_event2, actual_event1] = json_response(conn, 200)
+      assert actual_event2["id"]== "uuid-2"
+      assert actual_event1["id"]== "uuid-1"
     end
   end
 end

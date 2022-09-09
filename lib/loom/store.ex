@@ -146,7 +146,12 @@ defmodule Loom.Store do
       end
       |> Enum.map(&Integer.to_string/1)
 
-    Repo.all(from e in Event, where: e.source == ^stream_id, where: e.extensions["sequence"] in ^revision_range, order_by: e.extensions["sequence"])
+    sort_dir = case direction do
+      :forward -> :asc
+      :backward -> :desc
+    end
+
+    Repo.all(from e in Event, where: e.source == ^stream_id, where: e.extensions["sequence"] in ^revision_range, order_by: [{^sort_dir, e.extensions["sequence"]}])
     |> Enum.map(&Event.to_cloudevent/1)
   end
 end
