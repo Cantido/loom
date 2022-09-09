@@ -5,10 +5,9 @@ defmodule LoomWeb.EventController do
 
   action_fallback LoomWeb.FallbackController
 
-  def create(conn, %{"event" => event_params, "stream_id" => stream_id}) do
+  def create(conn, %{"event" => event_params}) do
     with {:ok, event} <- Cloudevents.from_map(event_params),
-         {:ok, root_dir} <- Application.fetch_env(:loom, :root_dir),
-         {:ok, _revision} <- Store.append(root_dir, stream_id, event)do
+         {:ok, _revision} <- Store.append(event)do
       conn
       |> put_status(:created)
       |> put_resp_content_type("application/cloudevents+json")
@@ -25,8 +24,7 @@ defmodule LoomWeb.EventController do
   end
 
   def stream(conn, %{"stream_id" => id}) do
-    {:ok, root_dir} = Application.fetch_env(:loom, :root_dir)
-    events = Store.read(root_dir, id) |> Enum.to_list()
+    events = Store.read(id) |> Enum.to_list()
 
     conn
     |> put_resp_content_type("application/cloudevents-batch+json")
@@ -34,8 +32,7 @@ defmodule LoomWeb.EventController do
   end
 
   def show(conn, %{"source" => source, "id" => id}) do
-    with {:ok, root_dir} <- Application.fetch_env(:loom, :root_dir),
-         {:ok, event} <- Store.fetch(root_dir, source, id) do
+    with {:ok, event} <- Store.fetch(source, id) do
       etag = Base.encode16(:crypto.hash(:sha256, Cloudevents.to_json(event)))
       {:ok, timestamp, _} = DateTime.from_iso8601(event.time)
 

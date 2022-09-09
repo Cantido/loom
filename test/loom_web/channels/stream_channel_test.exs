@@ -5,7 +5,7 @@ defmodule LoomWeb.StreamChannelTest do
     {:ok, _, socket} =
       LoomWeb.EventSocket
       |> socket()
-      |> subscribe_and_join(LoomWeb.StreamChannel, "stream:test-stream")
+      |> subscribe_and_join(LoomWeb.StreamChannel, "stream:stream-channel-test")
 
     %{socket: socket}
   end
@@ -29,11 +29,8 @@ defmodule LoomWeb.StreamChannelTest do
       source: "stream-channel-test"
     })
 
-    Loom.Store.init(tmp_dir)
-    {:ok, _revision} = Loom.Store.append(tmp_dir, "test-stream", event)
+    {:ok, _revision} = Loom.Store.append(event)
 
-    assert_broadcast "event", actual_event
-
-    assert actual_event.id == "stream-channel-test-event"
+    assert_broadcast "event", %{id: "stream-channel-test-event"}
   end
 end

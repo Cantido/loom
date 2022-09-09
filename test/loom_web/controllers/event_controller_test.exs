@@ -9,18 +9,6 @@ defmodule LoomWeb.EventControllerTest do
   }
   @invalid_attrs %{id: nil}
 
-  setup do
-    root_dir = Application.fetch_env!(:loom, :root_dir)
-    Loom.Store.delete_all(root_dir)
-    Loom.Store.init(root_dir)
-
-    on_exit fn ->
-      Loom.Store.delete_all(root_dir)
-    end
-
-    %{root_dir: root_dir}
-  end
-
   setup %{conn: conn} do
     {:ok, conn: put_req_header(conn, "accept", "application/json")}
   end
@@ -33,10 +21,10 @@ defmodule LoomWeb.EventControllerTest do
   end
 
   describe "show event" do
-    test "renders an event", %{conn: conn, root_dir: root_dir} do
+    test "renders an event", %{conn: conn} do
       event = Cloudevents.from_map!(%{specversion: "1.0", id: "12345", source: "loom-web-show-event-test", type: "com.example.event"})
 
-      {:ok, _revision} = Loom.Store.append(root_dir, "test-stream", event)
+      {:ok, _revision} = Loom.Store.append(event)
 
       conn = get(conn, Routes.event_path(conn, :show, "loom-web-show-event-test", "12345"))
 
@@ -49,10 +37,10 @@ defmodule LoomWeb.EventControllerTest do
       assert json_body["sequence"] == 1
     end
 
-    test "includes an etag header", %{conn: conn, root_dir: root_dir} do
+    test "includes an etag header", %{conn: conn} do
       event = Cloudevents.from_map!(%{specversion: "1.0", id: "12345", source: "loom-web-show-event-test", type: "com.example.event"})
 
-      {:ok, _revision} = Loom.Store.append(root_dir, "test-stream", event)
+      {:ok, _revision} = Loom.Store.append(event)
 
       conn = get(conn, Routes.event_path(conn, :show, "loom-web-show-event-test", "12345"))
 
@@ -61,10 +49,10 @@ defmodule LoomWeb.EventControllerTest do
       assert String.ends_with?(header, ~s("))
     end
 
-    test "includes an last-modified header", %{conn: conn, root_dir: root_dir} do
+    test "includes an last-modified header", %{conn: conn} do
       event = Cloudevents.from_map!(%{specversion: "1.0", id: "12345", source: "loom-web-show-event-test", type: "com.example.event"})
 
-      {:ok, _revision} = Loom.Store.append(root_dir, "test-stream", event)
+      {:ok, _revision} = Loom.Store.append(event)
 
       conn = get(conn, Routes.event_path(conn, :show, "loom-web-show-event-test", "12345"))
 
@@ -73,10 +61,10 @@ defmodule LoomWeb.EventControllerTest do
       assert Timex.before?(last_modified, Timex.now())
     end
 
-    test "includes a cache-control header", %{conn: conn, root_dir: root_dir} do
+    test "includes a cache-control header", %{conn: conn} do
       event = Cloudevents.from_map!(%{specversion: "1.0", id: "12345", source: "loom-web-show-event-test", type: "com.example.event"})
 
-      {:ok, _revision} = Loom.Store.append(root_dir, "test-stream", event)
+      {:ok, _revision} = Loom.Store.append(event)
 
       conn = get(conn, Routes.event_path(conn, :show, "loom-web-show-event-test", "12345"))
 
@@ -84,10 +72,10 @@ defmodule LoomWeb.EventControllerTest do
       assert header == "public, max-age=31536000, immutable"
     end
 
-    test "returns 304 if the etag is the same", %{conn: conn, root_dir: root_dir} do
+    test "returns 304 if the etag is the same", %{conn: conn} do
       event = Cloudevents.from_map!(%{specversion: "1.0", id: "12345", source: "loom-web-show-event-test", type: "com.example.event"})
 
-      {:ok, _revision} = Loom.Store.append(root_dir, "test-stream", event)
+      {:ok, _revision} = Loom.Store.append(event)
       conn1 = get(conn, Routes.event_path(conn, :show, "loom-web-show-event-test", "12345"))
       etag = List.first get_resp_header(conn1, "etag")
 
@@ -101,10 +89,10 @@ defmodule LoomWeb.EventControllerTest do
       assert header == "public, max-age=31536000, immutable"
     end
 
-    test "returns 304 if the modified time is before the if-modified-since header", %{conn: conn, root_dir: root_dir} do
+    test "returns 304 if the modified time is before the if-modified-since header", %{conn: conn} do
       event = Cloudevents.from_map!(%{specversion: "1.0", id: "12345", source: "loom-web-show-event-test", type: "com.example.event"})
 
-      {:ok, _revision} = Loom.Store.append(root_dir, "test-stream", event)
+      {:ok, _revision} = Loom.Store.append(event)
 
       if_modified_since = Timex.format!(Timex.shift(Timex.now, seconds: 1), "{RFC1123}")
 
@@ -124,12 +112,12 @@ defmodule LoomWeb.EventControllerTest do
   end
 
   describe "show stream" do
-    test "returns all events in a stream", %{conn: conn, root_dir: root_dir} do
+    test "returns all events in a stream", %{conn: conn} do
       event1 = Cloudevents.from_map!(%{id: "uuid-1", source: "store-show-test", type: "com.example.event", specversion: "1.0"})
       event2 = Cloudevents.from_map!(%{id: "uuid-2", source: "store-show-test", type: "com.example.event", specversion: "1.0"})
 
-      {:ok, 1} = Loom.Store.append(root_dir, "store-show-test", event1)
-      {:ok, 2} = Loom.Store.append(root_dir, "store-show-test", event2)
+      {:ok, 1} = Loom.Store.append(event1)
+      {:ok, 2} = Loom.Store.append(event2)
 
       conn = get(conn, Routes.event_path(conn, :stream), stream_id: "store-show-test")
 

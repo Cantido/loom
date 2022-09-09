@@ -96,7 +96,7 @@ defmodule Loom.SubscriptionsTest do
 
       event = Cloudevents.from_map!(%{id: "webhook-request-event", source: "webhook-tests", type: "com.example.event", specversion: "1.0"})
       Loom.Store.init(tmp_dir)
-      {:ok, _} = Loom.Store.append(tmp_dir, "test-stream", event)
+      {:ok, _} = Loom.Store.append(event)
 
       assert_receive ^test_ref
     end
@@ -122,7 +122,7 @@ defmodule Loom.SubscriptionsTest do
 
       event = Cloudevents.from_map!(%{id: "webhook-request-event", source: "webhook-tests", type: "com.example.event", specversion: "1.0"})
       Loom.Store.init(tmp_dir)
-      {:ok, _} = Loom.Store.append(tmp_dir, "test-stream", event)
+      {:ok, _} = Loom.Store.append(event)
     end
 
     test "a webhook is validated before being created" do
