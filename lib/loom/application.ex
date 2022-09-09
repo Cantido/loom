@@ -5,8 +5,6 @@ defmodule Loom.Application do
 
   @impl true
   def start(_type, _args) do
-    Loom.Store.init(Application.fetch_env!(:loom, :root_dir))
-
     children = [
       Loom.Cache,
       Loom.Repo,

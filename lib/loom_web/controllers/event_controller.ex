@@ -35,16 +35,16 @@ defmodule LoomWeb.EventController do
 
   def show(conn, %{"source" => source, "id" => id}) do
     with {:ok, root_dir} <- Application.fetch_env(:loom, :root_dir),
-         {:ok, event} <- Store.fetch(root_dir, source, id),
-         {:ok, stat} <- Store.stat(root_dir, source, id) do
+         {:ok, event} <- Store.fetch(root_dir, source, id) do
       etag = Base.encode16(:crypto.hash(:sha256, Cloudevents.to_json(event)))
+      {:ok, timestamp, _} = DateTime.from_iso8601(event.time)
 
-      if not_modified?(conn, etag, stat.mtime) do
+      if not_modified?(conn, etag, timestamp) do
         conn
         |> put_resp_header("cache-control", "public, max-age=31536000, immutable")
         |> resp(:not_modified, "")
       else
-        last_modified = Timex.format!(stat.mtime, "{RFC1123z}")
+        last_modified = Timex.format!(timestamp, "{RFC1123z}")
 
         conn
         |> put_status(:ok)

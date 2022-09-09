@@ -58,7 +58,7 @@ defmodule Loom.MixProject do
       {:gettext, "~> 0.18"},
       {:jason, "~> 1.2"},
       {:plug_cowboy, "~> 2.5"},
-      {:uniq, "~> 0.5.1", only: :dev},
+      {:uniq, "~> 0.5.1", only: [:dev, :test]},
       {:zarex, "~> 1.0.3"}
     ]
   end

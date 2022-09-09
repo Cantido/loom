@@ -32,6 +32,8 @@ defmodule LoomWeb.StreamChannelTest do
     Loom.Store.init(tmp_dir)
     {:ok, _revision} = Loom.Store.append(tmp_dir, "test-stream", event)
 
-    assert_broadcast "event", ^event
+    assert_broadcast "event", actual_event
+
+    assert actual_event.id == "stream-channel-test-event"
   end
 end

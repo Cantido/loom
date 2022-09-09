@@ -15,44 +15,11 @@ defmodule Loom.Store do
       iex> root_dir = System.tmp_dir!() |> Path.join(to_string(:rand.uniform(1_000_000)))
       iex> Loom.Store.init(root_dir)
       iex> {:ok, event} = Cloudevents.from_map(%{type: "com.example.event", specversion: "1.0", source: "loom", id: "a-uuid"})
-      iex> Loom.Store.append(root_dir, "my-stream-1", event)
+      iex> Loom.Store.append(root_dir, "loom", event)
       {:ok, 1}
-      iex> Loom.Store.read(root_dir, "my-stream-1") |> Enum.at(0) |> Map.get(:id)
+      iex> Loom.Store.read(root_dir, "loom") |> Enum.at(0) |> Map.get(:id)
       "a-uuid"
 
-  ## Filesystem structure
-
-  Events are written as JSON blobs to the `events` directory, inside the given `root_dir`.
-  A soft link is also created in the `streams` directory in `root_dir`, named after the current stream revision, and pointing to that event.
-  There is also a special stream named `$all` that contains every event appended to the store.
-
-  For example, the directory structure would look like this after calling `append/4` with five different events.
-
-  ```
-  /my/app/dir
-  ├── events
-  │   ├── my-source-1
-  │   │   ├── 5add8700-5a01-46f3-a8c0-8315bb019909.json
-  │   │   └── cd4ae630-f17b-480b-956b-c7c5d71a5590.json
-  │   └── my-source-2
-  │       ├── c0ca5952-a22a-41a6-b865-5ce692e6736e.json
-  │       ├── 300d57fe-330b-45dc-aa81-90611cd0ae95.json
-  │       └── 7e805bb4-f9b5-48ef-9b25-35ca1879552c.json
-  └── streams
-      ├── $all
-      │   ├── 1.json
-      │   ├── 2.json
-      │   ├── 3.json
-      │   ├── 4.json
-      │   └── 5.json
-      ├── my-stream-1
-      │   ├── 1.json
-      │   ├── 2.json
-      │   └── 3.json
-      ├── my-stream-2
-      │   └── 1.json
-      └── my-stream-3
-          └── 1.json
   ```
 
   In this directory, we have two event sources, `my-source-1` and `my-source-2`,
@@ -70,114 +37,61 @@ defmodule Loom.Store do
   """
   use Nebulex.Caching
 
-  alias Loom.Cache
+  alias Loom.Event
+  alias Loom.Repo
+
+  import Ecto.Query
+
+  require Logger
 
   @type stream_id :: String.t()
   @type event_id :: String.t()
   @type event_source :: String.t()
   @type revision :: non_neg_integer()
 
-  def init(root_dir) do
-    File.mkdir_p!(events_path(root_dir))
-    File.mkdir_p!(stream_path(root_dir, "$all"))
-  end
-
-  def delete_all(root_dir) do
-    Cache.delete_all()
-    _ = File.rm_rf(root_dir)
-    init(root_dir)
-  end
+  def init(_), do: nil
+  def delete_all(_), do: nil
 
   @doc """
   Append an event to an event stream.
-
-  ## Options
-
-  - `:expected_revision` - The current revision of the stream you expect.
-  This function will return `{:error, :revision_mismatch}` if the stream's current revision does not match.
-  Can be an integer, or `:no_stream`, which asserts that the stream does not exist, or `:stream_exists`, which asserts that a stream with events already exists.
   """
   @spec append(Path.t(), stream_id(), Cloudevents.t(), Keyword.t()) :: {:ok, revision} | {:error, :revision_mismatch} | {:error, :retry_limit_reached}
-  def append(dir, stream_id, event, opts \\ []) do
-    current_revision = last_revision(dir, stream_id)
-    expected_revision = Keyword.get(opts, :expected_revision, :any)
+  def append(_dir, stream_id, event, opts \\ []) do
+    result =
+      Ecto.Multi.new()
+      |> Ecto.Multi.run(:last_sequence, fn repo, _changes ->
+        query = from e in Event, where: e.source == ^event.source
+        all_seq = repo.all(query) |> Enum.map(&(String.to_integer(Map.get(&1.extensions, "sequence", "0"))))
 
-    if revision_match?(current_revision, expected_revision) do
-      stream_directory = stream_path(dir, stream_id)
-      unless File.exists?(stream_directory) do
-        File.mkdir_p!(stream_directory)
-      end
+        max_seq = if Enum.empty?(all_seq), do: 0, else: Enum.max(all_seq)
 
-      source_directory = event_source_path(dir, event.source)
-      unless File.exists?(source_directory) do
-        File.mkdir_p!(source_directory)
-      end
-
-     event_path = event_path(dir, event.source, event.id)
-
-      case retry_stream_link(dir, event_path, stream_id, &revision_match?(&1, expected_revision)) do
-        {:ok, written_revision} ->
-          case write_event(event_path, event) do
-            :ok ->
-              {:ok, _all_revision} = retry_stream_link(dir, event_path, "$all")
-
-              # TODO: extract these into, you guessed it, event handlers!
-
-              Loom.Subscriptions.send_webhooks(event, stream_id, written_revision)
-              LoomWeb.Endpoint.broadcast!("stream:" <> stream_id, "event", event)
-
-              {:ok, written_revision}
-
-            err ->
-              err
-          end
-
-        err ->
-          err
-      end
-    else
-      {:error, :revision_mismatch}
-    end
-  end
-
-  defp write_event(event_path, event) do
-    case File.write(event_path, Cloudevents.to_json(event), [:exclusive]) do
-      :ok ->
-        Cache.put(event_path, event)
-        :ok
-      {:error, :eexist} ->
-        :ok
-      err ->
-        err
-    end
-  end
-
-  defp retry_stream_link(root_dir, event_path, stream_id, revision_matcher \\ fn _ -> true end) do
-    max_attempts = Application.get_env(:loom, :write_retry_attemps, 1_000)
-    current_revision = last_revision(root_dir, stream_id)
-    do_retry_stream_link(root_dir, event_path, stream_id, current_revision, revision_matcher, 0, max_attempts)
-  end
-
-  defp do_retry_stream_link(root_dir, event_path, stream_id, current_revision, revision_matcher, attempt_count, max_attempts) do
-    if attempt_count < max_attempts do
-
-      if revision_matcher.(current_revision) do
-        next_revision = current_revision + 1
-        link_path = stream_revision_path(root_dir, stream_id, next_revision)
-
-        case File.ln_s(event_path, link_path) do
-          :ok ->
-            {:ok, next_revision}
-          {:error, :eexist} ->
-            do_retry_stream_link(root_dir, event_path, stream_id, next_revision, revision_matcher, attempt_count + 1, max_attempts)
-          err ->
-            err
+        if revision_match?(max_seq, Keyword.get(opts, :expected_revision, :any)) do
+          {:ok, max_seq}
+        else
+          {:error, :revision_mismatch}
         end
-      else
+      end)
+      |> Ecto.Multi.insert(:event, fn %{last_sequence: last_rev} ->
+        next_rev = Integer.to_string(last_rev + 1)
+        extensions = Map.put(event.extensions, "sequence", next_rev)
+        event = %{event | extensions: extensions}
+        event = if is_nil(event.time), do: %{event | time: DateTime.utc_now()}, else: event
+
+        Loom.Event.from_cloudevent(event)
+      end)
+      |> Ecto.Multi.run(:webhook, fn _, %{event: event} ->
+        event = Event.to_cloudevent(event)
+        Loom.Subscriptions.send_webhooks(event, event.source, event.extensions["sequence"])
+        LoomWeb.Endpoint.broadcast!("stream:" <> stream_id, "event", event)
+        {:ok, nil}
+      end)
+      |> Repo.transaction()
+
+    case result do
+      {:ok, results} ->
+        {:ok, String.to_integer(results[:event].extensions["sequence"])}
+      {:error, :last_sequence, :revision_mismatch, _changes} ->
         {:error, :revision_mismatch}
-      end
-    else
-      {:error, :retry_limit_reached}
     end
   end
 
@@ -202,21 +116,20 @@ defmodule Loom.Store do
   @doc """
   Returns the most recent revision of the stream.
   """
-  def last_revision(dir, stream_id, _opts \\ []) do
-    stream_dir = stream_path(dir, stream_id)
+  def last_revision(_dir, stream_id, _opts \\ []) do
+    query = from e in Event, where: e.source == ^stream_id, select: coalesce(e.extensions["sequence"], "0")
+    all_seq = Repo.all(query) |> Enum.map(&String.to_integer/1)
 
-    if File.exists?(stream_dir) do
-      File.ls!(stream_dir)
-      |> Enum.count()
-    else
-      0
-    end
+    if Enum.empty?(all_seq), do: 0, else: Enum.max(all_seq)
   end
 
 
-  def fetch(dir, source, event_id) do
-    path = event_path(dir, source, event_id)
-    read_event(path)
+  def fetch(_dir, source, event_id) do
+    if event = Repo.get_by(Event, source: source, id: event_id) do
+      {:ok, Event.to_cloudevent(event)}
+    else
+      {:error, :not_found}
+    end
   end
 
   def list_streams(root_dir) do
@@ -258,26 +171,10 @@ defmodule Loom.Store do
           range_end = max(last_revision(dir, stream_id), range_start - limit)
           range_start..range_end
       end
+      |> Enum.map(&Integer.to_string/1)
 
-    Task.async_stream(revision_range, fn revision ->
-      event_path_for_revision(dir, stream_id, revision)
-      |> read_event()
-    end)
-    |> Stream.map(fn {:ok, {:ok, event}} -> event end)
-  end
-
-  defp read_event(event_path) do
-    if Cache.has_key?(event_path) do
-      {:ok, Cache.get!(event_path)}
-    else
-      with {:ok, data} <- File.read(event_path),
-           {:ok, json} <- Cloudevents.from_json(data) do
-        {:ok, json}
-      else
-        {:error, :enoent} -> {:error, :not_found}
-        err -> err
-      end
-    end
+    Repo.all(from e in Event, where: e.source == ^stream_id, where: e.extensions["sequence"] in ^revision_range, order_by: e.extensions["sequence"])
+    |> Enum.map(&Event.to_cloudevent/1)
   end
 
   def stat(dir, source, id) do

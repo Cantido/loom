@@ -1,7 +1,11 @@
 defmodule Loom.StoreTest do
-  use ExUnit.Case, async: true
-  doctest Loom.Store
+  use Loom.DataCase, async: true
+  alias Loom.Event
+  alias Loom.Repo
   alias Loom.Store
+  import Ecto.Query
+
+  doctest Loom.Store
 
   setup context do
     if Map.has_key?(context, :tmp_dir) do
@@ -13,141 +17,44 @@ defmodule Loom.StoreTest do
   end
 
   describe "append/4 with no previous events" do
-    @tag :tmp_dir
-    test "creates a file in the events dir", %{tmp_dir: dir} do
-      {:ok, event} = Cloudevents.from_map(%{type: "test.event", specversion: "1.0", source: "loom", id: "first"})
+    test "creates a an event" do
+      event_id = Uniq.UUID.uuid7()
+      {:ok, event} = Cloudevents.from_map(%{type: "test.event", specversion: "1.0", source: "loom", id: event_id})
 
-      {:ok, 1} = Store.append(dir, "test-stream", event)
+      {:ok, 1} = Store.append(nil, "test-stream", event)
 
-      expected_event_path = Path.join([dir, "events", "loom", "first.json"])
-
-      assert File.exists?(expected_event_path)
-    end
-
-    @tag :tmp_dir
-    test "creates a link in the stream dir", %{tmp_dir: dir} do
-      {:ok, event} = Cloudevents.from_map(%{type: "test.event", specversion: "1.0", source: "loom", id: "first"})
-
-      {:ok, 1} = Store.append(dir, "test-stream", event)
-
-      expected_link_path = Path.join([dir, "streams", "test-stream", "1.json"])
-
-      assert File.exists?(expected_link_path)
-      assert File.lstat!(expected_link_path).type == :symlink
-    end
-
-    @tag :tmp_dir
-    test "creates a file in the $all dir", %{tmp_dir: dir} do
-      {:ok, event} = Cloudevents.from_map(%{type: "test.event", specversion: "1.0", source: "loom", id: "first"})
-
-      {:ok, 1} = Store.append(dir, "test-stream", event)
-
-      expected_link_path = Path.join([dir, "streams", "$all", "1.json"])
-
-      assert File.exists?(expected_link_path)
-      assert File.lstat!(expected_link_path).type == :symlink
-    end
-
-    @tag :tmp_dir
-    test "sanitizes event IDs", %{tmp_dir: dir} do
-      {:ok, event} = Cloudevents.from_map(%{type: "test.event", specversion: "1.0", source: "loom", id: "  what\ēver//wëird:user:înput:"})
-
-      {:ok, 1} = Store.append(dir, "test-stream", event)
-
-      expected_event_path = Path.join([dir, "events", "loom", "whatēverwëirduserînput.json"])
-
-      assert File.exists?(expected_event_path)
-    end
-
-    @tag :tmp_dir
-    test "sanitizes source names", %{tmp_dir: dir} do
-      {:ok, event} = Cloudevents.from_map(%{type: "test.event", specversion: "1.0", source: "  what\ēver//wëird:user:înput:", id: "first"})
-
-      {:ok, 1} = Store.append(dir, "test-stream", event)
-
-      expected_event_path = Path.join([dir, "events", "whatēverwëirduserînput", "first.json"])
-
-      assert File.exists?(expected_event_path)
-    end
-
-    @tag :tmp_dir
-    test "sanitizes stream names", %{tmp_dir: dir} do
-      {:ok, event} = Cloudevents.from_map(%{type: "test.event", specversion: "1.0", source: "loom", id: "first"})
-
-      {:ok, 1} = Store.append(dir, "  what\ēver//wëird:user:înput:", event)
-
-      expected_event_path = Path.join([dir, "streams", "whatēverwëirduserînput", "1.json"])
-
-      assert File.exists?(expected_event_path)
-    end
-  end
-
-  describe "append/4 when the stream has events in it" do
-    setup %{tmp_dir: tmp_dir} do
-      {:ok, first_event} = Cloudevents.from_map(%{type: "test.setup.event", specversion: "1.0", source: "loom", id: "first"})
-
-      {:ok, 1} = Store.append(tmp_dir, "test-stream", first_event)
-
-      :ok
-    end
-
-    @tag :tmp_dir
-    test "expecting a matching numeric revision", %{tmp_dir: tmp_dir} do
-      {:ok, event} = Cloudevents.from_map(%{type: "test.setup.event", specversion: "1.0", source: "loom", id: "matching"})
-      {:ok, 2} = Store.append(tmp_dir, "test-stream", event, expected_revision: 1)
-
-      expected_link_path = Path.join([tmp_dir, "streams", "test-stream", "2.json"])
-
-      assert File.exists?(expected_link_path)
-      assert File.lstat!(expected_link_path).type == :symlink
-    end
-
-    @tag :tmp_dir
-    test "expecting a mis-matching numeric revision", %{tmp_dir: tmp_dir} do
-      {:ok, event} = Cloudevents.from_map(%{type: "test.setup.event", specversion: "1.0", source: "loom", id: "mismatched"})
-      {:error, :revision_mismatch} = Store.append(tmp_dir, "test-stream", event, expected_revision: 2)
-
-      event_path = Path.join([tmp_dir, "events", "loom", "mismatched.json"])
-      link_path = Path.join([tmp_dir, "streams", "test-stream", "2.json"])
-
-      refute File.exists?(event_path)
-      refute File.exists?(link_path)
-    end
-
-    @tag :tmp_dir
-    test "appending an event that has already been inserted", %{tmp_dir: tmp_dir} do
-      {:ok, event} = Cloudevents.from_map(%{type: "test.duplicate.event", specversion: "1.0", source: "loom", id: "first"})
-      {:ok, 2} = Store.append(tmp_dir, "test-stream", event)
-
-      assert File.ls!(Path.join([tmp_dir, "events", "loom"])) == ["first.json"]
+      assert Repo.exists?(from e in Event, where: e.id == ^event_id, where: e.source == "loom")
     end
   end
 
   describe "read" do
     @tag :tmp_dir
     test "forward from start", %{tmp_dir: tmp_dir} do
-      {:ok, first_event} = Cloudevents.from_map(%{type: "test.event", specversion: "1.0", source: "loom", id: "first"})
-      {:ok, second_event} = Cloudevents.from_map(%{type: "test.event", specversion: "1.0", source: "loom", id: "second"})
+      {:ok, first_event} = Cloudevents.from_map(%{type: "test.event", specversion: "1.0", source: "read-forward-test", id: "first-to-read"})
+      {:ok, second_event} = Cloudevents.from_map(%{type: "test.event", specversion: "1.0", source: "read-forward-test", id: "second-to-read"})
 
-      {:ok, 1} = Store.append(tmp_dir, "test-stream", first_event)
-      {:ok, 2} = Store.append(tmp_dir, "test-stream", second_event)
+      {:ok, 1} = Store.append(tmp_dir, "read-forward-test", first_event)
+      {:ok, 2} = Store.append(tmp_dir, "read-forward-test", second_event)
 
-      events = Store.read(tmp_dir, "test-stream", direction: :forward, from_revision: :start)
+      events = Store.read(tmp_dir, "read-forward-test", direction: :forward, from_revision: :start)
 
-      assert Enum.to_list(events) == [first_event, second_event]
+      assert Enum.count(events) == 2
+      assert Enum.at(events, 0).id == "first-to-read"
+      assert Enum.at(events, 1).id == "second-to-read"
     end
 
     @tag :tmp_dir
     test "limit", %{tmp_dir: tmp_dir} do
-      {:ok, first_event} = Cloudevents.from_map(%{type: "test.event", specversion: "1.0", source: "loom", id: "first"})
-      {:ok, second_event} = Cloudevents.from_map(%{type: "test.event", specversion: "1.0", source: "loom", id: "second"})
+      {:ok, first_event} = Cloudevents.from_map(%{type: "test.event", specversion: "1.0", source: "read-limit-test", id: "before-limit"})
+      {:ok, second_event} = Cloudevents.from_map(%{type: "test.event", specversion: "1.0", source: "read-limit-test", id: "after-limit"})
 
-      {:ok, 1} = Store.append(tmp_dir, "test-stream", first_event)
-      {:ok, 2} = Store.append(tmp_dir, "test-stream", second_event)
+      {:ok, 1} = Store.append(tmp_dir, "read-limit-test", first_event)
+      {:ok, 2} = Store.append(tmp_dir, "read-limit-test", second_event)
 
-      events = Store.read(tmp_dir, "test-stream", direction: :forward, from_revision: :start, limit: 1)
+      events = Store.read(tmp_dir, "read-limit-test", direction: :forward, from_revision: :start, limit: 1)
 
-      assert Enum.to_list(events) == [first_event]
+      assert Enum.count(events) == 1
+      assert List.first(events)
     end
   end
 end

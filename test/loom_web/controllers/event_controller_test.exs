@@ -40,7 +40,13 @@ defmodule LoomWeb.EventControllerTest do
 
       conn = get(conn, Routes.event_path(conn, :show, "loom-web-show-event-test", "12345"))
 
-      assert json_response(conn, 200) == Cloudevents.to_json(event) |> Jason.decode!()
+      json_body = json_response(conn, 200)
+      assert json_body["id"] == "12345"
+      assert json_body["source"] == "loom-web-show-event-test"
+      assert json_body["type"] == "com.example.event"
+      assert json_body["specversion"] == "1.0"
+      assert Map.has_key?(json_body, "time")
+      assert json_body["sequence"] == 1
     end
 
     test "includes an etag header", %{conn: conn, root_dir: root_dir} do
@@ -80,11 +86,13 @@ defmodule LoomWeb.EventControllerTest do
 
     test "returns 304 if the etag is the same", %{conn: conn, root_dir: root_dir} do
       event = Cloudevents.from_map!(%{specversion: "1.0", id: "12345", source: "loom-web-show-event-test", type: "com.example.event"})
-      etag = Base.encode16(:crypto.hash(:sha256, Cloudevents.to_json(event)))
 
       {:ok, _revision} = Loom.Store.append(root_dir, "test-stream", event)
+      conn1 = get(conn, Routes.event_path(conn, :show, "loom-web-show-event-test", "12345"))
+      etag = List.first get_resp_header(conn1, "etag")
 
-      conn = put_req_header(conn, "if-none-match", ~s("#{etag}"))
+
+      conn = put_req_header(conn, "if-none-match", etag)
       conn = get(conn, Routes.event_path(conn, :show, "loom-web-show-event-test", "12345"))
 
       assert response(conn, 304) == ""
@@ -120,10 +128,10 @@ defmodule LoomWeb.EventControllerTest do
       event1 = Cloudevents.from_map!(%{id: "uuid-1", source: "store-show-test", type: "com.example.event", specversion: "1.0"})
       event2 = Cloudevents.from_map!(%{id: "uuid-2", source: "store-show-test", type: "com.example.event", specversion: "1.0"})
 
-      {:ok, 1} = Loom.Store.append(root_dir, "my-stream", event1)
-      {:ok, 2} = Loom.Store.append(root_dir, "my-stream", event2)
+      {:ok, 1} = Loom.Store.append(root_dir, "store-show-test", event1)
+      {:ok, 2} = Loom.Store.append(root_dir, "store-show-test", event2)
 
-      conn = get(conn, Routes.event_path(conn, :stream), stream_id: "my-stream")
+      conn = get(conn, Routes.event_path(conn, :stream), stream_id: "store-show-test")
 
       assert [actual_event1, actual_event2] = json_response(conn, 200)
     end
