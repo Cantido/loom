@@ -41,11 +41,8 @@ defmodule Loom.Store do
   def append(event, opts \\ []) do
     result =
       Ecto.Multi.new()
-      |> Ecto.Multi.run(:last_sequence, fn repo, _changes ->
-        query = from e in Event, where: e.source == ^event.source
-        all_seq = repo.all(query) |> Enum.map(&(String.to_integer(Map.get(&1.extensions, "sequence", "0"))))
-
-        max_seq = if Enum.empty?(all_seq), do: 0, else: Enum.max(all_seq)
+      |> Ecto.Multi.run(:last_sequence, fn _repo, _changes ->
+        max_seq = last_revision(event.source)
 
         if revision_match?(max_seq, Keyword.get(opts, :expected_revision, :any)) do
           {:ok, max_seq}
@@ -99,10 +96,8 @@ defmodule Loom.Store do
   Returns the most recent revision of the stream.
   """
   def last_revision(source, _opts \\ []) do
-    query = from e in Event, where: e.source == ^source, select: coalesce(e.extensions["sequence"], "0")
-    all_seq = Repo.all(query) |> Enum.map(&String.to_integer/1)
-
-    if Enum.empty?(all_seq), do: 0, else: Enum.max(all_seq)
+    query = from e in Event, where: e.source == ^source
+    Repo.aggregate(query, :count)
   end
 
   def fetch(source, event_id) do
