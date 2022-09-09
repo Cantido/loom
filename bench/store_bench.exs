@@ -1,51 +1,19 @@
 defmodule StoreBench do
   use Benchfella
 
+
   setup_all do
     Application.ensure_all_started(:loom)
-    root_dir = Path.join([System.tmp_dir!(), "store-bench", Integer.to_string(System.monotonic_time())])
-    File.mkdir_p!(root_dir)
-    Loom.Store.init(root_dir)
-    {:ok, root_dir}
-  end
-
-  teardown_all root_dir do
-    File.rm_rf!(root_dir)
   end
 
   bench "write event", [event: random_event(), stream: random_stream(), revision: random_revision()] do
-    _ = Loom.Store.append(bench_context, stream, event, expected_revision: revision)
+    _ = Loom.Store.append(event, expected_revision: revision)
     :ok
   end
 
-  bench "read event (cache hit)", [params: random_cached(bench_context)] do
-    {dir, stream_id} = params
-    _ = Loom.Store.read(dir, stream_id)
+  bench "read event", [stream: random_stream()] do
+    _ = Loom.Store.read(stream)
     :ok
-  end
-
-  bench "read event (cache miss)", [params: random_uncached(bench_context)] do
-    {dir, stream_id} = params
-    _ = Loom.Store.read(dir, stream_id)
-    :ok
-  end
-
-  defp random_uncached(root_dir) do
-    event = random_event()
-
-    Loom.Store.append(root_dir, "stream-1", event)
-    path = Loom.Store.event_path(root_dir, event.source, event.id)
-    Loom.Cache.delete(path)
-
-    {root_dir, "stream-1"}
-  end
-
-  defp random_cached(root_dir) do
-    event = random_event()
-
-    Loom.Store.append(root_dir, "stream-1", event)
-
-    {root_dir, "stream-1"}
   end
 
   defp random_event do

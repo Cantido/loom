@@ -1,8 +1,8 @@
 config:
   target: "http://localhost:4000/api"
   phases:
-    - duration: 60
-      arrivalRate: 250
+    - duration: 30
+      arrivalRate: 400
   processor: "./load-test-hooks.js"
   variables:
     eventType:
