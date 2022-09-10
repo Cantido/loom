@@ -4,8 +4,8 @@ defmodule Loom.Repo.Migrations.CreateEvents do
   def change do
     create table("events", primary_key: false) do
       # No specversion because all events should be normalized to the latest CE version
-      add :id, :string, null: false
-      add :source, :string, null: false
+      add :id, :string, primary_key: true
+      add :source, :string, primary_key: true
       add :type, :string, null: false
       add :data, :binary
       add :dataschema, :string
@@ -14,7 +14,6 @@ defmodule Loom.Repo.Migrations.CreateEvents do
       add :extensions, {:map, :string}
     end
 
-    create unique_index("events", [:source, :id])
     create index("events", [:type])
   end
 end

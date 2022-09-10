@@ -8,8 +8,8 @@ defmodule Loom.Event do
 
   @primary_key false
   schema "events" do
-    field :id, :string
-    field :source, :string
+    field :id, :string, primary_key: true
+    field :source, :string, primary_key: true
     field :type, :string
     field :data, :binary
     field :datacontenttype, :string
