@@ -93,9 +93,6 @@ defmodule Loom.SubscriptionsTest do
         {:ok, event} = Cloudevents.from_json(body)
         assert event.id == "webhook-request-event"
 
-        assert "1" == Tesla.get_header(env, "x-loom-revision")
-        assert "webhook-tests" == Tesla.get_header(env, "x-loom-stream")
-
         assert "application/cloudevents+json; charset=utf-8" ==
                  Tesla.get_header(env, "content-type")
 

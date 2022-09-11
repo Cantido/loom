@@ -22,10 +22,8 @@ defmodule Loom.Subscriptions.WebhookClient do
     options(webhook.url, headers: headers)
   end
 
-  def push(webhook, event_json, stream, revision) do
+  def push(webhook, event_json) do
     headers = [
-      {"x-loom-stream", stream},
-      {"x-loom-revision", Integer.to_string(revision)},
       {"content-type", "application/cloudevents+json; charset=utf-8"},
       {"authorization", "Bearer #{webhook.token}"}
     ]

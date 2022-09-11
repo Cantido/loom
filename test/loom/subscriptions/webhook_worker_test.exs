@@ -36,9 +36,7 @@ defmodule Loom.Subscriptions.WebhookWorkerTest do
         Loom.Subscriptions.WebhookWorker,
         %{
           webhook_id: webhook.id,
-          event_json: Cloudevents.to_json(event),
-          stream: "my-stream",
-          revision: 1000
+          event_json: Cloudevents.to_json(event)
         }
       )
   end
@@ -57,9 +55,7 @@ defmodule Loom.Subscriptions.WebhookWorkerTest do
         Loom.Subscriptions.WebhookWorker,
         %{
           webhook_id: "50f87e1d-d5c7-4f31-a9df-04090bbf2a5e",
-          event_json: Cloudevents.to_json(event),
-          stream: "my-stream",
-          revision: 1000
+          event_json: Cloudevents.to_json(event)
         }
       )
   end
@@ -92,9 +88,7 @@ defmodule Loom.Subscriptions.WebhookWorkerTest do
         Loom.Subscriptions.WebhookWorker,
         %{
           webhook_id: webhook.id,
-          event_json: Cloudevents.to_json(event),
-          stream: "my-stream",
-          revision: 1000
+          event_json: Cloudevents.to_json(event)
         }
       )
 
@@ -134,9 +128,7 @@ defmodule Loom.Subscriptions.WebhookWorkerTest do
         Loom.Subscriptions.WebhookWorker,
         %{
           webhook_id: webhook.id,
-          event_json: Cloudevents.to_json(event),
-          stream: "my-stream",
-          revision: 1000
+          event_json: Cloudevents.to_json(event)
         }
       )
   end
@@ -180,9 +172,7 @@ defmodule Loom.Subscriptions.WebhookWorkerTest do
         Loom.Subscriptions.WebhookWorker,
         %{
           webhook_id: webhook.id,
-          event_json: Cloudevents.to_json(event),
-          stream: "my-stream",
-          revision: 1000
+          event_json: Cloudevents.to_json(event)
         }
       )
 

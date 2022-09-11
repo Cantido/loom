@@ -10,16 +10,14 @@ defmodule Loom.Subscriptions.WebhookWorker do
   def perform(%Oban.Job{
         args: %{
           "webhook_id" => id,
-          "event_json" => event,
-          "stream" => stream,
-          "revision" => revision
+          "event_json" => event
         }
       }) do
     with {:ok, webhook} <- Loom.Subscriptions.get_webhook(id),
          {:allow, _} <-
            Hammer.check_rate("webhook_push:#{id}", :timer.minutes(1), webhook.allowed_rate),
          {:ok, %{status: status}} when status in [200, 201, 202, 204] <-
-           Loom.Subscriptions.WebhookClient.push(webhook, event, stream, revision) do
+           Loom.Subscriptions.WebhookClient.push(webhook, event) do
       :ok
     else
       {:error, :not_found} ->

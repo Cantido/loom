@@ -153,7 +153,7 @@ defmodule Loom.Subscriptions do
     Webhook.changeset(webhook, attrs)
   end
 
-  def send_webhooks(event, stream, revision) do
+  def send_webhooks(event) do
     webhooks = Loom.Repo.all(from w in Webhook, where: w.type == ^event.type, where: w.validated)
     Logger.info("Got #{Enum.count(webhooks)} webhooks for type #{event.type}")
 
@@ -162,9 +162,7 @@ defmodule Loom.Subscriptions do
     Enum.each(webhooks, fn webhook ->
       %{
         webhook_id: webhook.id,
-        event_json: event_json,
-        stream: stream,
-        revision: revision
+        event_json: event_json
       }
       |> Loom.Subscriptions.WebhookWorker.new()
       |> Oban.insert()
