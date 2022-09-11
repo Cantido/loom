@@ -21,10 +21,15 @@ defmodule Loom.Subscriptions.WebhookWorkerTest do
       %Tesla.Env{status: 200}
     end)
 
-
     {:ok, webhook} = Subscriptions.create_webhook(webhook_attrs)
 
-    event = Cloudevents.from_map!(%{id: "webhook-worker-test", source: "webhook-tests", type: "com.example.event", specversion: "1.0"})
+    event =
+      Cloudevents.from_map!(%{
+        id: "webhook-worker-test",
+        source: "webhook-tests",
+        type: "com.example.event",
+        specversion: "1.0"
+      })
 
     :ok =
       perform_job(
@@ -39,7 +44,13 @@ defmodule Loom.Subscriptions.WebhookWorkerTest do
   end
 
   test "cancels the job if the webhook does not exist " do
-    event = Cloudevents.from_map!(%{id: "webhook-worker-test", source: "webhook-tests", type: "com.example.event", specversion: "1.0"})
+    event =
+      Cloudevents.from_map!(%{
+        id: "webhook-worker-test",
+        source: "webhook-tests",
+        type: "com.example.event",
+        specversion: "1.0"
+      })
 
     {:cancel, "webhook not found"} =
       perform_job(
@@ -68,7 +79,13 @@ defmodule Loom.Subscriptions.WebhookWorkerTest do
 
     {:ok, webhook} = Subscriptions.create_webhook(webhook_attrs)
 
-    event = Cloudevents.from_map!(%{id: "webhook-worker-test", source: "webhook-tests", type: "com.example.event", specversion: "1.0"})
+    event =
+      Cloudevents.from_map!(%{
+        id: "webhook-worker-test",
+        source: "webhook-tests",
+        type: "com.example.event",
+        specversion: "1.0"
+      })
 
     :ok =
       perform_job(
@@ -104,7 +121,13 @@ defmodule Loom.Subscriptions.WebhookWorkerTest do
 
     {:ok, webhook} = Subscriptions.create_webhook(webhook_attrs)
 
-    event = Cloudevents.from_map!(%{id: "webhook-worker-test", source: "webhook-tests", type: "com.example.event", specversion: "1.0"})
+    event =
+      Cloudevents.from_map!(%{
+        id: "webhook-worker-test",
+        source: "webhook-tests",
+        type: "com.example.event",
+        specversion: "1.0"
+      })
 
     {:snooze, _} =
       perform_job(
@@ -117,7 +140,6 @@ defmodule Loom.Subscriptions.WebhookWorkerTest do
         }
       )
   end
-
 
   test "snoozes if we need to rate-limit" do
     webhook_attrs = %{
@@ -135,11 +157,23 @@ defmodule Loom.Subscriptions.WebhookWorkerTest do
       %Tesla.Env{status: 200}
     end)
 
-
     {:ok, webhook} = Subscriptions.create_webhook(webhook_attrs)
 
-    {:allow, _} = Hammer.check_rate_inc("webhook_push:#{webhook.id}", :timer.minutes(1), webhook.allowed_rate, webhook.allowed_rate)
-    event = Cloudevents.from_map!(%{id: "webhook-worker-test", source: "webhook-tests", type: "com.example.event", specversion: "1.0"})
+    {:allow, _} =
+      Hammer.check_rate_inc(
+        "webhook_push:#{webhook.id}",
+        :timer.minutes(1),
+        webhook.allowed_rate,
+        webhook.allowed_rate
+      )
+
+    event =
+      Cloudevents.from_map!(%{
+        id: "webhook-worker-test",
+        source: "webhook-tests",
+        type: "com.example.event",
+        specversion: "1.0"
+      })
 
     {:snooze, snooze_amt} =
       perform_job(
@@ -151,9 +185,7 @@ defmodule Loom.Subscriptions.WebhookWorkerTest do
           revision: 1000
         }
       )
+
     assert snooze_amt > 0
   end
-
-
 end
-

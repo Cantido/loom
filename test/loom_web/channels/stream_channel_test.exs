@@ -21,13 +21,17 @@ defmodule LoomWeb.StreamChannelTest do
   end
 
   @tag :tmp_dir
-  test "broadcasts are pushed to the client when an event is pushed", %{socket: socket, tmp_dir: tmp_dir} do
-    event = Cloudevents.from_map!(%{
-      specversion: "1.0",
-      type: "com.example.event",
-      id: "stream-channel-test-event",
-      source: "stream-channel-test"
-    })
+  test "broadcasts are pushed to the client when an event is pushed", %{
+    socket: socket,
+    tmp_dir: tmp_dir
+  } do
+    event =
+      Cloudevents.from_map!(%{
+        specversion: "1.0",
+        type: "com.example.event",
+        id: "stream-channel-test-event",
+        source: "stream-channel-test"
+      })
 
     {:ok, _revision} = Loom.Store.append(event)
 

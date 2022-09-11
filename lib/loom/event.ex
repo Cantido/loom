@@ -23,7 +23,6 @@ defmodule Loom.Event do
     changeset(%__MODULE__{}, params)
   end
 
-
   @doc """
   Converts an Ecto struct to a `Cloudevents` struct.
 
@@ -55,7 +54,16 @@ defmodule Loom.Event do
 
   def changeset(model, params \\ %{}) do
     model
-    |> cast(params, [:id, :source, :type, :data, :datacontenttype, :dataschema, :time, :extensions])
+    |> cast(params, [
+      :id,
+      :source,
+      :type,
+      :data,
+      :datacontenttype,
+      :dataschema,
+      :time,
+      :extensions
+    ])
     |> validate_required([:id, :source, :type])
     |> validate_length(:data, max: 64 * 1024)
     |> validate_length(:id, min: 1)

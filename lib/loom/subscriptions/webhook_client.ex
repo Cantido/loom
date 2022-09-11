@@ -3,7 +3,10 @@ defmodule Loom.Subscriptions.WebhookClient do
 
   def validate(webhook) do
     origin = Application.fetch_env!(:loom, :webhook_request_origin)
-    callback = Application.fetch_env!(:loom, :webhook_request_callback) |> String.replace("%3Awebhook_id", webhook.id)
+
+    callback =
+      Application.fetch_env!(:loom, :webhook_request_callback)
+      |> String.replace("%3Awebhook_id", webhook.id)
 
     headers = [
       {"webhook-request-callback", callback},
@@ -20,6 +23,7 @@ defmodule Loom.Subscriptions.WebhookClient do
       {"content-type", "application/cloudevents+json; charset=utf-8"},
       {"authorization", "Bearer #{webhook.token}"}
     ]
+
     post(webhook.url, event_json, headers: headers)
   end
 end

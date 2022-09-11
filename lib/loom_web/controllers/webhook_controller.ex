@@ -45,7 +45,8 @@ defmodule LoomWeb.WebhookController do
     allowed_origin = get_req_header(conn, "webhook-allowed-origin")
 
     with {:ok, webhook} <- Subscriptions.get_webhook(id),
-         {:ok, %Webhook{} = webhook} <- Subscriptions.validate_webhook(webhook, List.first(allowed_origin)) do
+         {:ok, %Webhook{} = webhook} <-
+           Subscriptions.validate_webhook(webhook, List.first(allowed_origin)) do
       render(conn, "show.json", webhook: webhook)
     else
       {:error, err} ->

@@ -37,7 +37,11 @@ defmodule Loom.Store do
   @doc """
   Append an event to an event stream.
   """
-  @spec append(Cloudevents.t(), Keyword.t()) :: {:ok, revision} | {:error, :event_exists} | {:error, :revision_mismatch} | {:error, :retry_limit_reached}
+  @spec append(Cloudevents.t(), Keyword.t()) ::
+          {:ok, revision}
+          | {:error, :event_exists}
+          | {:error, :revision_mismatch}
+          | {:error, :retry_limit_reached}
   def append(event, opts \\ []) do
     result =
       Ecto.Multi.new()
@@ -53,7 +57,9 @@ defmodule Loom.Store do
         end
       end)
       |> Ecto.Multi.insert(:event, fn %{current_counter: current_counter} ->
-        extensions = Map.put(event.extensions, "sequence", Integer.to_string(current_counter.value))
+        extensions =
+          Map.put(event.extensions, "sequence", Integer.to_string(current_counter.value))
+
         event = %{event | extensions: extensions}
         event = if is_nil(event.time), do: %{event | time: DateTime.utc_now()}, else: event
 
@@ -70,8 +76,10 @@ defmodule Loom.Store do
     case result do
       {:ok, results} ->
         {:ok, String.to_integer(results[:event].extensions["sequence"])}
+
       {:error, :current_counter, :revision_mismatch, _changes} ->
         {:error, :revision_mismatch}
+
       {:error, :event, _changeset, _changes} ->
         {:error, :event_exists}
     end
@@ -135,29 +143,42 @@ defmodule Loom.Store do
 
     revision_range =
       case {direction, from_revision} do
-        {:forward, :end} -> []
+        {:forward, :end} ->
+          []
+
         {:forward, :start} ->
           range_end = min(last_revision(stream_id), limit)
           1..range_end
+
         {:forward, range_start} ->
           range_end = min(last_revision(stream_id), range_start + limit)
           range_start..range_end
-        {:backward, :start} -> []
+
+        {:backward, :start} ->
+          []
+
         {:backward, :end} ->
           range_start = min(last_revision(stream_id), limit)
           range_start..0
+
         {:backward, range_start} ->
           range_end = max(last_revision(stream_id), range_start - limit)
           range_start..range_end
       end
       |> Enum.map(&Integer.to_string/1)
 
-    sort_dir = case direction do
-      :forward -> :asc
-      :backward -> :desc
-    end
+    sort_dir =
+      case direction do
+        :forward -> :asc
+        :backward -> :desc
+      end
 
-    Repo.all(from e in Event, where: e.source == ^stream_id, where: e.extensions["sequence"] in ^revision_range, order_by: [{^sort_dir, e.extensions["sequence"]}])
+    Repo.all(
+      from e in Event,
+        where: e.source == ^stream_id,
+        where: e.extensions["sequence"] in ^revision_range,
+        order_by: [{^sort_dir, e.extensions["sequence"]}]
+    )
     |> Enum.map(&Event.to_cloudevent/1)
   end
 end

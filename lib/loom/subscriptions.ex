@@ -83,14 +83,23 @@ defmodule Loom.Subscriptions do
           Loom.Subscriptions.ValidationWorker.new(args)
           |> Oban.insert!()
 
-          cleanup_after = Keyword.get(opts, :cleanup_after, Application.fetch_env!(:loom, :webhook_cleanup_timeout))
+          cleanup_after =
+            Keyword.get(
+              opts,
+              :cleanup_after,
+              Application.fetch_env!(:loom, :webhook_cleanup_timeout)
+            )
+
           unless cleanup_after == :never do
             Loom.Subscriptions.CleanupWorker.new(args, schedule_in: cleanup_after)
             |> Oban.insert!()
           end
         end
+
         {:ok, webhook}
-      err -> err
+
+      err ->
+        err
     end
   end
 
@@ -146,6 +155,7 @@ defmodule Loom.Subscriptions do
     Logger.info("Got #{Enum.count(webhooks)} webhooks for type #{event.type}")
 
     event_json = Cloudevents.to_json(event)
+
     Enum.each(webhooks, fn webhook ->
       %{
         webhook_id: webhook.id,
@@ -166,6 +176,7 @@ defmodule Loom.Subscriptions do
         validated: true,
         allowed_rate: Keyword.get(opts, :allowed_rate, 120)
       }
+
       update_webhook(webhook, args)
     else
       {:error, "WebHook-Allowed-Origin header must be equal to #{expected_origin} or *"}

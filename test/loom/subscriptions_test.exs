@@ -23,7 +23,12 @@ defmodule Loom.SubscriptionsTest do
     end
 
     test "create_webhook/1 with valid data creates a webhook" do
-      valid_attrs = %{token: "some token", type: "some type", url: "https://example.com/event_hook", validated: true}
+      valid_attrs = %{
+        token: "some token",
+        type: "some type",
+        url: "https://example.com/event_hook",
+        validated: true
+      }
 
       assert {:ok, %Webhook{} = webhook} = Subscriptions.create_webhook(valid_attrs)
       assert webhook.token == "some token"
@@ -37,7 +42,12 @@ defmodule Loom.SubscriptionsTest do
 
     test "update_webhook/2 with valid data updates the webhook" do
       webhook = webhook_fixture()
-      update_attrs = %{token: "some updated token", type: "some updated type", url: "https://example.com/updated_event_hook"}
+
+      update_attrs = %{
+        token: "some updated token",
+        type: "some updated type",
+        url: "https://example.com/updated_event_hook"
+      }
 
       assert {:ok, %Webhook{} = webhook} = Subscriptions.update_webhook(webhook, update_attrs)
       assert webhook.token == "some updated token"
@@ -61,7 +71,6 @@ defmodule Loom.SubscriptionsTest do
       webhook = webhook_fixture()
       assert %Ecto.Changeset{} = Subscriptions.change_webhook(webhook)
     end
-
   end
 
   describe "webhook behaviour" do
@@ -79,22 +88,31 @@ defmodule Loom.SubscriptionsTest do
       test_ref = make_ref()
 
       mock(fn %{method: :post, url: url, body: body} = env ->
-        send test_pid, test_ref
+        send(test_pid, test_ref)
 
         {:ok, event} = Cloudevents.from_json(body)
         assert event.id == "webhook-request-event"
 
         assert "1" == Tesla.get_header(env, "x-loom-revision")
         assert "webhook-tests" == Tesla.get_header(env, "x-loom-stream")
-        assert "application/cloudevents+json; charset=utf-8" == Tesla.get_header(env, "content-type")
+
+        assert "application/cloudevents+json; charset=utf-8" ==
+                 Tesla.get_header(env, "content-type")
+
         assert "Bearer some token" == Tesla.get_header(env, "authorization")
         %Tesla.Env{status: 200}
       end)
 
-
       {:ok, _} = Subscriptions.create_webhook(webhook_attrs)
 
-      event = Cloudevents.from_map!(%{id: "webhook-request-event", source: "webhook-tests", type: "com.example.event", specversion: "1.0"})
+      event =
+        Cloudevents.from_map!(%{
+          id: "webhook-request-event",
+          source: "webhook-tests",
+          type: "com.example.event",
+          specversion: "1.0"
+        })
+
       Loom.Store.init(tmp_dir)
       {:ok, _} = Loom.Store.append(event)
 
@@ -110,17 +128,22 @@ defmodule Loom.SubscriptionsTest do
         validated: false
       }
 
-
       mock(fn
-        %{method: :put} -> flunk "This webhook shouldn't have been published to"
+        %{method: :put} -> flunk("This webhook shouldn't have been published to")
       end)
-
 
       Oban.Testing.with_testing_mode(:manual, fn ->
         {:ok, _} = Subscriptions.create_webhook(webhook_attrs)
       end)
 
-      event = Cloudevents.from_map!(%{id: "webhook-request-event", source: "webhook-tests", type: "com.example.event", specversion: "1.0"})
+      event =
+        Cloudevents.from_map!(%{
+          id: "webhook-request-event",
+          source: "webhook-tests",
+          type: "com.example.event",
+          specversion: "1.0"
+        })
+
       Loom.Store.init(tmp_dir)
       {:ok, _} = Loom.Store.append(event)
     end
@@ -136,15 +159,17 @@ defmodule Loom.SubscriptionsTest do
       test_ref = make_ref()
 
       mock(fn %{method: :options} = env ->
-        send test_pid, test_ref
+        send(test_pid, test_ref)
 
         origin = Tesla.get_header(env, "webhook-request-origin")
 
         assert origin == "localhost"
 
-        %Tesla.Env{status: 200, headers: [{"webhook-allowed-origin", origin}, {"webhook-allowed-rate", 100}]}
+        %Tesla.Env{
+          status: 200,
+          headers: [{"webhook-allowed-origin", origin}, {"webhook-allowed-rate", 100}]
+        }
       end)
-
 
       {:ok, %{id: id}} = Subscriptions.create_webhook(webhook_attrs)
 
@@ -157,7 +182,6 @@ defmodule Loom.SubscriptionsTest do
       webhook = Subscriptions.get_webhook!(id)
 
       assert webhook.validated
-
     end
 
     test "a webhook can be validated asynchronously" do
@@ -171,11 +195,10 @@ defmodule Loom.SubscriptionsTest do
       test_ref = make_ref()
 
       mock(fn %{method: :options} = env ->
-        send test_pid, {test_ref, Tesla.get_header(env, "webhook-request-callback")}
+        send(test_pid, {test_ref, Tesla.get_header(env, "webhook-request-callback")})
 
         %Tesla.Env{status: 200}
       end)
-
 
       {:ok, %{id: id}} = Subscriptions.create_webhook(webhook_attrs, cleanup_after: :never)
 
@@ -187,7 +210,8 @@ defmodule Loom.SubscriptionsTest do
 
       assert callback_url =~ "http://localhost:4002/api/webhooks/#{id}/confirm"
 
-      {:ok, webhook} = Subscriptions.get_webhook!(id) |> Subscriptions.validate_webhook("localhost")
+      {:ok, webhook} =
+        Subscriptions.get_webhook!(id) |> Subscriptions.validate_webhook("localhost")
 
       assert webhook.validated
     end
@@ -203,7 +227,7 @@ defmodule Loom.SubscriptionsTest do
       test_ref = make_ref()
 
       mock(fn %{method: :options} = env ->
-        send test_pid, test_ref
+        send(test_pid, test_ref)
 
         %Tesla.Env{status: 200}
       end)

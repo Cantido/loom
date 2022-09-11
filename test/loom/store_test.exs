@@ -19,7 +19,14 @@ defmodule Loom.StoreTest do
   describe "append/4 with no previous events" do
     test "creates a an event" do
       event_id = Uniq.UUID.uuid7()
-      {:ok, event} = Cloudevents.from_map(%{type: "test.event", specversion: "1.0", source: "loom", id: event_id})
+
+      {:ok, event} =
+        Cloudevents.from_map(%{
+          type: "test.event",
+          specversion: "1.0",
+          source: "loom",
+          id: event_id
+        })
 
       {:ok, 1} = Store.append(event)
 
@@ -29,8 +36,21 @@ defmodule Loom.StoreTest do
 
   describe "read" do
     test "forward from start" do
-      {:ok, first_event} = Cloudevents.from_map(%{type: "test.event", specversion: "1.0", source: "read-forward-test", id: "first-to-read"})
-      {:ok, second_event} = Cloudevents.from_map(%{type: "test.event", specversion: "1.0", source: "read-forward-test", id: "second-to-read"})
+      {:ok, first_event} =
+        Cloudevents.from_map(%{
+          type: "test.event",
+          specversion: "1.0",
+          source: "read-forward-test",
+          id: "first-to-read"
+        })
+
+      {:ok, second_event} =
+        Cloudevents.from_map(%{
+          type: "test.event",
+          specversion: "1.0",
+          source: "read-forward-test",
+          id: "second-to-read"
+        })
 
       {:ok, 1} = Store.append(first_event)
       {:ok, 2} = Store.append(second_event)
@@ -43,8 +63,21 @@ defmodule Loom.StoreTest do
     end
 
     test "limit" do
-      {:ok, first_event} = Cloudevents.from_map(%{type: "test.event", specversion: "1.0", source: "read-limit-test", id: "before-limit"})
-      {:ok, second_event} = Cloudevents.from_map(%{type: "test.event", specversion: "1.0", source: "read-limit-test", id: "after-limit"})
+      {:ok, first_event} =
+        Cloudevents.from_map(%{
+          type: "test.event",
+          specversion: "1.0",
+          source: "read-limit-test",
+          id: "before-limit"
+        })
+
+      {:ok, second_event} =
+        Cloudevents.from_map(%{
+          type: "test.event",
+          specversion: "1.0",
+          source: "read-limit-test",
+          id: "after-limit"
+        })
 
       {:ok, 1} = Store.append(first_event)
       {:ok, 2} = Store.append(second_event)
