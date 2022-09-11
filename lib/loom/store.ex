@@ -37,22 +37,23 @@ defmodule Loom.Store do
   @doc """
   Append an event to an event stream.
   """
-  @spec append(Cloudevents.t(), Keyword.t()) :: {:ok, revision} | {:error, :revision_mismatch} | {:error, :retry_limit_reached}
+  @spec append(Cloudevents.t(), Keyword.t()) :: {:ok, revision} | {:error, :event_exists} | {:error, :revision_mismatch} | {:error, :retry_limit_reached}
   def append(event, opts \\ []) do
     result =
       Ecto.Multi.new()
-      |> Ecto.Multi.run(:last_sequence, fn _repo, _changes ->
-        max_seq = last_revision(event.source)
+      |> Ecto.Multi.one(:last_counter, from(c in Loom.Counter, where: c.source == ^event.source))
+      |> Ecto.Multi.run(:current_counter, fn repo, %{last_counter: counter} ->
+        counter = if is_nil(counter), do: %Loom.Counter{source: event.source}, else: counter
 
-        if revision_match?(max_seq, Keyword.get(opts, :expected_revision, :any)) do
-          {:ok, max_seq}
+        if revision_match?(counter.value, Keyword.get(opts, :expected_revision, :any)) do
+          cs = Ecto.Changeset.change(counter, %{value: counter.value + 1})
+          repo.insert_or_update(cs)
         else
           {:error, :revision_mismatch}
         end
       end)
-      |> Ecto.Multi.insert(:event, fn %{last_sequence: last_rev} ->
-        next_rev = Integer.to_string(last_rev + 1)
-        extensions = Map.put(event.extensions, "sequence", next_rev)
+      |> Ecto.Multi.insert(:event, fn %{current_counter: current_counter} ->
+        extensions = Map.put(event.extensions, "sequence", Integer.to_string(current_counter.value))
         event = %{event | extensions: extensions}
         event = if is_nil(event.time), do: %{event | time: DateTime.utc_now()}, else: event
 
@@ -69,8 +70,10 @@ defmodule Loom.Store do
     case result do
       {:ok, results} ->
         {:ok, String.to_integer(results[:event].extensions["sequence"])}
-      {:error, :last_sequence, :revision_mismatch, _changes} ->
+      {:error, :current_counter, :revision_mismatch, _changes} ->
         {:error, :revision_mismatch}
+      {:error, :event, _changeset, _changes} ->
+        {:error, :event_exists}
     end
   end
 
