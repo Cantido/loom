@@ -99,8 +99,11 @@ defmodule Loom.Store do
   Returns the most recent revision of the stream.
   """
   def last_revision(source, _opts \\ []) do
-    query = from e in Event, where: e.source == ^source
-    Repo.aggregate(query, :count)
+    if counter = Repo.one(from(c in Loom.Counter, where: c.source == ^source)) do
+      counter.value
+    else
+      0
+    end
   end
 
   def fetch(source, event_id) do
