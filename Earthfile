@@ -4,6 +4,7 @@ ARG MIX_ENV=dev
 
 all:
   BUILD +check
+  BUILD +test
   BUILD +docker
 
 deps:
@@ -26,12 +27,17 @@ build:
   RUN mix compile
 
 check:
+  FROM +build --MIX_ENV=dev
+
+  RUN mix check --except ex_unit
+
+test:
   FROM +build --MIX_ENV=test
 
   COPY docker-compose.yml .
 
   WITH DOCKER --compose docker-compose.yml
-    RUN mix test
+    RUN mix check --only ex_unit
   END
 
 release:
