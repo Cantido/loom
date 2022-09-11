@@ -4,6 +4,7 @@ ARG MIX_ENV=dev
 
 all:
   BUILD +check
+  BUILD +docker
 
 deps:
   FROM elixir:1.13-alpine
