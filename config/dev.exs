@@ -1,8 +1,5 @@
 import Config
 
-config :loom,
-  root_dir: "tmp/dev"
-
 # Configure your database
 config :loom, Loom.Repo,
   username: "postgres",

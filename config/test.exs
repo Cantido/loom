@@ -1,8 +1,5 @@
 import Config
 
-config :loom,
-  root_dir: "tmp/test"
-
 # Configure your database
 #
 # The MIX_TEST_PARTITION environment variable can be used
