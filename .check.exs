@@ -1,5 +1,6 @@
 [
   tools: [
-    {:audit, "mix hex.audit"}
+    {:audit, "mix hex.audit"},
+    {:ex_unit, false}
   ]
 ]

@@ -29,7 +29,7 @@ build:
 check:
   FROM +build --MIX_ENV=dev
 
-  RUN mix check --except ex_unit
+  RUN mix check
 
 test:
   FROM +build --MIX_ENV=test
@@ -37,7 +37,7 @@ test:
   COPY docker-compose.yml .
 
   WITH DOCKER --compose docker-compose.yml
-    RUN mix check --only ex_unit
+    RUN mix test
   END
 
 release:
