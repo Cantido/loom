@@ -7,12 +7,13 @@ all:
   BUILD +docker
 
 deps:
-  FROM elixir:1.13-alpine
+  FROM elixir:1.13
   ARG MIX_ENV
   COPY mix.exs .
   COPY mix.lock .
 
-  RUN apk --update-cache upgrade --available \
+  RUN apt update \
+      && apt upgrade -y \
       && mix local.rebar --force \
       && mix local.hex --force \
       && mix deps.get \
@@ -41,11 +42,17 @@ release:
   SAVE ARTIFACT _build/$MIX_ENV/rel
 
 docker:
-  FROM alpine
+  FROM debian:bullseye
   WORKDIR /app
 
-  RUN apk --update-cache upgrade --available \
-      && apk add alpine-sdk ncurses
+  RUN apt update && apt upgrade -y \
+    && apt install -y locales \
+    && sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen \
+    && locale-gen
+
+  ENV LANG en_US.UTF-8
+  ENV LANGUAGE en_US:en
+  ENV LC_ALL en_US.UTF-8
 
   COPY --dir --build-arg MIX_ENV=prod +release/rel .
 
