@@ -77,29 +77,32 @@ defmodule Loom.Subscriptions do
     |> Repo.insert()
     |> case do
       {:ok, webhook} ->
-        unless webhook.validated do
-          args = %{webhook_id: webhook.id}
-
-          Loom.Subscriptions.ValidationWorker.new(args)
-          |> Oban.insert!()
-
-          cleanup_after =
-            Keyword.get(
-              opts,
-              :cleanup_after,
-              Application.fetch_env!(:loom, :webhook_cleanup_timeout)
-            )
-
-          unless cleanup_after == :never do
-            Loom.Subscriptions.CleanupWorker.new(args, schedule_in: cleanup_after)
-            |> Oban.insert!()
-          end
-        end
-
+        start_webhook_jobs(webhook, opts)
         {:ok, webhook}
 
       err ->
         err
+    end
+  end
+
+  defp start_webhook_jobs(webhook, opts) do
+    unless webhook.validated do
+      args = %{webhook_id: webhook.id}
+
+      Loom.Subscriptions.ValidationWorker.new(args)
+      |> Oban.insert!()
+
+      cleanup_after =
+        Keyword.get(
+          opts,
+          :cleanup_after,
+          Application.fetch_env!(:loom, :webhook_cleanup_timeout)
+        )
+
+      unless cleanup_after == :never do
+        Loom.Subscriptions.CleanupWorker.new(args, schedule_in: cleanup_after)
+        |> Oban.insert!()
+      end
     end
   end
 

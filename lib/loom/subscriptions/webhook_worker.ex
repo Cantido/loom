@@ -1,4 +1,8 @@
 defmodule Loom.Subscriptions.WebhookWorker do
+  @moduledoc """
+  An `Oban` worker that publishes an event to a webhook.
+  """
+
   use Oban.Worker,
     queue: :webhooks
 

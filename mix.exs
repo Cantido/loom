@@ -34,6 +34,7 @@ defmodule Loom.MixProject do
     [
       {:benchfella, "~> 0.3.0"},
       {:cloudevents, "~> 0.6.1"},
+      {:credo, ">= 0.0.0", only: [:dev], runtime: false},
       {:decorator, "~> 1.4"},
       {:ex_check, "~> 0.14.0", only: [:dev], runtime: false},
       {:ex_doc, "~> 0.27", only: :dev, runtime: false},

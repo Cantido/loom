@@ -1,4 +1,8 @@
 defmodule LoomWeb.StreamChannel do
+  @moduledoc """
+  Channel for event streams.
+  """
+
   use LoomWeb, :channel
 
   @impl true

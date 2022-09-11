@@ -1,4 +1,8 @@
 defmodule Loom.Subscriptions.ValidationWorker do
+  @moduledoc """
+  An `Oban` worker that performs a Cloudevents webhook validation request.
+  """
+
   use Oban.Worker
 
   alias Loom.Subscriptions

@@ -1,4 +1,8 @@
 defmodule Loom.Schema do
+  @moduledoc """
+  Defines `Ecto.Schema` module defaults.
+  """
+
   defmacro __using__(_) do
     quote do
       use Ecto.Schema

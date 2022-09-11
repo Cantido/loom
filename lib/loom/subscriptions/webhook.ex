@@ -1,4 +1,8 @@
 defmodule Loom.Subscriptions.Webhook do
+  @moduledoc """
+  The `Ecto` model for a Cloudevents webhook.
+  """
+
   use Loom.Schema
   import Ecto.Changeset
 

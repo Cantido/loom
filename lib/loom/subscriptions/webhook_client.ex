@@ -1,4 +1,10 @@
 defmodule Loom.Subscriptions.WebhookClient do
+  @moduledoc """
+  A `Tesla` client for making webhook requests.
+
+  Handles both validation requests as well as publish requests.
+  """
+
   use Tesla
 
   def validate(webhook) do

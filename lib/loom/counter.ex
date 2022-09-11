@@ -1,4 +1,8 @@
 defmodule Loom.Counter do
+  @moduledoc """
+  The latest sequence number of events from a particular source.
+  """
+
   use Ecto.Schema
   import Ecto.Changeset
 
