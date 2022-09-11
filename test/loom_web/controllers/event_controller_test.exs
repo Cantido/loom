@@ -32,7 +32,7 @@ defmodule LoomWeb.EventControllerTest do
           type: "com.example.event"
         })
 
-      {:ok, _revision} = Loom.Store.append(event)
+      {:ok, _revision} = Loom.append(event)
 
       conn = get(conn, Routes.event_path(conn, :show, "loom-web-show-event-test", "12345"))
 
@@ -54,7 +54,7 @@ defmodule LoomWeb.EventControllerTest do
           type: "com.example.event"
         })
 
-      {:ok, _revision} = Loom.Store.append(event)
+      {:ok, _revision} = Loom.append(event)
 
       conn = get(conn, Routes.event_path(conn, :show, "loom-web-show-event-test", "12345"))
 
@@ -72,7 +72,7 @@ defmodule LoomWeb.EventControllerTest do
           type: "com.example.event"
         })
 
-      {:ok, _revision} = Loom.Store.append(event)
+      {:ok, _revision} = Loom.append(event)
 
       conn = get(conn, Routes.event_path(conn, :show, "loom-web-show-event-test", "12345"))
 
@@ -90,7 +90,7 @@ defmodule LoomWeb.EventControllerTest do
           type: "com.example.event"
         })
 
-      {:ok, _revision} = Loom.Store.append(event)
+      {:ok, _revision} = Loom.append(event)
 
       conn = get(conn, Routes.event_path(conn, :show, "loom-web-show-event-test", "12345"))
 
@@ -107,7 +107,7 @@ defmodule LoomWeb.EventControllerTest do
           type: "com.example.event"
         })
 
-      {:ok, _revision} = Loom.Store.append(event)
+      {:ok, _revision} = Loom.append(event)
       conn1 = get(conn, Routes.event_path(conn, :show, "loom-web-show-event-test", "12345"))
       etag = List.first(get_resp_header(conn1, "etag"))
 
@@ -129,7 +129,7 @@ defmodule LoomWeb.EventControllerTest do
           type: "com.example.event"
         })
 
-      {:ok, _revision} = Loom.Store.append(event)
+      {:ok, _revision} = Loom.append(event)
 
       if_modified_since = Timex.format!(Timex.shift(Timex.now(), seconds: 1), "{RFC1123}")
 
@@ -166,8 +166,8 @@ defmodule LoomWeb.EventControllerTest do
           specversion: "1.0"
         })
 
-      {:ok, 1} = Loom.Store.append(event1)
-      {:ok, 2} = Loom.Store.append(event2)
+      {:ok, 1} = Loom.append(event1)
+      {:ok, 2} = Loom.append(event2)
 
       conn = get(conn, Routes.event_path(conn, :stream), stream_id: "store-show-test")
 
@@ -193,8 +193,8 @@ defmodule LoomWeb.EventControllerTest do
           specversion: "1.0"
         })
 
-      {:ok, 1} = Loom.Store.append(event1)
-      {:ok, 2} = Loom.Store.append(event2)
+      {:ok, 1} = Loom.append(event1)
+      {:ok, 2} = Loom.append(event2)
 
       conn = get(conn, Routes.event_path(conn, :stream), stream_id: "store-limit-test", limit: 1)
 
@@ -219,8 +219,8 @@ defmodule LoomWeb.EventControllerTest do
           specversion: "1.0"
         })
 
-      {:ok, 1} = Loom.Store.append(event1)
-      {:ok, 2} = Loom.Store.append(event2)
+      {:ok, 1} = Loom.append(event1)
+      {:ok, 2} = Loom.append(event2)
 
       conn =
         get(conn, Routes.event_path(conn, :stream),
@@ -249,8 +249,8 @@ defmodule LoomWeb.EventControllerTest do
           specversion: "1.0"
         })
 
-      {:ok, 1} = Loom.Store.append(event1)
-      {:ok, 2} = Loom.Store.append(event2)
+      {:ok, 1} = Loom.append(event1)
+      {:ok, 2} = Loom.append(event2)
 
       conn =
         get(conn, Routes.event_path(conn, :stream),

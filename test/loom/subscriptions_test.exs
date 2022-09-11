@@ -74,8 +74,7 @@ defmodule Loom.SubscriptionsTest do
   end
 
   describe "webhook behaviour" do
-    @tag :tmp_dir
-    test "a webhook makes a web request when an event is created", %{tmp_dir: tmp_dir} do
+    test "a webhook makes a web request when an event is created" do
       webhook_attrs = %{
         token: "some token",
         type: "com.example.event",
@@ -110,14 +109,12 @@ defmodule Loom.SubscriptionsTest do
           specversion: "1.0"
         })
 
-      Loom.Store.init(tmp_dir)
-      {:ok, _} = Loom.Store.append(event)
+      {:ok, _} = Loom.append(event)
 
       assert_receive ^test_ref
     end
 
-    @tag :tmp_dir
-    test "a webhook is not triggered when it is not yet validated", %{tmp_dir: tmp_dir} do
+    test "a webhook is not triggered when it is not yet validated" do
       webhook_attrs = %{
         token: "some token",
         type: "com.example.event",
@@ -141,8 +138,7 @@ defmodule Loom.SubscriptionsTest do
           specversion: "1.0"
         })
 
-      Loom.Store.init(tmp_dir)
-      {:ok, _} = Loom.Store.append(event)
+      {:ok, _} = Loom.append(event)
     end
 
     test "a webhook is validated before being created" do

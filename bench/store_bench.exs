@@ -7,12 +7,12 @@ defmodule StoreBench do
   end
 
   bench "write event", [event: random_event(), stream: random_stream(), revision: random_revision()] do
-    _ = Loom.Store.append(event, expected_revision: revision)
+    _ = Loom.append(event, expected_revision: revision)
     :ok
   end
 
   bench "read event", [stream: random_stream()] do
-    _ = Loom.Store.read(stream)
+    _ = Loom.read(stream)
     :ok
   end
 
