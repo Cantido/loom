@@ -2,7 +2,7 @@ defmodule Loom.Store do
   @moduledoc """
   Loom's event store.
   """
-  alias Loom.Event
+  alias Loom.Store.Event
   alias Loom.Repo
   alias Loom.Store.Source
   alias Loom.Store.Counter
@@ -50,7 +50,7 @@ defmodule Loom.Store do
           |> Map.put(:extensions, extensions)
           |> Map.put_new(:time, DateTime.utc_now())
 
-        Loom.Event.changeset(%Event{}, event)
+        Loom.Store.Event.changeset(%Event{}, event)
         |> Ecto.Changeset.put_assoc(:source, source)
       end)
       |> Ecto.Multi.run(:webhook, fn _, %{event: event} ->

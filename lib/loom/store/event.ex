@@ -1,4 +1,4 @@
-defmodule Loom.Event do
+defmodule Loom.Store.Event do
   @moduledoc """
   Ecto schema for a CloudEvents event.
   """
@@ -29,8 +29,8 @@ defmodule Loom.Event do
 
   ## Examples
 
-      iex> event = %Loom.Event{id: "123", source: %Loom.Store.Source{source: "loom"}, type: "com.example.event", extensions: %{"sequence" => 1}}
-      iex> Loom.Event.to_cloudevent(event)
+      iex> event = %Loom.Store.Event{id: "123", source: %Loom.Store.Source{source: "loom"}, type: "com.example.event", extensions: %{"sequence" => 1}}
+      iex> Loom.Store.Event.to_cloudevent(event)
       %Cloudevents.Format.V_1_0.Event{id: "123", source: "loom", type: "com.example.event", extensions: %{"sequence" => 1}}
   """
   def to_cloudevent(%__MODULE__{} = event) do
