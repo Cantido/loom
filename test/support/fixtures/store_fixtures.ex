@@ -4,13 +4,7 @@ defmodule Loom.StoreFixtures do
   entities via the `Loom.Store` context.
   """
 
-  @doc """
-  Generate an account.
-  """
-  def account_fixture do
-    {:ok, account} = Loom.Accounts.create_account()
-    account
-  end
+  import Loom.AccountsFixtures
 
   @doc """
   Generate a source.

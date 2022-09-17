@@ -76,16 +76,19 @@ defmodule Loom.SubscriptionsTest do
   end
 
   describe "webhook behaviour" do
+    import Loom.AccountsFixtures
     import Loom.StoreFixtures
+
     @source "loom-subscriptions-test"
 
     setup do
-      source = source_fixture(%{source: @source})
+      account = account_fixture()
+      source = source_fixture(%{account: account, source: @source})
 
-      %{source: source}
+      %{source: source, account: account}
     end
 
-    test "a webhook makes a web request when an event is created" do
+    test "a webhook makes a web request when an event is created", %{account: account} do
       webhook_attrs = %{
         token: "some token",
         type: "com.example.event",
@@ -120,12 +123,12 @@ defmodule Loom.SubscriptionsTest do
           specversion: "1.0"
         })
 
-      {:ok, _} = Loom.append(event)
+      {:ok, _} = Loom.append(event, account)
 
       assert_receive ^test_ref
     end
 
-    test "a webhook is not triggered when it is not yet validated" do
+    test "a webhook is not triggered when it is not yet validated", %{account: account} do
       webhook_attrs = %{
         token: "some token",
         type: "com.example.event",
@@ -149,7 +152,7 @@ defmodule Loom.SubscriptionsTest do
           specversion: "1.0"
         })
 
-      {:ok, _} = Loom.append(event)
+      {:ok, _} = Loom.append(event, account)
     end
 
     test "a webhook is validated before being created" do

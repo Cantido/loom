@@ -3,6 +3,8 @@ defmodule Loom.Accounts do
   alias Loom.Accounts.Token
   alias Loom.Repo
 
+  import Ecto.Query
+
   require Logger
 
   def create_account do
@@ -23,8 +25,7 @@ defmodule Loom.Accounts do
   end
 
   def verify_token(username, password) do
-    Repo.get_by(Token, username: username)
+    Repo.one(from t in Token, where: [username: ^username], preload: [account: [sources: []]])
     |> Argon2.check_pass(password)
-    |> tap(fn token -> Logger.info("token: #{inspect token, pretty: true}") end)
   end
 end

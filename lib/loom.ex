@@ -10,12 +10,16 @@ defmodule Loom do
   This will return an `:ok` tuple with the revision number of that event.
   You can then read the event stream with `read/3`, which returns a `Stream` containing the requested events.
 
-      iex> {:ok, event} = Cloudevents.from_map(%{type: "com.example.event", specversion: "1.0", source: "loom-test", id: "a-uuid"})
-      iex> Loom.append(event)
+      iex> account = account_fixture()
+      iex> source = source_fixture(%{account: account, source: "loom-doctest"})
+      iex> {:ok, event} = Cloudevents.from_map(%{type: "com.example.event", specversion: "1.0", source: "loom-doctest", id: "a-uuid"})
+      iex> Loom.append(event, account)
       {:ok, 1}
-      iex> Loom.read("loom-test") |> Enum.at(0) |> Map.get(:id)
+      iex> Loom.read("loom-doctest", account) |> Enum.at(0) |> Map.get(:id)
       "a-uuid"
   """
+
+  alias Loom.Repo
 
   @type stream_id :: String.t()
   @type event_id :: String.t()
@@ -29,33 +33,45 @@ defmodule Loom do
           {:ok, revision}
           | {:error, :event_exists}
           | {:error, :revision_mismatch}
-  def append(event, opts \\ []) do
-    case Loom.Store.append(event, opts) do
-      {:ok, event} ->
-        {:ok, event}
-      err ->
-        err
+  def append(event, account, opts \\ []) do
+    account = Repo.preload(account, :sources)
+    if Enum.any?(account.sources, fn src -> src.source == event.source end) do
+      Loom.Store.append(event, opts)
+    else
+      {:error, :unauthorized}
     end
   end
 
   @doc """
   Same as `append/4`, but raises on error.
   """
-  def append!(event, opts \\ []) do
-    case append(event, opts) do
+  def append!(event, account, opts \\ []) do
+    case append(event, account, opts) do
       {:ok, new_store} -> new_store
       {:error, err} -> raise err
     end
   end
 
-  defdelegate fetch(source, event_id), to: Loom.Store
+  def fetch(source, event_id, account) do
+    account = Repo.preload(account, :sources)
+    if Enum.any?(account.sources, fn src -> src.source == source end) do
+      Loom.Store.fetch(source, event_id)
+    else
+      {:error, :unauthorized}
+    end
+  end
 
   @doc """
   Returns the most recent sequence number from a source.
   """
-  defdelegate last_sequence(source), to: Loom.Store, as: :last_revision
-
-  defdelegate list_sources, to: Loom.Store, as: :list_streams
+  def last_sequence(source, account) do
+    account = Repo.preload(account, :sources)
+    if Enum.any?(account.sources, fn src -> src.source == source end) do
+      Loom.Store.last_revision(source)
+    else
+      {:error, :unauthorized}
+    end
+  end
 
   @doc """
   Returns events from a stream.
@@ -69,5 +85,12 @@ defmodule Loom do
     You must set this to `:end` when `:direction` is set to `:backwards`. Default: `:start`
   - `:limit` - the maximum number of events to return. Default: `1000`, and cannot be set higher.
   """
-  defdelegate read(source, opts \\ []), to: Loom.Store
+  def read(source, account, opts \\ []) do
+    account = Repo.preload(account, :sources)
+    if Enum.any?(account.sources, fn src -> src.source == source end) do
+      Loom.Store.read(source, opts)
+    else
+      {:error, :unauthorized}
+    end
+  end
 end

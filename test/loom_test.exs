@@ -1,19 +1,21 @@
 defmodule LoomTest do
   use Loom.DataCase, async: true
 
-  doctest Loom
-
+  import Loom.AccountsFixtures
   import Loom.StoreFixtures
+
+  doctest Loom
 
   @source "loom-test"
 
   setup do
-    source = source_fixture(%{source: @source})
-    %{source: source}
+    account = account_fixture()
+    source = source_fixture(%{account: account, source: @source})
+    %{source: source, account: account}
   end
 
   describe "append/4 with no previous events" do
-    test "creates a an event" do
+    test "creates a an event", %{account: account} do
       {:ok, event} =
         Cloudevents.from_map(%{
           type: "test.event",
@@ -22,14 +24,14 @@ defmodule LoomTest do
           id: "basic-create-event"
         })
 
-      {:ok, 1} = Loom.append(event)
+      {:ok, 1} = Loom.append(event, account)
 
-      {:ok, event} = Loom.fetch(@source, "basic-create-event")
+      {:ok, event} = Loom.fetch(@source, "basic-create-event", account)
     end
   end
 
   describe "read" do
-    test "forward from start" do
+    test "forward from start", %{account: account} do
       {:ok, first_event} =
         Cloudevents.from_map(%{
           type: "test.event",
@@ -46,17 +48,17 @@ defmodule LoomTest do
           id: "second-to-read"
         })
 
-      {:ok, 1} = Loom.append(first_event)
-      {:ok, 2} = Loom.append(second_event)
+      {:ok, 1} = Loom.append(first_event, account)
+      {:ok, 2} = Loom.append(second_event, account)
 
-      events = Loom.read(@source, direction: :forward, from_revision: :start)
+      events = Loom.read(@source, account, direction: :forward, from_revision: :start)
 
       assert Enum.count(events) == 2
       assert Enum.at(events, 0).id == "first-to-read"
       assert Enum.at(events, 1).id == "second-to-read"
     end
 
-    test "limit" do
+    test "limit", %{account: account} do
       {:ok, first_event} =
         Cloudevents.from_map(%{
           type: "test.event",
@@ -73,10 +75,10 @@ defmodule LoomTest do
           id: "after-limit"
         })
 
-      {:ok, 1} = Loom.append(first_event)
-      {:ok, 2} = Loom.append(second_event)
+      {:ok, 1} = Loom.append(first_event, account)
+      {:ok, 2} = Loom.append(second_event, account)
 
-      events = Loom.read(@source, direction: :forward, from_revision: :start, limit: 1)
+      events = Loom.read(@source, account, direction: :forward, from_revision: :start, limit: 1)
 
       assert Enum.count(events) == 1
       assert List.first(events).id == "before-limit"
