@@ -14,7 +14,7 @@ defmodule Loom.Store do
   def append(event, opts \\ []) do
     result =
       Ecto.Multi.new()
-      |> Ecto.Multi.one(:source, from(s in Source, where: s.source == ^event.source))
+      |> Ecto.Multi.one(:source, from(s in Source, where: s.source == ^event.source, preload: [:counter]))
       |> Ecto.Multi.run(:check_source, fn _, %{source: source} ->
         if is_nil(source) do
           {:error, :source_not_found}
@@ -22,12 +22,19 @@ defmodule Loom.Store do
           {:ok, true}
         end
       end)
-      |> Ecto.Multi.one(:last_counter, from(c in Counter, where: c.source == ^event.source))
-      |> Ecto.Multi.run(:current_counter, fn repo, %{last_counter: counter} ->
-        counter = if is_nil(counter), do: %Counter{source: event.source}, else: counter
+      |> Ecto.Multi.run(:current_counter, fn repo, %{source: source} ->
+        counter =
+          if is_nil(source.counter) do
+            Counter.changeset(%Counter{})
+            |> Ecto.Changeset.put_assoc(:source, source)
+          else
+            Ecto.Changeset.change(source.counter)
+          end
 
-        if revision_match?(counter.value, Keyword.get(opts, :expected_revision, :any)) do
-          cs = Ecto.Changeset.change(counter, %{value: counter.value + 1})
+        counter_value = Ecto.Changeset.get_field(counter, :value)
+
+        if revision_match?(counter_value, Keyword.get(opts, :expected_revision, :any)) do
+          cs = Ecto.Changeset.change(counter, %{value: counter_value + 1})
           repo.insert_or_update(cs)
         else
           {:error, :revision_mismatch}
@@ -76,7 +83,14 @@ defmodule Loom.Store do
   defp revision_match?(_, _), do: false
 
   def last_revision(source) do
-    if counter = Repo.one(from(c in Loom.Counter, where: c.source == ^source)) do
+    counter =
+      Repo.one(
+        from c in Loom.Counter,
+        join: s in assoc(c, :source),
+        where: s.source == ^source
+      )
+
+    if counter do
       counter.value
     else
       0

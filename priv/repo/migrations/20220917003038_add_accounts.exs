@@ -27,5 +27,10 @@ defmodule Loom.Repo.Migrations.AddAccounts do
     end
 
     create unique_index(:events, [:source_id, :id])
+
+    alter table(:counters) do
+      remove :source, :string
+      add :source_id, references(:sources, on_delete: :delete_all, on_update: :update_all), null: false, primary_key: true
+    end
   end
 end
