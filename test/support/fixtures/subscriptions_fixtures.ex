@@ -4,11 +4,13 @@ defmodule Loom.SubscriptionsFixtures do
   entities via the `Loom.Subscriptions` context.
   """
 
+  import Loom.AccountsFixtures
+
   @doc """
   Generate a webhook.
   """
   def webhook_fixture(attrs \\ %{}) do
-    {:ok, webhook} =
+    attrs =
       attrs
       |> Enum.into(%{
         token: "some token",
@@ -17,7 +19,9 @@ defmodule Loom.SubscriptionsFixtures do
         validated: true,
         allowed_rate: 100
       })
-      |> Loom.Subscriptions.create_webhook()
+    account = Map.get(attrs, :account, account_fixture())
+    {:ok, webhook} =
+      Loom.Subscriptions.create_webhook(account, attrs)
 
     webhook
   end

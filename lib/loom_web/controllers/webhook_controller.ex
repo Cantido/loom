@@ -7,12 +7,12 @@ defmodule LoomWeb.WebhookController do
   action_fallback LoomWeb.FallbackController
 
   def index(conn, _params) do
-    webhooks = Subscriptions.list_webhooks()
+    webhooks = Subscriptions.list_webhooks(conn.assigns[:current_account])
     render(conn, "index.json", webhooks: webhooks)
   end
 
   def create(conn, %{"webhook" => webhook_params}) do
-    with {:ok, %Webhook{} = webhook} <- Subscriptions.create_webhook(webhook_params) do
+    with {:ok, %Webhook{} = webhook} <- Subscriptions.create_webhook(conn.assigns[:current_account], webhook_params) do
       conn
       |> put_status(:created)
       |> put_resp_header("location", Routes.webhook_path(conn, :show, webhook))

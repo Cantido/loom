@@ -3,10 +3,10 @@ defmodule Loom.Subscriptions do
   The Subscriptions context.
   """
 
-  import Ecto.Query, warn: false
   alias Loom.Repo
-
   alias Loom.Subscriptions.Webhook
+
+  import Ecto.Query, warn: false
 
   require Logger
 
@@ -19,8 +19,8 @@ defmodule Loom.Subscriptions do
       [%Webhook{}, ...]
 
   """
-  def list_webhooks do
-    Repo.all(Webhook)
+  def list_webhooks(account) do
+    Repo.all(Ecto.assoc(account, :webhooks))
   end
 
   @doc """
@@ -64,16 +64,17 @@ defmodule Loom.Subscriptions do
 
   ## Examples
 
-      iex> create_webhook(%{field: value})
+      iex> create_webhook(create_account(), %{field: value})
       {:ok, %Webhook{}}
 
-      iex> create_webhook(%{field: bad_value})
+      iex> create_webhook(create_account(), %{field: bad_value})
       {:error, %Ecto.Changeset{}}
 
   """
-  def create_webhook(attrs \\ %{}, opts \\ []) do
+  def create_webhook(account, attrs \\ %{}, opts \\ []) do
     %Webhook{}
     |> Webhook.changeset(attrs)
+    |> Ecto.Changeset.put_assoc(:account, account)
     |> Repo.insert()
     |> case do
       {:ok, webhook} ->
@@ -154,7 +155,15 @@ defmodule Loom.Subscriptions do
   end
 
   def send_webhooks(event) do
-    webhooks = Loom.Repo.all(from w in Webhook, where: w.type == ^event.type, where: w.validated)
+    webhooks =
+      Loom.Repo.all(
+        from w in Webhook,
+        join: a in assoc(w, :account),
+        join: s in assoc(a, :sources),
+        where: s.source == ^event.source,
+        where: w.type == ^event.type,
+        where: w.validated
+      )
     Logger.info("Got #{Enum.count(webhooks)} webhooks for type #{event.type}")
 
     event_json = Cloudevents.to_json(event)

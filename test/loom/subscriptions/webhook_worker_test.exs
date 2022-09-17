@@ -4,9 +4,17 @@ defmodule Loom.Subscriptions.WebhookWorkerTest do
 
   alias Loom.Subscriptions
 
+  import Loom.AccountsFixtures
+
   import Tesla.Mock
 
-  test "sends the event to the webhook target" do
+  setup do
+    %{
+      account: account_fixture()
+    }
+  end
+
+  test "sends the event to the webhook target", %{account: account} do
     webhook_attrs = %{
       token: "some token",
       type: "com.example.event",
@@ -21,7 +29,7 @@ defmodule Loom.Subscriptions.WebhookWorkerTest do
       %Tesla.Env{status: 200}
     end)
 
-    {:ok, webhook} = Subscriptions.create_webhook(webhook_attrs)
+    {:ok, webhook} = Subscriptions.create_webhook(account, webhook_attrs)
 
     event =
       Cloudevents.from_map!(%{
@@ -41,7 +49,7 @@ defmodule Loom.Subscriptions.WebhookWorkerTest do
       )
   end
 
-  test "cancels the job if the webhook does not exist " do
+  test "cancels the job if the webhook does not exist" do
     event =
       Cloudevents.from_map!(%{
         id: "webhook-worker-test",
@@ -60,7 +68,7 @@ defmodule Loom.Subscriptions.WebhookWorkerTest do
       )
   end
 
-  test "deletes the webhook when we get a 410 Gone response" do
+  test "deletes the webhook when we get a 410 Gone response", %{account: account} do
     webhook_attrs = %{
       token: "some token",
       type: "com.example.event",
@@ -73,7 +81,7 @@ defmodule Loom.Subscriptions.WebhookWorkerTest do
       %Tesla.Env{status: 410}
     end)
 
-    {:ok, webhook} = Subscriptions.create_webhook(webhook_attrs)
+    {:ok, webhook} = Subscriptions.create_webhook(account, webhook_attrs)
 
     event =
       Cloudevents.from_map!(%{
@@ -95,7 +103,7 @@ defmodule Loom.Subscriptions.WebhookWorkerTest do
     assert {:error, :not_found} == Loom.Subscriptions.get_webhook(webhook.id)
   end
 
-  test "snoozes the job if we get a 429 Too Many Requests response" do
+  test "snoozes the job if we get a 429 Too Many Requests response", %{account: account} do
     webhook_attrs = %{
       token: "some token",
       type: "com.example.event",
@@ -113,7 +121,7 @@ defmodule Loom.Subscriptions.WebhookWorkerTest do
       %Tesla.Env{status: 429, headers: [{"retry-after", retry_after}]}
     end)
 
-    {:ok, webhook} = Subscriptions.create_webhook(webhook_attrs)
+    {:ok, webhook} = Subscriptions.create_webhook(account, webhook_attrs)
 
     event =
       Cloudevents.from_map!(%{
@@ -133,7 +141,7 @@ defmodule Loom.Subscriptions.WebhookWorkerTest do
       )
   end
 
-  test "snoozes if we need to rate-limit" do
+  test "snoozes if we need to rate-limit", %{account: account} do
     webhook_attrs = %{
       token: "some token",
       type: "com.example.event",
@@ -149,7 +157,7 @@ defmodule Loom.Subscriptions.WebhookWorkerTest do
       %Tesla.Env{status: 200}
     end)
 
-    {:ok, webhook} = Subscriptions.create_webhook(webhook_attrs)
+    {:ok, webhook} = Subscriptions.create_webhook(account, webhook_attrs)
 
     {:allow, _} =
       Hammer.check_rate_inc(

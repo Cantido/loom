@@ -4,9 +4,12 @@ defmodule Loom.Subscriptions.Webhook do
   """
 
   use Loom.Schema
+  alias Loom.Accounts.Account
   import Ecto.Changeset
 
   schema "webhooks" do
+    belongs_to :account, Account
+
     field :token, :string, redact: true
     field :type, :string
     field :url, :string

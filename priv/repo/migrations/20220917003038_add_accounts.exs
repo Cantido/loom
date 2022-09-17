@@ -32,5 +32,9 @@ defmodule Loom.Repo.Migrations.AddAccounts do
       remove :source, :string
       add :source_id, references(:sources, on_delete: :delete_all, on_update: :update_all), null: false, primary_key: true
     end
+
+    alter table(:webhooks) do
+      add :account_id, references(:accounts, on_delete: :delete_all, on_update: :update_all), null: false
+    end
   end
 end
