@@ -2,6 +2,9 @@ defmodule Loom.Application do
   @moduledoc false
 
   use Application
+  use Boundary,
+    top_level?: true,
+    deps: [Loom, LoomWeb]
 
   @impl true
   def start(_type, _args) do
@@ -26,6 +29,8 @@ defmodule Loom.Application do
           :webhook_request_callback,
           LoomWeb.Router.Helpers.webhook_confirm_url(LoomWeb.Endpoint, :confirm, ":webhook_id")
         )
+
+        Application.put_env(:loom, :broadcast_endpoint, LoomWeb.Endpoint)
 
         {:ok, pid}
 

@@ -19,6 +19,18 @@ defmodule Loom do
       "a-uuid"
   """
 
+  use Boundary,
+    deps: [],
+    exports: [
+      Accounts,
+      Accounts.Token,
+      Accounts.User,
+      Store,
+      Store.Source,
+      Subscriptions,
+      Subscriptions.Webhook
+    ]
+
   alias Loom.Repo
 
   @type stream_id :: String.t()

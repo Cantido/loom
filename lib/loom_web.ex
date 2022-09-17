@@ -17,6 +17,10 @@ defmodule LoomWeb do
   and import those modules here.
   """
 
+  use Boundary,
+    deps: [Loom],
+    exports: [Endpoint, Router.Helpers]
+
   def controller do
     quote do
       use Phoenix.Controller, namespace: LoomWeb

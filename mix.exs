@@ -7,6 +7,7 @@ defmodule Loom.MixProject do
       version: "0.1.0",
       elixir: "~> 1.12",
       elixirc_paths: elixirc_paths(Mix.env()),
+      compilers: [:boundary] ++ Mix.compilers(),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
       deps: deps()
@@ -34,6 +35,7 @@ defmodule Loom.MixProject do
     [
       {:argon2_elixir, "~> 3.0"},
       {:benchfella, "~> 0.3.0"},
+      {:boundary, "~> 0.9", runtime: false},
       {:cloudevents, "~> 0.6.1"},
       {:credo, ">= 0.0.0", only: [:dev], runtime: false},
       {:decorator, "~> 1.4"},

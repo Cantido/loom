@@ -56,7 +56,10 @@ defmodule Loom.Store do
       |> Ecto.Multi.run(:webhook, fn _, %{event: event} ->
         event = Event.to_cloudevent(event)
         Loom.Subscriptions.send_webhooks(event)
-        LoomWeb.Endpoint.broadcast!("stream:" <> event.source, "event", event)
+
+        broadcast_endpoint = Application.fetch_env!(:loom, :broadcast_endpoint)
+
+        broadcast_endpoint.broadcast!("stream:" <> event.source, "event", event)
         {:ok, nil}
       end)
       |> Repo.transaction()
