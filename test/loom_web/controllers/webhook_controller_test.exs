@@ -2,6 +2,7 @@ defmodule LoomWeb.WebhookControllerTest do
   use LoomWeb.ConnCase
 
   import Loom.SubscriptionsFixtures
+  import Loom.AccountsFixtures
 
   alias Loom.Subscriptions.Webhook
 
@@ -19,7 +20,14 @@ defmodule LoomWeb.WebhookControllerTest do
   @invalid_attrs %{token: nil, type: nil, url: nil}
 
   setup %{conn: conn} do
-    {:ok, conn: put_req_header(conn, "accept", "application/json")}
+    token = token_fixture()
+
+    conn =
+      conn
+      |> put_req_header("accept", "application/json")
+      |> put_req_header("authorization", Plug.BasicAuth.encode_basic_auth(token.username, token.password))
+
+    {:ok, %{conn: conn}}
   end
 
   describe "index" do

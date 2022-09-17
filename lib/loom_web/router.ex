@@ -1,6 +1,8 @@
 defmodule LoomWeb.Router do
   use LoomWeb, :router
 
+  alias Loom.Accounts.Token
+
   pipeline :browser do
     plug :accepts, ["html"]
     plug :fetch_session
@@ -11,7 +13,17 @@ defmodule LoomWeb.Router do
   end
 
   pipeline :api do
+    plug :auth
     plug :accepts, ["json"]
+  end
+
+  defp auth(conn, _opts) do
+    with {user, pass} <- Plug.BasicAuth.parse_basic_auth(conn),
+         {:ok, %Token{} = token} <- Loom.Accounts.verify_token(user, pass) do
+      assign(conn, :current_account, token.account)
+    else
+      _ -> conn |> Plug.BasicAuth.request_basic_auth() |> halt()
+    end
   end
 
   scope "/", LoomWeb do

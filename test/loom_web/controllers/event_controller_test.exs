@@ -4,6 +4,8 @@ defmodule LoomWeb.EventControllerTest do
   alias Loom.Accounts
   alias Loom.Store
 
+  import Loom.AccountsFixtures
+
   @source "loom-web-event-controller-test"
 
   @create_attrs %{
@@ -14,18 +16,21 @@ defmodule LoomWeb.EventControllerTest do
   }
   @invalid_attrs %{id: nil}
 
-  setup do
+  setup %{conn: conn} do
     {:ok, account} = Accounts.create_account()
     {:ok, source} = Store.create_source(account, @source)
+    token = token_fixture()
+
+    conn =
+      conn
+      |> put_req_header("accept", "application/json")
+      |> put_req_header("authorization", Plug.BasicAuth.encode_basic_auth(token.username, token.password))
 
     %{
+      conn: conn,
       account: account,
       source: source
     }
-  end
-
-  setup %{conn: conn} do
-    {:ok, conn: put_req_header(conn, "accept", "application/json")}
   end
 
   describe "create event" do
@@ -91,6 +96,7 @@ defmodule LoomWeb.EventControllerTest do
 
       conn = get(conn, Routes.event_path(conn, :show, @source, "12345"))
 
+      assert response(conn, 200) != ""
       assert [header] = get_resp_header(conn, "last-modified")
       last_modified = Timex.parse!(header, "{RFC1123}")
       assert Timex.before?(last_modified, Timex.now())
@@ -124,6 +130,8 @@ defmodule LoomWeb.EventControllerTest do
 
       {:ok, _revision} = Loom.append(event)
       conn1 = get(conn, Routes.event_path(conn, :show, @source, "12345"))
+      assert response(conn1, 200) != ""
+
       etag = List.first(get_resp_header(conn1, "etag"))
 
       conn = put_req_header(conn, "if-none-match", etag)

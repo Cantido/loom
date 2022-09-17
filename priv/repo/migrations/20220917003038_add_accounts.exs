@@ -9,7 +9,7 @@ defmodule Loom.Repo.Migrations.AddAccounts do
     create table(:tokens) do
       add :account_id, references(:accounts, on_delete: :delete_all, on_update: :update_all), null: false
       add :username, :string, null: false
-      add :password, :string, null: false
+      add :password_hash, :string, null: false
     end
 
     create unique_index(:tokens, [:username])
