@@ -1,6 +1,19 @@
 defmodule LoomWeb.StreamChannelTest do
   use LoomWeb.ChannelCase
 
+  alias Loom.Accounts
+  alias Loom.Store
+
+  setup do
+    {:ok, account} = Accounts.create_account()
+    {:ok, source} = Store.create_source(account, "stream-channel-test")
+
+    %{
+      account: account,
+      source: source
+    }
+  end
+
   setup do
     {:ok, _, socket} =
       LoomWeb.EventSocket

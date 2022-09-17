@@ -5,6 +5,8 @@ defmodule Loom.SubscriptionsTest do
 
   import Tesla.Mock
 
+  @source "loom-subscriptions-test"
+
   describe "CRUD webhooks" do
     alias Loom.Subscriptions.Webhook
 
@@ -74,6 +76,15 @@ defmodule Loom.SubscriptionsTest do
   end
 
   describe "webhook behaviour" do
+    import Loom.StoreFixtures
+    @source "loom-subscriptions-test"
+
+    setup do
+      source = source_fixture(%{source: @source})
+
+      %{source: source}
+    end
+
     test "a webhook makes a web request when an event is created" do
       webhook_attrs = %{
         token: "some token",
@@ -104,7 +115,7 @@ defmodule Loom.SubscriptionsTest do
       event =
         Cloudevents.from_map!(%{
           id: "webhook-request-event",
-          source: "webhook-tests",
+          source: @source,
           type: "com.example.event",
           specversion: "1.0"
         })
@@ -133,7 +144,7 @@ defmodule Loom.SubscriptionsTest do
       event =
         Cloudevents.from_map!(%{
           id: "webhook-request-event",
-          source: "webhook-tests",
+          source: @source,
           type: "com.example.event",
           specversion: "1.0"
         })

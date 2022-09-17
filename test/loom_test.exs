@@ -3,19 +3,28 @@ defmodule LoomTest do
 
   doctest Loom
 
+  import Loom.StoreFixtures
+
+  @source "loom-test"
+
+  setup do
+    source = source_fixture(%{source: @source})
+    %{source: source}
+  end
+
   describe "append/4 with no previous events" do
     test "creates a an event" do
       {:ok, event} =
         Cloudevents.from_map(%{
           type: "test.event",
           specversion: "1.0",
-          source: "loom",
+          source: @source,
           id: "basic-create-event"
         })
 
       {:ok, 1} = Loom.append(event)
 
-      {:ok, event} = Loom.fetch("loom", "basic-create-event")
+      {:ok, event} = Loom.fetch(@source, "basic-create-event")
     end
   end
 
@@ -25,7 +34,7 @@ defmodule LoomTest do
         Cloudevents.from_map(%{
           type: "test.event",
           specversion: "1.0",
-          source: "read-forward-test",
+          source: @source,
           id: "first-to-read"
         })
 
@@ -33,14 +42,14 @@ defmodule LoomTest do
         Cloudevents.from_map(%{
           type: "test.event",
           specversion: "1.0",
-          source: "read-forward-test",
+          source: @source,
           id: "second-to-read"
         })
 
       {:ok, 1} = Loom.append(first_event)
       {:ok, 2} = Loom.append(second_event)
 
-      events = Loom.read("read-forward-test", direction: :forward, from_revision: :start)
+      events = Loom.read(@source, direction: :forward, from_revision: :start)
 
       assert Enum.count(events) == 2
       assert Enum.at(events, 0).id == "first-to-read"
@@ -52,7 +61,7 @@ defmodule LoomTest do
         Cloudevents.from_map(%{
           type: "test.event",
           specversion: "1.0",
-          source: "read-limit-test",
+          source: @source,
           id: "before-limit"
         })
 
@@ -60,14 +69,14 @@ defmodule LoomTest do
         Cloudevents.from_map(%{
           type: "test.event",
           specversion: "1.0",
-          source: "read-limit-test",
+          source: @source,
           id: "after-limit"
         })
 
       {:ok, 1} = Loom.append(first_event)
       {:ok, 2} = Loom.append(second_event)
 
-      events = Loom.read("read-limit-test", direction: :forward, from_revision: :start, limit: 1)
+      events = Loom.read(@source, direction: :forward, from_revision: :start, limit: 1)
 
       assert Enum.count(events) == 1
       assert List.first(events).id == "before-limit"

@@ -10,10 +10,10 @@ defmodule Loom do
   This will return an `:ok` tuple with the revision number of that event.
   You can then read the event stream with `read/3`, which returns a `Stream` containing the requested events.
 
-      iex> {:ok, event} = Cloudevents.from_map(%{type: "com.example.event", specversion: "1.0", source: "loom", id: "a-uuid"})
+      iex> {:ok, event} = Cloudevents.from_map(%{type: "com.example.event", specversion: "1.0", source: "loom-test", id: "a-uuid"})
       iex> Loom.append(event)
       {:ok, 1}
-      iex> Loom.read("loom") |> Enum.at(0) |> Map.get(:id)
+      iex> Loom.read("loom-test") |> Enum.at(0) |> Map.get(:id)
       "a-uuid"
   """
 

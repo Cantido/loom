@@ -3,13 +3,14 @@ defmodule Loom.Event do
   Ecto schema for a CloudEvents event.
   """
 
-  use Ecto.Schema
+  use Loom.Schema
+  alias Loom.Source
   import Ecto.Changeset
 
   @primary_key false
   schema "events" do
+    belongs_to :source, Source, primary_key: true
     field :id, :string, primary_key: true
-    field :source, :string, primary_key: true
     field :type, :string
     field :data, :binary
     field :datacontenttype, :string
@@ -28,15 +29,18 @@ defmodule Loom.Event do
 
   ## Examples
 
-      iex> event = %Loom.Event{id: "123", source: "loom", type: "com.example.event", extensions: %{"sequence" => 1}}
+      iex> event = %Loom.Event{id: "123", source: %Loom.Source{source: "loom"}, type: "com.example.event", extensions: %{"sequence" => 1}}
       iex> Loom.Event.to_cloudevent(event)
       %Cloudevents.Format.V_1_0.Event{id: "123", source: "loom", type: "com.example.event", extensions: %{"sequence" => 1}}
   """
   def to_cloudevent(%__MODULE__{} = event) do
     event
+    |> Loom.Repo.preload(:source)
     |> Map.from_struct()
     |> Map.drop([:__meta__])
     |> Map.put(:specversion, "1.0")
+    |> Map.update!(:source, fn s -> s.source end)
+    |> Map.delete(:source_id)
     |> then(fn event ->
       if Map.get(event, :time) do
         Map.update!(event, :time, &DateTime.to_iso8601/1)
@@ -56,7 +60,6 @@ defmodule Loom.Event do
     model
     |> cast(params, [
       :id,
-      :source,
       :type,
       :data,
       :datacontenttype,
@@ -64,10 +67,9 @@ defmodule Loom.Event do
       :time,
       :extensions
     ])
-    |> validate_required([:id, :source, :type])
+    |> validate_required([:id, :type])
     |> validate_length(:data, max: 64 * 1024)
     |> validate_length(:id, min: 1)
-    |> validate_length(:source, min: 1)
     |> validate_length(:type, min: 1)
     |> validate_format(:datacontenttype, ~r(/))
     |> validate_length(:dataschema, min: 1)

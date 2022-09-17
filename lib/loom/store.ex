@@ -4,6 +4,8 @@ defmodule Loom.Store do
   """
   alias Loom.Event
   alias Loom.Repo
+  alias Loom.Source
+  alias Loom.Counter
 
   import Ecto.Query
 
@@ -12,9 +14,17 @@ defmodule Loom.Store do
   def append(event, opts \\ []) do
     result =
       Ecto.Multi.new()
-      |> Ecto.Multi.one(:last_counter, from(c in Loom.Counter, where: c.source == ^event.source))
+      |> Ecto.Multi.one(:source, from(s in Source, where: s.source == ^event.source))
+      |> Ecto.Multi.run(:check_source, fn _, %{source: source} ->
+        if is_nil(source) do
+          {:error, :source_not_found}
+        else
+          {:ok, true}
+        end
+      end)
+      |> Ecto.Multi.one(:last_counter, from(c in Counter, where: c.source == ^event.source))
       |> Ecto.Multi.run(:current_counter, fn repo, %{last_counter: counter} ->
-        counter = if is_nil(counter), do: %Loom.Counter{source: event.source}, else: counter
+        counter = if is_nil(counter), do: %Counter{source: event.source}, else: counter
 
         if revision_match?(counter.value, Keyword.get(opts, :expected_revision, :any)) do
           cs = Ecto.Changeset.change(counter, %{value: counter.value + 1})
@@ -23,14 +33,18 @@ defmodule Loom.Store do
           {:error, :revision_mismatch}
         end
       end)
-      |> Ecto.Multi.insert(:event, fn %{current_counter: current_counter} ->
+      |> Ecto.Multi.insert(:event, fn %{current_counter: current_counter, source: source} ->
+
         extensions =
           Map.put(event.extensions, "sequence", Integer.to_string(current_counter.value))
 
-        event = %{event | extensions: extensions}
-        event = if is_nil(event.time), do: %{event | time: DateTime.utc_now()}, else: event
+        event =
+          Cloudevents.to_map(event)
+          |> Map.put(:extensions, extensions)
+          |> Map.put_new(:time, DateTime.utc_now())
 
-        Loom.Event.from_cloudevent(event)
+        Loom.Event.changeset(%Event{}, event)
+        |> Ecto.Changeset.put_assoc(:source, source)
       end)
       |> Ecto.Multi.run(:webhook, fn _, %{event: event} ->
         event = Event.to_cloudevent(event)
@@ -44,11 +58,12 @@ defmodule Loom.Store do
       {:ok, results} ->
         {:ok, String.to_integer(results[:event].extensions["sequence"])}
 
+      {:error, :check_source, :source_not_found, _changes} ->
+        {:error, :source_not_found}
+
       {:error, :current_counter, :revision_mismatch, _changes} ->
         {:error, :revision_mismatch}
 
-      {:error, :event, _changeset, _changes} ->
-        {:error, :event_exists}
     end
   end
 
@@ -69,10 +84,31 @@ defmodule Loom.Store do
   end
 
   def fetch(source, event_id) do
-    if event = Repo.get_by(Event, source: source, id: event_id) do
+    event =
+      Repo.one(
+        from e in Event,
+        join: s in assoc(e, :source),
+        where: s.source == ^source,
+        where: e.id == ^event_id
+      )
+    if event do
       {:ok, Event.to_cloudevent(event)}
     else
       {:error, :not_found}
+    end
+  end
+
+  def create_source(account, source_value) do
+    Source.changeset(%Source{}, %{source: source_value})
+    |> Ecto.Changeset.put_assoc(:account, account)
+    |> Repo.insert()
+  end
+
+  def fetch_source(source) do
+    if source = Repo.one(from s in Source, where: s.source == ^source, preload: [:account, :source]) do
+      {:ok, source}
+    else
+      :error
     end
   end
 
@@ -120,7 +156,8 @@ defmodule Loom.Store do
 
     Repo.all(
       from e in Event,
-        where: e.source == ^stream_id,
+        join: s in assoc(e, :source),
+        where: s.source == ^stream_id,
         where: e.extensions["sequence"] in ^revision_range,
         order_by: [{^sort_dir, e.extensions["sequence"]}]
     )
