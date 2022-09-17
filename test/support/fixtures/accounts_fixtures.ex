@@ -8,8 +8,13 @@ defmodule Loom.AccountsFixtures do
   @doc """
   Generate an account.
   """
-  def account_fixture do
-    {:ok, account} = Loom.Accounts.create_account()
+  def account_fixture(params \\ %{}) do
+    params =
+      Enum.into(params, %{
+        email: Faker.Internet.safe_email()
+      })
+
+    {:ok, account} = Loom.Accounts.create_account(params)
     account
   end
 

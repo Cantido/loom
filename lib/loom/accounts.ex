@@ -7,8 +7,9 @@ defmodule Loom.Accounts do
 
   require Logger
 
-  def create_account do
-    Repo.insert(%Account{})
+  def create_account(params \\ %{}) do
+    Account.changeset(%Account{}, params)
+    |> Repo.insert()
   end
 
   def generate_credentials do

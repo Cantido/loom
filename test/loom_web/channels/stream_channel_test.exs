@@ -4,9 +4,12 @@ defmodule LoomWeb.StreamChannelTest do
   alias Loom.Accounts
   alias Loom.Store
 
+  import Loom.AccountsFixtures
+  import Loom.StoreFixtures
+
   setup do
-    {:ok, account} = Accounts.create_account()
-    {:ok, source} = Store.create_source(account, "stream-channel-test")
+    account = account_fixture()
+    source = source_fixture(%{account: account, source: "stream-channel-test"})
 
     %{
       account: account,

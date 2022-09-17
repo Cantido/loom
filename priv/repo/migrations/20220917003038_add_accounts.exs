@@ -3,7 +3,7 @@ defmodule Loom.Repo.Migrations.AddAccounts do
 
   def change do
     create table(:accounts) do
-      # no fields, yet
+      add :email, :string, null: false
     end
 
     create table(:tokens) do
