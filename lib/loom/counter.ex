@@ -4,7 +4,7 @@ defmodule Loom.Counter do
   """
 
   use Loom.Schema
-  alias Loom.Source
+  alias Loom.Store.Source
   import Ecto.Changeset
 
   @primary_key false

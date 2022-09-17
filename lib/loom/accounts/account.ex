@@ -1,7 +1,7 @@
 defmodule Loom.Accounts.Account do
   use Loom.Schema
 
-  alias Loom.Source
+  alias Loom.Store.Source
   alias Loom.Subscriptions.Webhook
 
   import Ecto.Changeset

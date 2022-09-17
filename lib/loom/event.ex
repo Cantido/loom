@@ -4,7 +4,7 @@ defmodule Loom.Event do
   """
 
   use Loom.Schema
-  alias Loom.Source
+  alias Loom.Store.Source
   import Ecto.Changeset
 
   @primary_key false
@@ -29,7 +29,7 @@ defmodule Loom.Event do
 
   ## Examples
 
-      iex> event = %Loom.Event{id: "123", source: %Loom.Source{source: "loom"}, type: "com.example.event", extensions: %{"sequence" => 1}}
+      iex> event = %Loom.Event{id: "123", source: %Loom.Store.Source{source: "loom"}, type: "com.example.event", extensions: %{"sequence" => 1}}
       iex> Loom.Event.to_cloudevent(event)
       %Cloudevents.Format.V_1_0.Event{id: "123", source: "loom", type: "com.example.event", extensions: %{"sequence" => 1}}
   """

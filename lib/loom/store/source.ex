@@ -1,4 +1,4 @@
-defmodule Loom.Source do
+defmodule Loom.Store.Source do
   use Loom.Schema
 
   alias Loom.Accounts.Account

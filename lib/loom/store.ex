@@ -4,7 +4,7 @@ defmodule Loom.Store do
   """
   alias Loom.Event
   alias Loom.Repo
-  alias Loom.Source
+  alias Loom.Store.Source
   alias Loom.Counter
 
   import Ecto.Query
