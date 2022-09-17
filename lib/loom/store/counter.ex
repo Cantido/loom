@@ -1,4 +1,4 @@
-defmodule Loom.Counter do
+defmodule Loom.Store.Counter do
   @moduledoc """
   The latest sequence number of events from a particular source.
   """

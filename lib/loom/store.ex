@@ -5,7 +5,7 @@ defmodule Loom.Store do
   alias Loom.Event
   alias Loom.Repo
   alias Loom.Store.Source
-  alias Loom.Counter
+  alias Loom.Store.Counter
 
   import Ecto.Query
 
@@ -85,7 +85,7 @@ defmodule Loom.Store do
   def last_revision(source) do
     counter =
       Repo.one(
-        from c in Loom.Counter,
+        from c in Loom.Store.Counter,
         join: s in assoc(c, :source),
         where: s.source == ^source
       )

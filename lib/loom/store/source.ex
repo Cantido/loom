@@ -2,7 +2,7 @@ defmodule Loom.Store.Source do
   use Loom.Schema
 
   alias Loom.Accounts.Account
-  alias Loom.Counter
+  alias Loom.Store.Counter
 
   import Ecto.Changeset
 
