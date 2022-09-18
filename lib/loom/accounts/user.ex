@@ -1,8 +1,10 @@
 defmodule Loom.Accounts.User do
   use Loom.Schema
+  alias Loom.Accounts.Account
   import Ecto.Changeset
 
   schema "users" do
+    many_to_many :accounts, Account, join_through: "users_accounts"
     field :email, :string
     field :password, :string, virtual: true, redact: true
     field :hashed_password, :string, redact: true
