@@ -2,11 +2,13 @@ defmodule Loom.Accounts.Token do
   use Loom.Schema
 
   alias Loom.Accounts.Account
+  alias Loom.Accounts.Team
 
   import Ecto.Changeset
 
   schema "tokens" do
     belongs_to :account, Account
+    belongs_to :team, Team
     field :username, :string
     field :password_hash, :string, redact: true
     field :password, :string, virtual: true, redact: true
