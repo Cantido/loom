@@ -1,5 +1,7 @@
 defmodule Loom.Accounts do
   alias Loom.Accounts.Account
+  alias Loom.Accounts.Role
+  alias Loom.Accounts.Team
   alias Loom.Accounts.Token
   alias Loom.Repo
 
@@ -373,5 +375,125 @@ defmodule Loom.Accounts do
       {:ok, %{user: user}} -> {:ok, user}
       {:error, :user, changeset, _} -> {:error, changeset}
     end
+  end
+
+  @doc """
+  Returns the list of teams.
+
+  ## Examples
+
+      iex> list_teams(user_fixture())
+      [%Team{}, ...]
+
+  """
+  def list_teams(user) do
+    Ecto.assoc(user, :teams)
+    |> Repo.all()
+  end
+
+  @doc """
+  Gets a single team.
+
+  Raises `Ecto.NoResultsError` if the Team does not exist.
+
+  ## Examples
+
+      iex> get_team!(123)
+      %Team{}
+
+      iex> get_team!(456)
+      ** (Ecto.NoResultsError)
+
+  """
+  def get_team!(id), do: Repo.get!(Team, id)
+
+  @doc """
+  Creates a team.
+
+  ## Examples
+
+      iex> create_team(%{field: value}, user_fixture())
+      {:ok, %{team: %Team{}}}
+
+      iex> create_team(%{field: bad_value}, user_fixture())
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def create_team(attrs \\ %{}, user) do
+    Ecto.Multi.new()
+    |> Ecto.Multi.insert(:team, Team.changeset(%Team{}, attrs))
+    |> Ecto.Multi.insert(:role, fn %{team: team} ->
+      Ecto.build_assoc(team, :roles, user_id: user.id)
+      |> Role.changeset(%{role: :owner})
+    end)
+    |> Repo.transaction()
+  end
+
+  def join_team(team, user, role) do
+    Ecto.build_assoc(team, :role, user_id: user.id)
+    |> Role.changeset(%{role: role})
+    |> Repo.insert()
+  end
+
+  def leave_team(team, user) do
+    Repo.delete_all(
+      from r in Role,
+      where: [team_id: ^team.id],
+      where: [user_id: ^user.id]
+    )
+    :ok
+  end
+
+  def update_role(%Role{} = role, attrs) do
+    role
+    |> Role.changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Updates a team.
+
+  ## Examples
+
+      iex> update_team(team, %{field: new_value})
+      {:ok, %Team{}}
+
+      iex> update_team(team, %{field: bad_value})
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def update_team(%Team{} = team, attrs) do
+    team
+    |> Team.changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Deletes a team.
+
+  ## Examples
+
+      iex> delete_team(team)
+      {:ok, %Team{}}
+
+      iex> delete_team(team)
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def delete_team(%Team{} = team) do
+    Repo.delete(team)
+  end
+
+  @doc """
+  Returns an `%Ecto.Changeset{}` for tracking team changes.
+
+  ## Examples
+
+      iex> change_team(team)
+      %Ecto.Changeset{data: %Team{}}
+
+  """
+  def change_team(%Team{} = team, attrs \\ %{}) do
+    Team.changeset(team, attrs)
   end
 end

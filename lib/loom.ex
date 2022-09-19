@@ -23,6 +23,7 @@ defmodule Loom do
     deps: [],
     exports: [
       Accounts,
+      Accounts.Team,
       Accounts.Token,
       Accounts.User,
       Store,

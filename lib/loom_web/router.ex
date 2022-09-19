@@ -79,6 +79,12 @@ defmodule LoomWeb.Router do
     end
   end
 
+  scope "/", LoomWeb do
+    pipe_through [:browser, :require_authenticated_user]
+
+    resources "/teams", TeamController
+  end
+
   ## Authentication routes
 
   scope "/", LoomWeb do
