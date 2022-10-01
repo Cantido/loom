@@ -20,6 +20,10 @@ defmodule LoomWeb.Router do
     plug :accepts, ["json"]
   end
 
+  pipeline :adapter do
+    plug :accepts, ["json"]
+  end
+
   defp auth(conn, _opts) do
     with {user, pass} <- Plug.BasicAuth.parse_basic_auth(conn),
          {:ok, %Token{} = token} <- Loom.Accounts.verify_token(user, pass) do
@@ -33,6 +37,12 @@ defmodule LoomWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :index
+  end
+
+  scope "/adapters/aws", LoomWeb do
+    pipe_through :adapter
+
+    post "/s3", AwsS3EventController, :create
   end
 
   scope "/api", LoomWeb do
