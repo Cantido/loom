@@ -26,6 +26,7 @@ defmodule Loom do
       Accounts.Team,
       Accounts.Token,
       Accounts.User,
+      Adapters,
       Store,
       Store.Source,
       Subscriptions,
