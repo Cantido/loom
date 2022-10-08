@@ -5,7 +5,7 @@ defmodule LoomWeb.EventController do
 
   def create(conn, %{"event" => event_params}) do
     with {:ok, event} <- Cloudevents.from_map(event_params),
-         {:ok, _revision} <- Loom.append(event, conn.assigns[:current_account]) do
+         {:ok, _revision} <- Loom.append(event, conn.assigns[:current_team]) do
       conn
       |> put_status(:created)
       |> put_resp_content_type("application/cloudevents+json")
@@ -40,7 +40,7 @@ defmodule LoomWeb.EventController do
       end)
       |> Enum.to_list()
 
-    events = Loom.read(id, conn.assigns[:current_account], opts) |> Enum.to_list()
+    events = Loom.read(id, conn.assigns[:current_team], opts) |> Enum.to_list()
 
     conn
     |> put_resp_content_type("application/cloudevents-batch+json")
@@ -48,7 +48,7 @@ defmodule LoomWeb.EventController do
   end
 
   def show(conn, %{"source" => source, "id" => id}) do
-    with {:ok, event} <- Loom.fetch(source, id, conn.assigns[:current_account]) do
+    with {:ok, event} <- Loom.fetch(source, id, conn.assigns[:current_team]) do
       etag = Base.encode16(:crypto.hash(:sha256, Cloudevents.to_json(event)))
       {:ok, timestamp, _} = DateTime.from_iso8601(event.time)
 

@@ -1,10 +1,11 @@
 defmodule LoomWeb.AwsS3EventControllerTest do
   use LoomWeb.ConnCase, async: true
 
+  import Loom.StoreFixtures
+
   test "creates an event from an S3 event", %{conn: conn} do
     source_name = "aws:s3.us-west-2.bucket-name"
-    {:ok, account} = Loom.Accounts.create_account(%{email: "email@example.com"})
-    {:ok, source} = Loom.Store.create_source(account, source_name)
+    source = source_fixture(%{source: source_name})
     s3event = File.read!("test/support/fixtures/aws_s3_event.v2.2.json") |> Jason.decode!()
     conn = post(conn, Routes.aws_s3_event_path(conn, :create), s3event)
 

@@ -21,9 +21,9 @@ defmodule LoomWeb.EventControllerTest do
   require Logger
 
   setup %{conn: conn} do
-    account = account_fixture()
-    source = source_fixture(%{account: account, source: @source})
-    token = token_fixture(%{account: account})
+    team = team_fixture()
+    source = source_fixture(%{team: team, source: @source})
+    token = token_fixture(%{team: team})
 
     conn =
       conn
@@ -32,7 +32,7 @@ defmodule LoomWeb.EventControllerTest do
 
     %{
       conn: conn,
-      account: account,
+      team: team,
       source: source
     }
   end
@@ -47,7 +47,7 @@ defmodule LoomWeb.EventControllerTest do
   end
 
   describe "show event" do
-    test "renders an event", %{conn: conn, account: account} do
+    test "renders an event", %{conn: conn, team: team} do
       event =
         Cloudevents.from_map!(%{
           specversion: "1.0",
@@ -56,7 +56,7 @@ defmodule LoomWeb.EventControllerTest do
           type: "com.example.event"
         })
 
-      {:ok, _revision} = Loom.append(event, account)
+      {:ok, _revision} = Loom.append(event, team)
 
       conn = get(conn, Routes.event_path(conn, :show, @source, "12345"))
 
@@ -69,7 +69,7 @@ defmodule LoomWeb.EventControllerTest do
       assert json_body["sequence"] == 1
     end
 
-    test "includes an etag header", %{conn: conn, account: account} do
+    test "includes an etag header", %{conn: conn, team: team} do
       event =
         Cloudevents.from_map!(%{
           specversion: "1.0",
@@ -78,7 +78,7 @@ defmodule LoomWeb.EventControllerTest do
           type: "com.example.event"
         })
 
-      {:ok, _revision} = Loom.append(event, account)
+      {:ok, _revision} = Loom.append(event, team)
 
       conn = get(conn, Routes.event_path(conn, :show, @source, "12345"))
 
@@ -87,7 +87,7 @@ defmodule LoomWeb.EventControllerTest do
       assert String.ends_with?(header, ~s("))
     end
 
-    test "includes an last-modified header", %{conn: conn, account: account} do
+    test "includes an last-modified header", %{conn: conn, team: team} do
       event =
         Cloudevents.from_map!(%{
           specversion: "1.0",
@@ -96,7 +96,7 @@ defmodule LoomWeb.EventControllerTest do
           type: "com.example.event"
         })
 
-      {:ok, _revision} = Loom.append(event, account)
+      {:ok, _revision} = Loom.append(event, team)
 
       conn = get(conn, Routes.event_path(conn, :show, @source, "12345"))
 
@@ -106,7 +106,7 @@ defmodule LoomWeb.EventControllerTest do
       assert Timex.before?(last_modified, Timex.now())
     end
 
-    test "includes a cache-control header", %{conn: conn, account: account} do
+    test "includes a cache-control header", %{conn: conn, team: team} do
       event =
         Cloudevents.from_map!(%{
           specversion: "1.0",
@@ -115,7 +115,7 @@ defmodule LoomWeb.EventControllerTest do
           type: "com.example.event"
         })
 
-      {:ok, _revision} = Loom.append(event, account)
+      {:ok, _revision} = Loom.append(event, team)
 
       conn = get(conn, Routes.event_path(conn, :show, @source, "12345"))
 
@@ -123,7 +123,7 @@ defmodule LoomWeb.EventControllerTest do
       assert header == "public, max-age=31536000, immutable"
     end
 
-    test "returns 304 if the etag is the same", %{conn: conn, account: account} do
+    test "returns 304 if the etag is the same", %{conn: conn, team: team} do
       event =
         Cloudevents.from_map!(%{
           specversion: "1.0",
@@ -132,7 +132,7 @@ defmodule LoomWeb.EventControllerTest do
           type: "com.example.event"
         })
 
-      {:ok, _revision} = Loom.append(event, account)
+      {:ok, _revision} = Loom.append(event, team)
       conn1 = get(conn, Routes.event_path(conn, :show, @source, "12345"))
       assert response(conn1, 200) != ""
 
@@ -147,7 +147,7 @@ defmodule LoomWeb.EventControllerTest do
       assert header == "public, max-age=31536000, immutable"
     end
 
-    test "returns 304 if the modified time is before the if-modified-since header", %{conn: conn, account: account} do
+    test "returns 304 if the modified time is before the if-modified-since header", %{conn: conn, team: team} do
       event =
         Cloudevents.from_map!(%{
           specversion: "1.0",
@@ -156,7 +156,7 @@ defmodule LoomWeb.EventControllerTest do
           type: "com.example.event"
         })
 
-      {:ok, _revision} = Loom.append(event, account)
+      {:ok, _revision} = Loom.append(event, team)
 
       if_modified_since = Timex.format!(Timex.shift(Timex.now(), seconds: 1), "{RFC1123}")
 
@@ -176,7 +176,7 @@ defmodule LoomWeb.EventControllerTest do
   end
 
   describe "show stream" do
-    test "returns all events in a stream", %{conn: conn, account: account} do
+    test "returns all events in a stream", %{conn: conn, team: team} do
       event1 =
         Cloudevents.from_map!(%{
           id: "uuid-1",
@@ -193,8 +193,8 @@ defmodule LoomWeb.EventControllerTest do
           specversion: "1.0"
         })
 
-      {:ok, 1} = Loom.append(event1, account)
-      {:ok, 2} = Loom.append(event2, account)
+      {:ok, 1} = Loom.append(event1, team)
+      {:ok, 2} = Loom.append(event2, team)
 
       conn = get(conn, Routes.event_path(conn, :stream), stream_id: @source)
 
@@ -203,7 +203,7 @@ defmodule LoomWeb.EventControllerTest do
       assert actual_event2["id"] == "uuid-2"
     end
 
-    test "returns events in a stream when limited", %{conn: conn, account: account} do
+    test "returns events in a stream when limited", %{conn: conn, team: team} do
       event1 =
         Cloudevents.from_map!(%{
           id: "uuid-1",
@@ -220,8 +220,8 @@ defmodule LoomWeb.EventControllerTest do
           specversion: "1.0"
         })
 
-      {:ok, 1} = Loom.append(event1, account)
-      {:ok, 2} = Loom.append(event2, account)
+      {:ok, 1} = Loom.append(event1, team)
+      {:ok, 2} = Loom.append(event2, team)
 
       conn = get(conn, Routes.event_path(conn, :stream), stream_id: @source, limit: 1)
 
@@ -229,7 +229,7 @@ defmodule LoomWeb.EventControllerTest do
       assert actual_event1["id"] == "uuid-1"
     end
 
-    test "returns the stream from a given point", %{conn: conn, account: account} do
+    test "returns the stream from a given point", %{conn: conn, team: team} do
       event1 =
         Cloudevents.from_map!(%{
           id: "uuid-1",
@@ -246,8 +246,8 @@ defmodule LoomWeb.EventControllerTest do
           specversion: "1.0"
         })
 
-      {:ok, 1} = Loom.append(event1, account)
-      {:ok, 2} = Loom.append(event2, account)
+      {:ok, 1} = Loom.append(event1, team)
+      {:ok, 2} = Loom.append(event2, team)
 
       conn =
         get(conn, Routes.event_path(conn, :stream),
@@ -259,7 +259,7 @@ defmodule LoomWeb.EventControllerTest do
       assert actual_event1["id"] == "uuid-2"
     end
 
-    test "returns the stream backwards", %{conn: conn, account: account} do
+    test "returns the stream backwards", %{conn: conn, team: team} do
       event1 =
         Cloudevents.from_map!(%{
           id: "uuid-1",
@@ -276,8 +276,8 @@ defmodule LoomWeb.EventControllerTest do
           specversion: "1.0"
         })
 
-      {:ok, 1} = Loom.append(event1, account)
-      {:ok, 2} = Loom.append(event2, account)
+      {:ok, 1} = Loom.append(event1, team)
+      {:ok, 2} = Loom.append(event2, team)
 
       conn =
         get(conn, Routes.event_path(conn, :stream),

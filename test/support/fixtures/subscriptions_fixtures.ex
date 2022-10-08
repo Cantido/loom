@@ -19,9 +19,9 @@ defmodule Loom.SubscriptionsFixtures do
         validated: true,
         allowed_rate: 100
       })
-    account = Map.get(attrs, :account, account_fixture())
+    team = Map.get(attrs, :team, team_fixture())
     {:ok, webhook} =
-      Loom.Subscriptions.create_webhook(account, attrs)
+      Loom.Subscriptions.create_webhook(team, attrs)
 
     webhook
   end

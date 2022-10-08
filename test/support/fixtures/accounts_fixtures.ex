@@ -5,23 +5,10 @@ defmodule Loom.AccountsFixtures do
   entities via the `Loom.Accounts` context.
   """
 
-  @doc """
-  Generate an account.
-  """
-  def account_fixture(params \\ %{}) do
-    params =
-      Enum.into(params, %{
-        email: Faker.Internet.safe_email()
-      })
-
-    {:ok, account} = Loom.Accounts.create_account(params)
-    account
-  end
-
   def token_fixture(params \\ %{}) do
-    account = Map.get(params, :account, account_fixture())
+    team = Map.get(params, :team, team_fixture())
     credentials = Loom.Accounts.generate_credentials()
-    {:ok, token} = Loom.Accounts.create_token(account, credentials)
+    {:ok, token} = Loom.Accounts.create_token(team, credentials)
     %{token | password: credentials.password}
   end
 
@@ -59,7 +46,7 @@ defmodule Loom.AccountsFixtures do
       |> Enum.into(%{
         name: "some name"
       })
-      |> Loom.Accounts.create_team()
+      |> Loom.Accounts.create_team(Map.get(attrs, :user, user_fixture()))
 
     team
   end

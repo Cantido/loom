@@ -16,9 +16,9 @@ defmodule Loom.SubscriptionsTest do
     @invalid_attrs %{token: nil, type: nil, url: nil}
 
     test "list_webhooks/0 returns all webhooks" do
-      account = account_fixture()
-      webhook = webhook_fixture(%{account: account})
-      assert List.first(Subscriptions.list_webhooks(account)).id == webhook.id
+      team = team_fixture()
+      webhook = webhook_fixture(%{team: team})
+      assert List.first(Subscriptions.list_webhooks(team)).id == webhook.id
     end
 
     test "get_webhook!/1 returns the webhook with given id" do
@@ -34,14 +34,14 @@ defmodule Loom.SubscriptionsTest do
         validated: true
       }
 
-      assert {:ok, %Webhook{} = webhook} = Subscriptions.create_webhook(account_fixture(), valid_attrs)
+      assert {:ok, %Webhook{} = webhook} = Subscriptions.create_webhook(team_fixture(), valid_attrs)
       assert webhook.token == "some token"
       assert webhook.type == "some type"
       assert webhook.url == "https://example.com/event_hook"
     end
 
     test "create_webhook/1 with invalid data returns error changeset" do
-      assert {:error, %Ecto.Changeset{}} = Subscriptions.create_webhook(account_fixture(), @invalid_attrs)
+      assert {:error, %Ecto.Changeset{}} = Subscriptions.create_webhook(team_fixture(), @invalid_attrs)
     end
 
     test "update_webhook/2 with valid data updates the webhook" do
@@ -84,13 +84,13 @@ defmodule Loom.SubscriptionsTest do
     @source "loom-subscriptions-test"
 
     setup do
-      account = account_fixture()
-      source = source_fixture(%{account: account, source: @source})
+      team = team_fixture()
+      source = source_fixture(%{team: team, source: @source})
 
-      %{source: source, account: account}
+      %{source: source, team: team}
     end
 
-    test "a webhook makes a web request when an event is created", %{account: account} do
+    test "a webhook makes a web request when an event is created", %{team: team} do
       webhook_attrs = %{
         token: "some token",
         type: "com.example.event",
@@ -115,7 +115,7 @@ defmodule Loom.SubscriptionsTest do
         %Tesla.Env{status: 200}
       end)
 
-      {:ok, _} = Subscriptions.create_webhook(account, webhook_attrs)
+      {:ok, _} = Subscriptions.create_webhook(team, webhook_attrs)
 
       event =
         Cloudevents.from_map!(%{
@@ -125,12 +125,12 @@ defmodule Loom.SubscriptionsTest do
           specversion: "1.0"
         })
 
-      {:ok, _} = Loom.append(event, account)
+      {:ok, _} = Loom.append(event, team)
 
       assert_receive ^test_ref
     end
 
-    test "a webhook is not triggered when it is not yet validated", %{account: account} do
+    test "a webhook is not triggered when it is not yet validated", %{team: team} do
       webhook_attrs = %{
         token: "some token",
         type: "com.example.event",
@@ -143,7 +143,7 @@ defmodule Loom.SubscriptionsTest do
       end)
 
       Oban.Testing.with_testing_mode(:manual, fn ->
-        {:ok, _} = Subscriptions.create_webhook(account, webhook_attrs)
+        {:ok, _} = Subscriptions.create_webhook(team, webhook_attrs)
       end)
 
       event =
@@ -154,11 +154,11 @@ defmodule Loom.SubscriptionsTest do
           specversion: "1.0"
         })
 
-      {:ok, _} = Loom.append(event, account)
+      {:ok, _} = Loom.append(event, team)
     end
 
     test "a webhook is validated before being created" do
-      account = account_fixture()
+      team = team_fixture()
 
       webhook_attrs = %{
         token: "some token",
@@ -182,7 +182,7 @@ defmodule Loom.SubscriptionsTest do
         }
       end)
 
-      {:ok, %{id: id}} = Subscriptions.create_webhook(account, webhook_attrs)
+      {:ok, %{id: id}} = Subscriptions.create_webhook(team, webhook_attrs)
 
       # We're in a test and Oban is set to inline jobs, so the validation was run synchronously after creating the webhook
 
@@ -195,7 +195,7 @@ defmodule Loom.SubscriptionsTest do
       assert webhook.validated
     end
 
-    test "a webhook can be validated asynchronously", %{account: account} do
+    test "a webhook can be validated asynchronously", %{team: team} do
       webhook_attrs = %{
         token: "some token",
         type: "com.example.event",
@@ -211,7 +211,7 @@ defmodule Loom.SubscriptionsTest do
         %Tesla.Env{status: 200}
       end)
 
-      {:ok, %{id: id}} = Subscriptions.create_webhook(account, webhook_attrs, cleanup_after: :never)
+      {:ok, %{id: id}} = Subscriptions.create_webhook(team, webhook_attrs, cleanup_after: :never)
 
       # We're in a test and Oban is set to inline jobs, so the validation was run synchronously after creating the webhook
 
@@ -227,7 +227,7 @@ defmodule Loom.SubscriptionsTest do
       assert webhook.validated
     end
 
-    test "a webhook is cleaned up after an amount of time if it isn't validated", %{account: account} do
+    test "a webhook is cleaned up after an amount of time if it isn't validated", %{team: team} do
       webhook_attrs = %{
         token: "some token",
         type: "com.example.event",
@@ -243,7 +243,7 @@ defmodule Loom.SubscriptionsTest do
         %Tesla.Env{status: 200}
       end)
 
-      {:ok, %{id: id}} = Subscriptions.create_webhook(account, webhook_attrs, cleanup_after: 0)
+      {:ok, %{id: id}} = Subscriptions.create_webhook(team, webhook_attrs, cleanup_after: 0)
 
       # We're in a test and Oban is set to inline jobs, so the validation was run synchronously after creating the webhook, and then cleanup ran to delete it.
 
@@ -251,7 +251,7 @@ defmodule Loom.SubscriptionsTest do
 
       assert_receive ^test_ref
 
-      assert Enum.empty?(Subscriptions.list_webhooks(account))
+      assert Enum.empty?(Subscriptions.list_webhooks(team))
     end
   end
 end

@@ -4,13 +4,17 @@ defmodule Loom.Accounts.Team do
 
   alias Loom.Accounts.Role
   alias Loom.Accounts.Token
+  alias Loom.Store.Source
+  alias Loom.Subscriptions.Webhook
 
   schema "teams" do
     field :name, :string
 
+    has_many :sources, Source
     has_many :roles, Role
     has_many :users, through: [:roles, :user]
     has_many :tokens, Token
+    has_many :webhooks, Webhook
 
     timestamps()
   end

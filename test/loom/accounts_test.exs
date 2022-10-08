@@ -514,8 +514,12 @@ defmodule Loom.AccountsTest do
     @invalid_attrs %{name: nil}
 
     test "list_teams/0 returns all teams" do
-      team = team_fixture()
-      assert Accounts.list_teams() == [team]
+      team = team_fixture() |> Repo.preload(:users)
+      user = List.first(team.users)
+
+      actual_teams = Accounts.list_teams(user)
+
+      assert List.first(actual_teams).id == team.id
     end
 
     test "get_team!/1 returns the team with given id" do
@@ -526,12 +530,12 @@ defmodule Loom.AccountsTest do
     test "create_team/1 with valid data creates a team" do
       valid_attrs = %{name: "some name"}
 
-      assert {:ok, %Team{} = team} = Accounts.create_team(valid_attrs)
+      assert {:ok, %Team{} = team} = Accounts.create_team(valid_attrs, user_fixture())
       assert team.name == "some name"
     end
 
     test "create_team/1 with invalid data returns error changeset" do
-      assert {:error, %Ecto.Changeset{}} = Accounts.create_team(@invalid_attrs)
+      assert {:error, :team, %Ecto.Changeset{}, _changes} = Accounts.create_team(@invalid_attrs, user_fixture())
     end
 
     test "update_team/2 with valid data updates the team" do

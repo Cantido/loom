@@ -7,6 +7,20 @@ defmodule LoomWeb.TeamControllerTest do
   @update_attrs %{name: "some updated name"}
   @invalid_attrs %{name: nil}
 
+  defp log_in(%{conn: conn}) do
+    team = team_fixture() |> Loom.Repo.preload(:users)
+    user = List.first(team.users)
+    user_token = Loom.Accounts.generate_user_session_token(user)
+
+    conn =
+      conn
+      |> init_test_session(%{user_token: user_token})
+
+    %{conn: conn}
+  end
+
+  setup :log_in
+
   describe "index" do
     test "lists all teams", %{conn: conn} do
       conn = get(conn, Routes.team_path(conn, :index))

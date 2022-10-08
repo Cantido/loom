@@ -8,11 +8,11 @@ defmodule LoomWeb.StreamChannelTest do
   import Loom.StoreFixtures
 
   setup do
-    account = account_fixture()
-    source = source_fixture(%{account: account, source: "stream-channel-test"})
+    team = team_fixture()
+    source = source_fixture(%{team: team, source: "stream-channel-test"})
 
     %{
-      account: account,
+      team: team,
       source: source
     }
   end

@@ -12,7 +12,7 @@ defmodule Loom.StoreFixtures do
   def source_fixture(attrs \\ %{}) do
     {:ok, source} =
       Loom.Store.create_source(
-        Map.get(attrs, :account, account_fixture()),
+        Map.get(attrs, :team, team_fixture()),
         Map.get(attrs, :source, "loom-test-fixture")
       )
 

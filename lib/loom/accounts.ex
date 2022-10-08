@@ -1,5 +1,4 @@
 defmodule Loom.Accounts do
-  alias Loom.Accounts.Account
   alias Loom.Accounts.Role
   alias Loom.Accounts.Team
   alias Loom.Accounts.Token
@@ -9,11 +8,6 @@ defmodule Loom.Accounts do
 
   require Logger
 
-  def create_account(params \\ %{}) do
-    Account.changeset(%Account{}, params)
-    |> Repo.insert()
-  end
-
   def generate_credentials do
     %{
       username: Uniq.UUID.uuid7(:slug),
@@ -21,14 +15,14 @@ defmodule Loom.Accounts do
     }
   end
 
-  def create_token(account, params \\ %{}) do
+  def create_token(team, params \\ %{}) do
     Token.changeset(%Token{}, params)
-    |> Ecto.Changeset.put_assoc(:account, account)
+    |> Ecto.Changeset.put_assoc(:team, team)
     |> Repo.insert()
   end
 
   def verify_token(username, password) do
-    Repo.one(from t in Token, where: [username: ^username], preload: [account: [sources: []]])
+    Repo.one(from t in Token, where: [username: ^username], preload: [team: [sources: []]])
     |> Argon2.check_pass(password)
   end
 
@@ -419,7 +413,7 @@ defmodule Loom.Accounts do
       {:error, %Ecto.Changeset{}}
 
   """
-  def create_team(attrs \\ %{}, user) do
+  def create_team(attrs, user) do
     Ecto.Multi.new()
     |> Ecto.Multi.insert(:team, Team.changeset(%Team{}, attrs))
     |> Ecto.Multi.insert(:role, fn %{team: team} ->
@@ -427,6 +421,10 @@ defmodule Loom.Accounts do
       |> Role.changeset(%{role: :owner})
     end)
     |> Repo.transaction()
+    |> case do
+      {:ok, results} -> {:ok, results[:team]}
+      err -> err
+    end
   end
 
   def join_team(team, user, role) do

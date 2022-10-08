@@ -19,8 +19,8 @@ defmodule Loom.Subscriptions do
       [%Webhook{}, ...]
 
   """
-  def list_webhooks(account) do
-    Repo.all(Ecto.assoc(account, :webhooks))
+  def list_webhooks(team) do
+    Repo.all(Ecto.assoc(team, :webhooks))
   end
 
   @doc """
@@ -64,17 +64,17 @@ defmodule Loom.Subscriptions do
 
   ## Examples
 
-      iex> create_webhook(create_account(), %{field: value})
+      iex> create_webhook(create_team(), %{field: value})
       {:ok, %Webhook{}}
 
-      iex> create_webhook(create_account(), %{field: bad_value})
+      iex> create_webhook(create_team(), %{field: bad_value})
       {:error, %Ecto.Changeset{}}
 
   """
-  def create_webhook(account, attrs \\ %{}, opts \\ []) do
+  def create_webhook(team, attrs \\ %{}, opts \\ []) do
     %Webhook{}
     |> Webhook.changeset(attrs)
-    |> Ecto.Changeset.put_assoc(:account, account)
+    |> Ecto.Changeset.put_assoc(:team, team)
     |> Repo.insert()
     |> case do
       {:ok, webhook} ->
@@ -158,7 +158,7 @@ defmodule Loom.Subscriptions do
     webhooks =
       Loom.Repo.all(
         from w in Webhook,
-        join: a in assoc(w, :account),
+        join: a in assoc(w, :team),
         join: s in assoc(a, :sources),
         where: s.source == ^event.source,
         where: w.type == ^event.type,

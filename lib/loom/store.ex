@@ -115,14 +115,14 @@ defmodule Loom.Store do
     end
   end
 
-  def create_source(account, source_value) do
+  def create_source(team, source_value) do
     Source.changeset(%Source{}, %{source: source_value})
-    |> Ecto.Changeset.put_assoc(:account, account)
+    |> Ecto.Changeset.put_assoc(:team, team)
     |> Repo.insert()
   end
 
   def fetch_source(source) do
-    if source = Repo.one(from s in Source, where: s.source == ^source, preload: [:account, :source]) do
+    if source = Repo.one(from s in Source, where: s.source == ^source, preload: [:team, :source]) do
       {:ok, source}
     else
       :error

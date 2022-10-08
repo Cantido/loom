@@ -16,11 +16,11 @@ defmodule LoomWeb.TeamController do
 
   def create(conn, %{"team" => team_params}) do
     case Accounts.create_team(team_params, conn.assigns[:current_user]) do
-      {:ok, %{team: team}} ->
+      {:ok, team} ->
         conn
         |> put_flash(:info, "Team created successfully.")
         |> redirect(to: Routes.team_path(conn, :show, team))
-      {:error, %Ecto.Changeset{} = changeset} ->
+      {:error, :team, %Ecto.Changeset{} = changeset, _changes} ->
         render(conn, "new.html", changeset: changeset)
     end
   end
