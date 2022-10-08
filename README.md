@@ -1,8 +1,6 @@
 # Loom
 
-An event store database.
-
-Loom implements the [CloudEvents specification](https://github.com/cloudevents/spec) for maximum compatibility with modern event-based systems.
+An event store database that speaks the [CloudEvents specification](https://github.com/cloudevents/spec).
 
 ## Installation
 
