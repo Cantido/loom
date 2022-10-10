@@ -1,0 +1,24 @@
+<h1>Listing Tokens</h1>
+
+<table>
+  <thead>
+    <tr>
+
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+<%= for token <- @tokens do %>
+    <tr>
+
+      <td>
+        <span><%= link "Show", to: Routes.token_path(@conn, :show, token) %></span>
+        <span><%= link "Edit", to: Routes.token_path(@conn, :edit, token) %></span>
+        <span><%= link "Delete", to: Routes.token_path(@conn, :delete, token), method: :delete, data: [confirm: "Are you sure?"] %></span>
+      </td>
+    </tr>
+<% end %>
+  </tbody>
+</table>
+
+<span><%= link "New Token", to: Routes.token_path(@conn, :new) %></span>

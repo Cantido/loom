@@ -2,6 +2,7 @@ defmodule Loom.Accounts do
   alias Loom.Accounts.Role
   alias Loom.Accounts.Team
   alias Loom.Accounts.Token
+  alias Loom.Accounts.User
   alias Loom.Repo
 
   import Ecto.Query
@@ -15,15 +16,43 @@ defmodule Loom.Accounts do
     }
   end
 
-  def create_token(team, params \\ %{}) do
+  def create_token(params \\ %{}) do
+    Logger.info("Token params: #{inspect params, pretty: true}")
+
     Token.changeset(%Token{}, params)
-    |> Ecto.Changeset.put_assoc(:team, team)
     |> Repo.insert()
   end
 
   def verify_token(username, password) do
     Repo.one(from t in Token, where: [username: ^username], preload: [team: [sources: []]])
     |> Argon2.check_pass(password)
+  end
+
+  def list_tokens(%User{} = user) do
+    Repo.all(
+      from token in Token,
+      join: team in assoc(token, :team),
+      join: user in assoc(team, :users),
+      where: user.id == ^user.id
+    )
+  end
+
+  def change_token(token, attrs \\ %{}) do
+    Token.changeset(token, attrs)
+  end
+
+  def get_token!(id) do
+    Repo.get!(Token, id)
+  end
+
+  def update_token(%Token{} = token, attrs) do
+    token
+    |> Token.changeset(attrs)
+    |> Repo.update()
+  end
+
+  def delete_token(%Token{} = token) do
+    Repo.delete(token)
   end
 
   alias Loom.Accounts.{User, UserToken, UserNotifier}

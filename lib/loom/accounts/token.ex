@@ -15,8 +15,10 @@ defmodule Loom.Accounts.Token do
 
   def changeset(model, params \\ %{}) do
     model
-    |> cast(params, [:username, :password, :password_confirmation])
+    |> cast(params, [:username, :password, :password_confirmation, :team_id])
     |> validate_confirmation(:password)
+    |> validate_required([:username, :team_id])
+    |> validate_length(:username, is: 22) # we're using UUID slugs which are 22 chars long
     |> put_pass_hash()
   end
 

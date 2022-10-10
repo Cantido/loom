@@ -563,4 +563,65 @@ defmodule Loom.AccountsTest do
       assert %Ecto.Changeset{} = Accounts.change_team(team)
     end
   end
+
+  describe "API tokens" do
+    alias Loom.Accounts.Token
+
+    import Loom.AccountsFixtures
+
+    @invalid_attrs %{username: "not a UUID slug :)"}
+
+    test "list_tokens/1 returns all tokens for team" do
+      team = team_fixture() |> Repo.preload(:users)
+      user = List.first(team.users)
+      token = token_fixture(%{team: team})
+
+      actual_tokens = Accounts.list_tokens(user)
+
+      assert List.first(actual_tokens).id == token.id
+    end
+
+    test "get_token!/1 returns the token with given id" do
+      token = token_fixture()
+      assert Accounts.get_token!(token.id).id == token.id
+    end
+
+    test "create_token/1 with valid data creates a token" do
+      valid_attrs =
+        Accounts.generate_credentials()
+        |> Map.put(:team_id, team_fixture().id)
+
+      assert {:ok, %Token{} = token} = Accounts.create_token(valid_attrs)
+      assert token.username == valid_attrs.username
+    end
+
+    test "create_token/1 with invalid data returns error changeset" do
+      assert {:error, %Ecto.Changeset{}} = Accounts.create_token(@invalid_attrs)
+    end
+
+    test "update_token/2 with valid data updates the team" do
+      token = token_fixture()
+      update_attrs = %{username: "AYO-gPPvfpiDDKbXUDU-_g"}
+
+      assert {:ok, %Token{} = token} = Accounts.update_token(token, update_attrs)
+      assert token.username == "AYO-gPPvfpiDDKbXUDU-_g"
+    end
+
+    test "update_token/2 with invalid data returns error changeset" do
+      token = token_fixture()
+      assert {:error, %Ecto.Changeset{}} = Accounts.update_token(token, @invalid_attrs)
+      assert token.id == Accounts.get_token!(token.id).id
+    end
+
+    test "delete_token/1 deletes the team" do
+      token = token_fixture()
+      assert {:ok, %Token{}} = Accounts.delete_token(token)
+      assert_raise Ecto.NoResultsError, fn -> Accounts.get_token!(token.id) end
+    end
+
+    test "change_token/1 returns a token changeset" do
+      token = token_fixture()
+      assert %Ecto.Changeset{} = Accounts.change_token(token)
+    end
+  end
 end
