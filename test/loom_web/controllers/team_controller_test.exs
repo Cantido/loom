@@ -24,7 +24,7 @@ defmodule LoomWeb.TeamControllerTest do
   describe "index" do
     test "lists all teams", %{conn: conn} do
       conn = get(conn, Routes.team_path(conn, :index))
-      assert html_response(conn, 200) =~ "Listing Teams"
+      assert html_response(conn, 200) =~ "Teams"
     end
   end
 
@@ -43,7 +43,7 @@ defmodule LoomWeb.TeamControllerTest do
       assert redirected_to(conn) == Routes.team_path(conn, :show, id)
 
       conn = get(conn, Routes.team_path(conn, :show, id))
-      assert html_response(conn, 200) =~ "Show Team"
+      assert html_response(conn, 200) =~ "some name"
     end
 
     test "renders errors when data is invalid", %{conn: conn} do
