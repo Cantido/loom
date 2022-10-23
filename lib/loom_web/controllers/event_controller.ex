@@ -21,7 +21,7 @@ defmodule LoomWeb.EventController do
     |> render(:"422", errors: %{})
   end
 
-  def stream(conn, %{"stream_id" => id} = params) do
+  def source(conn, %{"source" => id} = params) do
     opts =
       Map.take(params, ["limit", "from_revision", "direction"])
       |> Map.new(fn {k, v} ->

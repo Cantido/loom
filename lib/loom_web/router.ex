@@ -50,7 +50,7 @@ defmodule LoomWeb.Router do
     pipe_through [:api, :require_token_auth]
 
     get "/events/:source/:id", EventController, :show
-    get "/events", EventController, :stream
+    get "/events/:source", EventController, :source
     post "/events", EventController, :create
 
     get "/streams", StreamController, :index

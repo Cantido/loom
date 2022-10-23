@@ -196,7 +196,7 @@ defmodule LoomWeb.EventControllerTest do
       {:ok, 1} = Loom.append(event1, team)
       {:ok, 2} = Loom.append(event2, team)
 
-      conn = get(conn, Routes.event_path(conn, :stream), stream_id: @source)
+      conn = get(conn, Routes.event_path(conn, :source, @source))
 
       assert [actual_event1, actual_event2] = json_response(conn, 200)
       assert actual_event1["id"] == "uuid-1"
@@ -223,7 +223,7 @@ defmodule LoomWeb.EventControllerTest do
       {:ok, 1} = Loom.append(event1, team)
       {:ok, 2} = Loom.append(event2, team)
 
-      conn = get(conn, Routes.event_path(conn, :stream), stream_id: @source, limit: 1)
+      conn = get(conn, Routes.event_path(conn, :source, @source), limit: 1)
 
       assert [actual_event1] = json_response(conn, 200)
       assert actual_event1["id"] == "uuid-1"
@@ -249,11 +249,7 @@ defmodule LoomWeb.EventControllerTest do
       {:ok, 1} = Loom.append(event1, team)
       {:ok, 2} = Loom.append(event2, team)
 
-      conn =
-        get(conn, Routes.event_path(conn, :stream),
-          stream_id: @source,
-          from_revision: 2
-        )
+      conn = get(conn, Routes.event_path(conn, :source, @source), from_revision: 2)
 
       assert [actual_event1] = json_response(conn, 200)
       assert actual_event1["id"] == "uuid-2"
@@ -280,8 +276,7 @@ defmodule LoomWeb.EventControllerTest do
       {:ok, 2} = Loom.append(event2, team)
 
       conn =
-        get(conn, Routes.event_path(conn, :stream),
-          stream_id: @source,
+        get(conn, Routes.event_path(conn, :source, @source),
           direction: "backward",
           from_revision: "end"
         )
