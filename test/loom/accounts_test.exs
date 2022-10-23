@@ -524,7 +524,7 @@ defmodule Loom.AccountsTest do
 
     test "get_team!/1 returns the team with given id" do
       team = team_fixture()
-      assert Accounts.get_team!(team.id) == team
+      assert Accounts.get_team!(team.id).id == team.id
     end
 
     test "create_team/1 with valid data creates a team" do
@@ -549,7 +549,7 @@ defmodule Loom.AccountsTest do
     test "update_team/2 with invalid data returns error changeset" do
       team = team_fixture()
       assert {:error, %Ecto.Changeset{}} = Accounts.update_team(team, @invalid_attrs)
-      assert team == Accounts.get_team!(team.id)
+      assert team.id == Accounts.get_team!(team.id).id
     end
 
     test "delete_team/1 deletes the team" do

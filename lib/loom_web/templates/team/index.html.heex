@@ -1,26 +1,15 @@
-<h1>Listing Teams</h1>
+<h1>Teams</h1>
+<%= link "New Team", to: Routes.team_path(@conn, :new), class: "uk-button uk-button-primary" %>
 
-<table>
-  <thead>
-    <tr>
-      <th>Name</th>
-
-      <th></th>
-    </tr>
-  </thead>
-  <tbody>
+<ul class="uk-list uk-list-divider">
 <%= for team <- @teams do %>
-    <tr>
-      <td><%= team.name %></td>
-
-      <td>
-        <span><%= link "Show", to: Routes.team_path(@conn, :show, team) %></span>
-        <span><%= link "Edit", to: Routes.team_path(@conn, :edit, team) %></span>
-        <span><%= link "Delete", to: Routes.team_path(@conn, :delete, team), method: :delete, data: [confirm: "Are you sure?"] %></span>
-      </td>
-    </tr>
+  <li>
+    <%= link team.name, to: Routes.team_path(@conn, :show, team), class: "uk-text-large" %>
+    <span class="uk-align-right">
+    <%= link "Edit", to: Routes.team_path(@conn, :edit, team), class: "uk-button uk-button-secondary" %>
+    <%= link "Delete", to: Routes.team_path(@conn, :delete, team), method: :delete, data: [confirm: "Are you sure?"], class: "uk-button uk-button-danger" %>
+    </span>
+  </li>
 <% end %>
-  </tbody>
-</table>
+</ul>
 
-<span><%= link "New Team", to: Routes.team_path(@conn, :new) %></span>

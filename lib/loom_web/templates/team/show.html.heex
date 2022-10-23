@@ -1,13 +1,12 @@
-<h1>Show Team</h1>
-
-<ul>
-
-  <li>
-    <strong>Name:</strong>
-    <%= @team.name %>
-  </li>
-
+<ul class="uk-breadcrumb">
+  <li><%= link "Teams", to: Routes.team_path(@conn, :index) %></li>
+  <li><span><%= @team.name %></span></li>
 </ul>
 
-<span><%= link "Edit", to: Routes.team_path(@conn, :edit, @team) %></span> |
-<span><%= link "Back", to: Routes.team_path(@conn, :index) %></span>
+<h2 class="uk-heading-small">Tokens</h2>
+
+<table class="uk-table">
+
+</table>
+
+<span><%= link "Edit", to: Routes.team_path(@conn, :edit, @team), class: "uk-button uk-button-primary" %></span>
