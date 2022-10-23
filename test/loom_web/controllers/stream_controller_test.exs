@@ -1,4 +1,4 @@
-defmodule LoomWeb.StreamControllerTest do
+defmodule LoomWeb.SourceControllerTest do
   use LoomWeb.ConnCase
 
   setup %{conn: conn} do

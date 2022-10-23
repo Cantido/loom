@@ -53,7 +53,7 @@ defmodule LoomWeb.Router do
     get "/events/:source", EventController, :source
     post "/events", EventController, :create
 
-    get "/streams", StreamController, :index
+    get "/sources", SourceController, :index
 
     resources "/webhooks", WebhookController, except: [:new, :edit] do
       get "/confirm", WebhookController, :confirm, as: :confirm

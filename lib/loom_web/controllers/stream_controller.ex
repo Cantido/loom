@@ -1,4 +1,4 @@
-defmodule LoomWeb.StreamController do
+defmodule LoomWeb.SourceController do
   use LoomWeb, :controller
 
   action_fallback LoomWeb.FallbackController
