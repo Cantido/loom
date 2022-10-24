@@ -1,5 +1,5 @@
 <h1>New Token</h1>
 
-<%= render "form.html", Map.put(assigns, :action, Routes.token_path(@conn, :create)) %>
+<%= render "form.html", Map.put(assigns, :action, Routes.team_token_path(@conn, :create, @team)) %>
 
-<span><%= link "Back", to: Routes.token_path(@conn, :index) %></span>
+<span><%= link "Back", to: Routes.team_token_path(@conn, :index, @team) %></span>

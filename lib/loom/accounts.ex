@@ -16,10 +16,9 @@ defmodule Loom.Accounts do
     }
   end
 
-  def create_token(params \\ %{}) do
-    Logger.info("Token params: #{inspect params, pretty: true}")
-
-    Token.changeset(%Token{}, params)
+  def create_token(%Team{} = team, params \\ %{}) do
+    Ecto.build_assoc(team, :tokens)
+    |> Token.changeset(params)
     |> Repo.insert()
   end
 

@@ -93,8 +93,9 @@ defmodule LoomWeb.Router do
   scope "/", LoomWeb do
     pipe_through [:browser, :require_authenticated_user]
 
-    resources "/teams", TeamController
-    resources "/tokens", TokenController
+    resources "/teams", TeamController do
+      resources "/tokens", TokenController
+    end
   end
 
   ## Authentication routes

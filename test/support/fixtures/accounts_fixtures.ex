@@ -8,11 +8,12 @@ defmodule Loom.AccountsFixtures do
   def token_fixture(params \\ %{}) do
     team = Map.get(params, :team, team_fixture())
     credentials = Loom.Accounts.generate_credentials()
+
     {:ok, token} =
-      params
-      |> Enum.into(credentials)
-      |> Enum.into(%{team_id: team.id})
-      |> Loom.Accounts.create_token()
+      Loom.Accounts.create_token(
+        team,
+        Enum.into(params, credentials)
+      )
 
     %{token | password: credentials.password}
   end

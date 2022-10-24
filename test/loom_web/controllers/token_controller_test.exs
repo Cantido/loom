@@ -34,32 +34,32 @@ defmodule LoomWeb.TokenControllerTest do
   setup :log_in
 
   describe "index" do
-    test "lists all tokens", %{conn: conn} do
-      conn = get(conn, Routes.token_path(conn, :index))
+    test "lists all tokens", %{conn: conn, team: team} do
+      conn = get(conn, Routes.team_token_path(conn, :index, team.id))
       assert html_response(conn, 200) =~ "Listing Tokens"
     end
   end
 
   describe "new token" do
-    test "renders form", %{conn: conn} do
-      conn = get(conn, Routes.token_path(conn, :new))
+    test "renders form", %{conn: conn, team: team} do
+      conn = get(conn, Routes.team_token_path(conn, :new, team.id))
       assert html_response(conn, 200) =~ "New Token"
     end
   end
 
   describe "create token" do
     test "redirects to show when data is valid", %{conn: conn, team: team} do
-      conn = post(conn, Routes.token_path(conn, :create), token: Map.put(@create_attrs, :team_id, team.id))
+      conn = post(conn, Routes.team_token_path(conn, :create, team.id), token: @create_attrs)
 
       assert %{id: id} = redirected_params(conn)
-      assert redirected_to(conn) == Routes.token_path(conn, :show, id)
+      assert redirected_to(conn) == Routes.team_token_path(conn, :show, team, id)
 
-      conn = get(conn, Routes.token_path(conn, :show, id))
+      conn = get(conn, Routes.team_token_path(conn, :show, team.id, id))
       assert html_response(conn, 200) =~ "Show Token"
     end
 
-    test "renders errors when data is invalid", %{conn: conn} do
-      conn = post(conn, Routes.token_path(conn, :create), token: @invalid_attrs)
+    test "renders errors when data is invalid", %{conn: conn, team: team} do
+      conn = post(conn, Routes.team_token_path(conn, :create, team.id), token: @invalid_attrs)
       assert html_response(conn, 200) =~ "New Token"
     end
   end
@@ -67,8 +67,8 @@ defmodule LoomWeb.TokenControllerTest do
   describe "edit token" do
     setup [:create_token]
 
-    test "renders form for editing chosen token", %{conn: conn, token: token} do
-      conn = get(conn, Routes.token_path(conn, :edit, token))
+    test "renders form for editing chosen token", %{conn: conn, team: team, token: token} do
+      conn = get(conn, Routes.team_token_path(conn, :edit, team.id, token))
       assert html_response(conn, 200) =~ "Edit Token"
     end
   end
@@ -76,16 +76,16 @@ defmodule LoomWeb.TokenControllerTest do
   describe "update token" do
     setup [:create_token]
 
-    test "redirects when data is valid", %{conn: conn, token: token} do
-      conn = put(conn, Routes.token_path(conn, :update, token), token: @update_attrs)
-      assert redirected_to(conn) == Routes.token_path(conn, :show, token)
+    test "redirects when data is valid", %{conn: conn, team: team, token: token} do
+      conn = put(conn, Routes.team_token_path(conn, :update, team.id, token), token: @update_attrs)
+      assert redirected_to(conn) == Routes.team_token_path(conn, :show, team.id, token)
 
-      conn = get(conn, Routes.token_path(conn, :show, token))
+      conn = get(conn, Routes.team_token_path(conn, :show, team.id, token))
       assert html_response(conn, 200)
     end
 
-    test "renders errors when data is invalid", %{conn: conn, token: token} do
-      conn = put(conn, Routes.token_path(conn, :update, token), token: @invalid_attrs)
+    test "renders errors when data is invalid", %{conn: conn, team: team, token: token} do
+      conn = put(conn, Routes.team_token_path(conn, :update, team.id, token), token: @invalid_attrs)
       assert html_response(conn, 200) =~ "Edit Token"
     end
   end
@@ -93,12 +93,12 @@ defmodule LoomWeb.TokenControllerTest do
   describe "delete token" do
     setup [:create_token]
 
-    test "deletes chosen token", %{conn: conn, token: token} do
-      conn = delete(conn, Routes.token_path(conn, :delete, token))
-      assert redirected_to(conn) == Routes.token_path(conn, :index)
+    test "deletes chosen token", %{conn: conn, team: team, token: token} do
+      conn = delete(conn, Routes.team_token_path(conn, :delete, team.id, token))
+      assert redirected_to(conn) == Routes.team_token_path(conn, :index, team.id)
 
       assert_error_sent 404, fn ->
-        get(conn, Routes.token_path(conn, :show, token))
+        get(conn, Routes.team_token_path(conn, :show, team.id, token))
       end
     end
   end

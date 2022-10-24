@@ -587,16 +587,20 @@ defmodule Loom.AccountsTest do
     end
 
     test "create_token/1 with valid data creates a token" do
+      team = team_fixture()
+
       valid_attrs =
         Accounts.generate_credentials()
         |> Map.put(:team_id, team_fixture().id)
 
-      assert {:ok, %Token{} = token} = Accounts.create_token(valid_attrs)
+      assert {:ok, %Token{} = token} = Accounts.create_token(team, valid_attrs)
       assert token.username == valid_attrs.username
     end
 
     test "create_token/1 with invalid data returns error changeset" do
-      assert {:error, %Ecto.Changeset{}} = Accounts.create_token(@invalid_attrs)
+      team = team_fixture()
+
+      assert {:error, %Ecto.Changeset{}} = Accounts.create_token(team, @invalid_attrs)
     end
 
     test "update_token/2 with valid data updates the team" do

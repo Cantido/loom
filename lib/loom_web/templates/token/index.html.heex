@@ -12,13 +12,13 @@
     <tr>
 
       <td>
-        <span><%= link "Show", to: Routes.token_path(@conn, :show, token) %></span>
-        <span><%= link "Edit", to: Routes.token_path(@conn, :edit, token) %></span>
-        <span><%= link "Delete", to: Routes.token_path(@conn, :delete, token), method: :delete, data: [confirm: "Are you sure?"] %></span>
+        <span><%= link "Show", to: Routes.team_token_path(@conn, :show, @team, token) %></span>
+        <span><%= link "Edit", to: Routes.team_token_path(@conn, :edit, @team, token) %></span>
+        <span><%= link "Delete", to: Routes.team_token_path(@conn, :delete, @team, token), method: :delete, data: [confirm: "Are you sure?"] %></span>
       </td>
     </tr>
 <% end %>
   </tbody>
 </table>
 
-<span><%= link "New Token", to: Routes.token_path(@conn, :new) %></span>
+<span><%= link "New Token", to: Routes.team_token_path(@conn, :new, @team) %></span>
