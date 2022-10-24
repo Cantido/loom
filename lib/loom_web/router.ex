@@ -49,11 +49,11 @@ defmodule LoomWeb.Router do
   scope "/api", LoomWeb do
     pipe_through [:api, :require_token_auth]
 
-    get "/events/:source/:id", EventController, :show
-    get "/events/:source", EventController, :source
     post "/events", EventController, :create
 
-    get "/sources", SourceController, :index
+    resources "/sources", SourceController do
+      resources "/events", EventController
+    end
 
     resources "/webhooks", WebhookController, except: [:new, :edit] do
       get "/confirm", WebhookController, :confirm, as: :confirm

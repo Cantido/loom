@@ -58,7 +58,7 @@ defmodule LoomWeb.EventControllerTest do
 
       {:ok, _revision} = Loom.append(event, team)
 
-      conn = get(conn, Routes.event_path(conn, :show, @source, "12345"))
+      conn = get(conn, Routes.source_event_path(conn, :show, @source, "12345"))
 
       json_body = json_response(conn, 200)
       assert json_body["id"] == "12345"
@@ -80,7 +80,7 @@ defmodule LoomWeb.EventControllerTest do
 
       {:ok, _revision} = Loom.append(event, team)
 
-      conn = get(conn, Routes.event_path(conn, :show, @source, "12345"))
+      conn = get(conn, Routes.source_event_path(conn, :show, @source, "12345"))
 
       assert [header] = get_resp_header(conn, "etag")
       assert String.starts_with?(header, ~s("))
@@ -98,7 +98,7 @@ defmodule LoomWeb.EventControllerTest do
 
       {:ok, _revision} = Loom.append(event, team)
 
-      conn = get(conn, Routes.event_path(conn, :show, @source, "12345"))
+      conn = get(conn, Routes.source_event_path(conn, :show, @source, "12345"))
 
       assert response(conn, 200) != ""
       assert [header] = get_resp_header(conn, "last-modified")
@@ -117,7 +117,7 @@ defmodule LoomWeb.EventControllerTest do
 
       {:ok, _revision} = Loom.append(event, team)
 
-      conn = get(conn, Routes.event_path(conn, :show, @source, "12345"))
+      conn = get(conn, Routes.source_event_path(conn, :show, @source, "12345"))
 
       assert [header] = get_resp_header(conn, "cache-control")
       assert header == "public, max-age=31536000, immutable"
@@ -133,13 +133,13 @@ defmodule LoomWeb.EventControllerTest do
         })
 
       {:ok, _revision} = Loom.append(event, team)
-      conn1 = get(conn, Routes.event_path(conn, :show, @source, "12345"))
+      conn1 = get(conn, Routes.source_event_path(conn, :show, @source, "12345"))
       assert response(conn1, 200) != ""
 
       etag = List.first(get_resp_header(conn1, "etag"))
 
       conn = put_req_header(conn, "if-none-match", etag)
-      conn = get(conn, Routes.event_path(conn, :show, @source, "12345"))
+      conn = get(conn, Routes.source_event_path(conn, :show, @source, "12345"))
 
       assert response(conn, 304) == ""
 
@@ -161,7 +161,7 @@ defmodule LoomWeb.EventControllerTest do
       if_modified_since = Timex.format!(Timex.shift(Timex.now(), seconds: 1), "{RFC1123}")
 
       conn = put_req_header(conn, "if-modified-since", if_modified_since)
-      conn = get(conn, Routes.event_path(conn, :show, @source, "12345"))
+      conn = get(conn, Routes.source_event_path(conn, :show, @source, "12345"))
 
       assert response(conn, 304) == ""
       assert [header] = get_resp_header(conn, "cache-control")
@@ -169,7 +169,7 @@ defmodule LoomWeb.EventControllerTest do
     end
 
     test "returns 404 when event does not exist", %{conn: conn} do
-      conn = get(conn, Routes.event_path(conn, :show, @source, "12345"))
+      conn = get(conn, Routes.source_event_path(conn, :show, @source, "12345"))
 
       assert json_response(conn, 404)["errors"] == [%{"title" => "Not Found"}]
     end
@@ -196,7 +196,7 @@ defmodule LoomWeb.EventControllerTest do
       {:ok, 1} = Loom.append(event1, team)
       {:ok, 2} = Loom.append(event2, team)
 
-      conn = get(conn, Routes.event_path(conn, :source, @source))
+      conn = get(conn, Routes.source_event_path(conn, :index, @source))
 
       assert [actual_event1, actual_event2] = json_response(conn, 200)
       assert actual_event1["id"] == "uuid-1"
@@ -223,7 +223,7 @@ defmodule LoomWeb.EventControllerTest do
       {:ok, 1} = Loom.append(event1, team)
       {:ok, 2} = Loom.append(event2, team)
 
-      conn = get(conn, Routes.event_path(conn, :source, @source), limit: 1)
+      conn = get(conn, Routes.source_event_path(conn, :index, @source), limit: 1)
 
       assert [actual_event1] = json_response(conn, 200)
       assert actual_event1["id"] == "uuid-1"
@@ -249,7 +249,7 @@ defmodule LoomWeb.EventControllerTest do
       {:ok, 1} = Loom.append(event1, team)
       {:ok, 2} = Loom.append(event2, team)
 
-      conn = get(conn, Routes.event_path(conn, :source, @source), from_revision: 2)
+      conn = get(conn, Routes.source_event_path(conn, :index, @source), from_revision: 2)
 
       assert [actual_event1] = json_response(conn, 200)
       assert actual_event1["id"] == "uuid-2"
@@ -276,7 +276,7 @@ defmodule LoomWeb.EventControllerTest do
       {:ok, 2} = Loom.append(event2, team)
 
       conn =
-        get(conn, Routes.event_path(conn, :source, @source),
+        get(conn, Routes.source_event_path(conn, :index, @source),
           direction: "backward",
           from_revision: "end"
         )

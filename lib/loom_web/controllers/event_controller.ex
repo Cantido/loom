@@ -9,7 +9,7 @@ defmodule LoomWeb.EventController do
       conn
       |> put_status(:created)
       |> put_resp_content_type("application/cloudevents+json")
-      |> put_resp_header("location", Routes.event_path(conn, :show, event.source, event.id))
+      |> put_resp_header("location", Routes.source_event_path(conn, :show, event.source, event.id))
       |> render("show.json", event: event)
     end
   end
@@ -21,7 +21,7 @@ defmodule LoomWeb.EventController do
     |> render(:"422", errors: %{})
   end
 
-  def source(conn, %{"source" => id} = params) do
+  def index(conn, %{"source_id" => id} = params) do
     opts =
       Map.take(params, ["limit", "from_revision", "direction"])
       |> Map.new(fn {k, v} ->
@@ -47,7 +47,7 @@ defmodule LoomWeb.EventController do
     |> render("stream.json", events: events)
   end
 
-  def show(conn, %{"source" => source, "id" => id}) do
+  def show(conn, %{"source_id" => source, "id" => id}) do
     with {:ok, event} <- Loom.fetch(source, id, conn.assigns[:current_team]) do
       etag = Base.encode16(:crypto.hash(:sha256, Cloudevents.to_json(event)))
       {:ok, timestamp, _} = DateTime.from_iso8601(event.time)
