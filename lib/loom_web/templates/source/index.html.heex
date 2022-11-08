@@ -1,0 +1,26 @@
+<h1>Listing Sources</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>Source</th>
+
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+<%= for source <- @sources do %>
+    <tr>
+      <td><%= source.source %></td>
+
+      <td>
+        <span><%= link "Show", to: Routes.source_path(@conn, :show, source) %></span>
+        <span><%= link "Edit", to: Routes.source_path(@conn, :edit, source) %></span>
+        <span><%= link "Delete", to: Routes.source_path(@conn, :delete, source), method: :delete, data: [confirm: "Are you sure?"] %></span>
+      </td>
+    </tr>
+<% end %>
+  </tbody>
+</table>
+
+<span><%= link "New Source", to: Routes.source_path(@conn, :new) %></span>

@@ -1,0 +1,13 @@
+<h1>Show Source</h1>
+
+<ul>
+
+  <li>
+    <strong>Source:</strong>
+    <%= @source.source %>
+  </li>
+
+</ul>
+
+<span><%= link "Edit", to: Routes.source_path(@conn, :edit, @source) %></span> |
+<span><%= link "Back", to: Routes.source_path(@conn, :index) %></span>

@@ -3,10 +3,26 @@
   <li><span><%= @team.name %></span></li>
 </ul>
 
+
+<span><%= link "Change name", to: Routes.team_path(@conn, :edit, @team), class: "uk-button uk-button-primary" %></span>
+
 <h2 class="uk-heading-small">Tokens</h2>
 
-<table class="uk-table">
+<%= if Enum.any?(@team.tokens) do %>
+  <p>This team has tokens</p>
+<% else %>
+  <p>This team does not have any tokens</p>
+<% end %>
 
-</table>
+<h2 class="uk-heading-small">Members</h2>
 
-<span><%= link "Edit", to: Routes.team_path(@conn, :edit, @team), class: "uk-button uk-button-primary" %></span>
+<%= if Enum.any?(@team.users) do %>
+  <ul>
+  <%= for user <- @team.users do %>
+    <li><%= user.email %></li>
+  <% end %>
+  </ul>
+<% else %>
+  <p>This team does not have any members</p>
+<% end %>
+
