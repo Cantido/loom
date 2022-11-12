@@ -4,6 +4,7 @@ defmodule Loom.Accounts.Team do
 
   alias Loom.Accounts.Role
   alias Loom.Accounts.Token
+  alias Loom.Accounts.User
   alias Loom.Store.Source
   alias Loom.Subscriptions.Webhook
 
@@ -24,5 +25,11 @@ defmodule Loom.Accounts.Team do
     team
     |> cast(attrs, [:name])
     |> validate_required([:name])
+  end
+
+  def get_role(%__MODULE__{} = team, %User{} = user) do
+    Enum.find(team.roles, fn role ->
+      role.user_id == user.id
+    end)
   end
 end

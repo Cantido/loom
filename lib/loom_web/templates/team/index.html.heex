@@ -1,15 +1,40 @@
-<h1>Teams</h1>
-<%= link "New Team", to: Routes.team_path(@conn, :new), class: "uk-button uk-button-primary" %>
+<div>
+<h1 class="uk-inline">Teams</h1>
+<%= link "New Team", to: Routes.team_path(@conn, :new), class: "uk-button uk-button-primary uk-align-right" %>
+</div>
 
-<ul class="uk-list uk-list-divider">
 <%= for team <- @teams do %>
-  <li>
-    <%= link team.name, to: Routes.team_path(@conn, :show, team), class: "uk-text-large" %>
-    <span class="uk-align-right">
-    <%= link "Edit", to: Routes.team_path(@conn, :edit, team), class: "uk-button uk-button-secondary" %>
-    <%= link "Delete", to: Routes.team_path(@conn, :delete, team), method: :delete, data: [confirm: "Are you sure?"], class: "uk-button uk-button-danger" %>
-    </span>
-  </li>
+  <div class="uk-card uk-card-small uk-card-default uk-card-hover uk-width-1-2">
+    <%= if is_owner?(@current_user, team) do %>
+    <div class="uk-card-badge uk-label">Owner</div>
+    <% end %>
+
+    <div class="uk-card-header">
+      <%= link team.name, to: Routes.team_path(@conn, :show, team), class: "uk-card-title" %>
+
+      <div class="uk-inline">
+
+        <%= link to: Routes.team_path(@conn, :edit, team) do %>
+          <span uk-icon="pencil" class="uk-icon-link"></span>
+        <% end %>
+
+        <%= link to: Routes.team_path(@conn, :delete, team), method: :delete, data: [confirm: "Are you sure?"] do %>
+          <span uk-icon="trash" class="uk-icon-link"></span>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="uk-card-body">
+      <div>
+          <span uk-icon="users" class="uk-icon-link"></span>
+        <%= Enum.count(team.users) %> members
+      </div>
+      <div>
+          <span uk-icon="server" class="uk-icon-link"></span>
+        <%= Enum.count(team.tokens) %> tokens
+
+      </div>
+    </div>
+  </div>
 <% end %>
-</ul>
 
