@@ -411,7 +411,7 @@ defmodule Loom.Accounts do
   def list_teams(user) do
     Ecto.assoc(user, :teams)
     |> Repo.all()
-    |> Repo.preload([:users, :tokens])
+    |> Repo.preload([:users, :tokens, :sources])
   end
 
   @doc """

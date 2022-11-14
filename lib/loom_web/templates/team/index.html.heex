@@ -26,13 +26,16 @@
 
     <div class="uk-card-body">
       <div>
-          <span uk-icon="users" class="uk-icon-link"></span>
-        <%= Enum.count(team.users) %> members
+        <span uk-icon="users" class="uk-icon-link"></span>
+        <%= link "#{Enum.count(team.users)} members", to: Routes.team_member_path(@conn, :index, team) %>
       </div>
       <div>
-          <span uk-icon="server" class="uk-icon-link"></span>
-        <%= Enum.count(team.tokens) %> tokens
-
+        <span uk-icon="database" class="uk-icon-link"></span>
+        <%= link "#{Enum.count(team.sources)} sources", to: Routes.team_source_path(@conn, :index, team) %>
+      </div>
+      <div>
+        <span uk-icon="server" class="uk-icon-link"></span>
+        <%= link "#{Enum.count(team.tokens)} tokens", to: Routes.team_token_path(@conn, :index, team) %>
       </div>
     </div>
   </div>

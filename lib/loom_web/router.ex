@@ -65,6 +65,7 @@ defmodule LoomWeb.Router do
     pipe_through [:browser, :require_authenticated_user]
 
     resources "/teams", TeamController do
+      resources "/members", MemberController
       resources "/sources", SourceController
       resources "/tokens", TokenController
     end
