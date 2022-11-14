@@ -1,0 +1,51 @@
+openapi: 3.1.0
+info:
+  title: Loom
+  description: "Loom is an event store for event-sourced systems."
+  version: 1.0.0
+  license:
+    name: MIT
+    url: https://mit-license.org/
+servers:
+  - url: https://cantido.github.com/loom
+tags:
+  - name: sources
+  - name: events
+paths:
+  /api/sources:
+    get:
+      operationId: getSources
+      tags:
+        - sources
+      description: Get a source
+  /api/events:
+    post:
+      operationId: postEvent
+      tags:
+        - events
+      description: Create a new event
+      requestBody:
+        description: The event to create
+        content:
+          application/json:
+            schema:
+              $ref: 'https://raw.githubusercontent.com/cloudevents/spec/v1.0.2/cloudevents/formats/cloudevents.json'
+            example:
+              $ref: '#/components/examples/event'
+components:
+  examples:
+    event:
+      description: An event
+      value:
+        specversion: "1.0"
+        type: com.example.someevent
+        source: /mycontext
+        id: C234-1234-1234
+        time: 2018-04-05T17:31:00Z
+        comexampleextension1: value
+        comexampleothervalue: 5
+        datacontenttype: application/json
+        data:
+          appinfoA: abc
+          appinfoB: 123
+          appinfoC: true
