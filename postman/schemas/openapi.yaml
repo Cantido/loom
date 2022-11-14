@@ -72,6 +72,8 @@ paths:
       tags:
         - events
       description: Create a new event from a single source
+    parameters:
+      - $ref: '#/components/parameters/pathSource'
   /api/sources/{sourceId}/events/{eventId}:
     get:
       operationId: getEvent
@@ -88,6 +90,9 @@ paths:
               examples:
                 event:
                   $ref: '#/components/examples/event'
+    parameters:
+      - $ref: '#/components/parameters/pathSource'
+      - $ref: '#/components/parameters/pathEventId'
 components:
   examples:
     event:
@@ -111,5 +116,12 @@ components:
       in: path
       required: true
       description: Source value to fetch
+      schema:
+        type: string
+    pathEventId:
+      name: eventId
+      in: path
+      required: true
+      description: ID for an event
       schema:
         type: string
