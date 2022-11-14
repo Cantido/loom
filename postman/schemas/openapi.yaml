@@ -17,10 +17,10 @@ paths:
   /adapters/aws/s3:
     post:
       operationId: postAwsS3Event
-    tags:
-      - events
-      - adapters
-    description: Create a new event from an Amazon S3 compatible event
+      tags:
+        - events
+        - adapters
+      description: Create a new event from an Amazon S3 compatible event
   /api/events:
     post:
       operationId: createEvent
@@ -59,6 +59,8 @@ paths:
       tags:
         - sources
       description: Update information about a source
+    parameters:
+      - $ref: '#/components/parameters/pathSource'
   /api/sources/{sourceId}/events:
     get:
       operationId: getSourceEvents
@@ -68,7 +70,7 @@ paths:
     post:
       operationId: createSourceEvent
       tags:
-        - event
+        - events
       description: Create a new event from a single source
   /api/sources/{sourceId}/events/{eventId}:
     get:
@@ -103,3 +105,11 @@ components:
           appinfoA: abc
           appinfoB: 123
           appinfoC: true
+  parameters:
+    pathSource:
+      name: sourceId
+      in: path
+      required: true
+      description: Source value to fetch
+      schema:
+        type: string
