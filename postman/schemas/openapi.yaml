@@ -11,31 +11,85 @@ servers:
 tags:
   - name: sources
   - name: events
+  - name: adapters
+  - name: webhooks
 paths:
+  /adapters/aws/s3:
+    post:
+      operationId: postAwsS3Event
+    tags:
+      - events
+      - adapters
+    description: Create a new event from an Amazon S3 compatible event
+  /api/events:
+    post:
+      operationId: createEvent
+      tags:
+        - events
+      description: Create a new event
+      requestBody:
+        description: The event to create
+        required: true
+        content:
+          application/cloudevents+json; charset=utf-8:
+            schema:
+              $ref: 'https://raw.githubusercontent.com/cloudevents/spec/v1.0.2/cloudevents/formats/cloudevents.json'
+            examples:
+              event:
+                $ref: '#/components/examples/event'
   /api/sources:
     get:
       operationId: getSources
       tags:
         - sources
       description: Get a source
-  /api/events:
     post:
-      operationId: postEvent
+      operationId: createSource
+      tags:
+        - sources
+      description: Create a source
+  /api/sources/{sourceId}:
+    get:
+      operationId: getSource
+      tags:
+        - sources
+      description: Get info about a single event source
+    put:
+      operationId: putSource
+      tags:
+        - sources
+      description: Update information about a source
+  /api/sources/{sourceId}/events:
+    get:
+      operationId: getSourceEvents
       tags:
         - events
-      description: Create a new event
-      requestBody:
-        description: The event to create
-        content:
-          application/json:
-            schema:
-              $ref: 'https://raw.githubusercontent.com/cloudevents/spec/v1.0.2/cloudevents/formats/cloudevents.json'
-            example:
-              $ref: '#/components/examples/event'
+      description: Get all events from a single source
+    post:
+      operationId: createSourceEvent
+      tags:
+        - event
+      description: Create a new event from a single source
+  /api/sources/{sourceId}/events/{eventId}:
+    get:
+      operationId: getEvent
+      tags:
+        - events
+      description: Get a single event
+      responses:
+        '201':
+          description: The requested event
+          content:
+            application/cloudevents+json; charset=UTF-8:
+              schema:
+                $ref: 'https://raw.githubusercontent.com/cloudevents/spec/v1.0.2/cloudevents/formats/cloudevents.json'
+              examples:
+                event:
+                  $ref: '#/components/examples/event'
 components:
   examples:
     event:
-      description: An event
+      summary: An event
       value:
         specversion: "1.0"
         type: com.example.someevent
