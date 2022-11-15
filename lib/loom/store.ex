@@ -46,6 +46,7 @@ defmodule Loom.Store do
           event
           |> Map.drop(~w(id source type data datacontenttype dataschema time)a)
           |> Map.drop(~w(id source type data datacontenttype dataschema time))
+          |> Map.reject(fn {_key, val} -> is_nil(val) end)
           |> Map.put("sequence", Integer.to_string(current_counter.value))
 
         %Event{
