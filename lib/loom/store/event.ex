@@ -16,7 +16,7 @@ defmodule Loom.Store.Event do
     field :datacontenttype, :string
     field :dataschema, :string
     field :time, :utc_datetime_usec
-    field :extensions, {:map, :string}
+    field :extensions, :map
   end
 
   def from_cloudevent(ce) do
@@ -73,6 +73,6 @@ defmodule Loom.Store.Event do
     |> validate_length(:type, min: 1)
     |> validate_format(:datacontenttype, ~r(/))
     |> validate_length(:dataschema, min: 1)
-    |> unique_constraint([:source, :id])
+    |> unique_constraint([:source_id, :id], error_key: :id)
   end
 end

@@ -3,22 +3,16 @@ defmodule LoomWeb.EventController do
 
   action_fallback LoomWeb.FallbackController
 
-  def create(conn, %{"event" => event_params}) do
-    with {:ok, event} <- Cloudevents.from_map(event_params),
-         {:ok, _revision} <- Loom.append(event, conn.assigns[:current_team]) do
-      conn
-      |> put_status(:created)
-      |> put_resp_content_type("application/cloudevents+json")
-      |> put_resp_header("location", Routes.source_event_path(conn, :show, event.source, event.id))
-      |> render("show.json", event: event)
+  def create(conn, event_params) do
+    case Loom.append(event_params, conn.assigns[:current_team]) do
+      {:ok, event} ->
+        conn
+        |> put_status(:created)
+        |> put_resp_content_type("application/cloudevents+json")
+        |> put_resp_header("location", Routes.source_event_path(conn, :show, event.source.source, event.id))
+        |> render("show.json", event: event)
+      err -> err
     end
-  end
-
-  def create(conn, _params) do
-    conn
-    |> put_status(:unprocessable_entity)
-    |> put_view(LoomWeb.ErrorView)
-    |> render(:"422", errors: %{})
   end
 
   def index(conn, %{"source_id" => id} = params) do

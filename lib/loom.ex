@@ -49,7 +49,7 @@ defmodule Loom do
           | {:error, :revision_mismatch}
   def append(event, team, opts \\ []) do
     team = Repo.preload(team, :sources)
-    if Enum.any?(team.sources, fn src -> src.source == event.source end) do
+    if Enum.any?(team.sources, fn src -> src.source == event["source"] end) do
       Loom.Store.append(event, opts)
     else
       {:error, :unauthorized}

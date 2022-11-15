@@ -14,7 +14,7 @@ defmodule Loom.Store do
   def append(event, opts \\ []) do
     result =
       Ecto.Multi.new()
-      |> Ecto.Multi.one(:source, from(s in Source, where: s.source == ^event.source, preload: [:counter]))
+      |> Ecto.Multi.one(:source, from(s in Source, where: s.source == ^event["source"], preload: [:counter]))
       |> Ecto.Multi.run(:check_source, fn _, %{source: source} ->
         if is_nil(source) do
           {:error, :source_not_found}
@@ -43,14 +43,16 @@ defmodule Loom.Store do
       |> Ecto.Multi.insert(:event, fn %{current_counter: current_counter, source: source} ->
 
         extensions =
-          Map.put(event.extensions, "sequence", Integer.to_string(current_counter.value))
+          event
+          |> Map.drop(~w(id source type data datacontenttype dataschema time)a)
+          |> Map.drop(~w(id source type data datacontenttype dataschema time))
+          |> Map.put("sequence", Integer.to_string(current_counter.value))
 
-        event =
-          Cloudevents.to_map(event)
-          |> Map.put(:extensions, extensions)
-          |> Map.put_new(:time, DateTime.utc_now())
-
-        Loom.Store.Event.changeset(%Event{}, event)
+        %Event{
+          time: DateTime.utc_now(),
+          extensions: extensions
+        }
+        |> Loom.Store.Event.changeset(event)
         |> Ecto.Changeset.put_assoc(:source, source)
       end)
       |> Ecto.Multi.run(:webhook, fn _, %{event: event} ->
@@ -74,6 +76,8 @@ defmodule Loom.Store do
       {:error, :current_counter, :revision_mismatch, _changes} ->
         {:error, :revision_mismatch}
 
+      {:error, :event, changeset, _changes} ->
+        {:error, changeset}
     end
   end
 
