@@ -8,6 +8,9 @@ info:
     url: https://mit-license.org/
 servers:
   - url: https://cantido.github.com/loom
+security:
+  - basic:
+    - basic
 tags:
   - name: sources
   - name: events
@@ -125,3 +128,8 @@ components:
       description: ID for an event
       schema:
         type: string
+  securitySchemes:
+    basic:
+      description: HTTP Basic Auth using a token username and password, created in Loom's web interface
+      type: http
+      scheme: Basic
