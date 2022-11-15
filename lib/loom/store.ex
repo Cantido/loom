@@ -68,7 +68,7 @@ defmodule Loom.Store do
 
     case result do
       {:ok, results} ->
-        {:ok, String.to_integer(results[:event].extensions["sequence"])}
+        {:ok, results[:event]}
 
       {:error, :check_source, :source_not_found, _changes} ->
         {:error, :source_not_found}

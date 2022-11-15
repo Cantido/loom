@@ -29,6 +29,7 @@ defmodule Loom do
       Adapters,
       Store,
       Store.Source,
+      Store.Event,
       Subscriptions,
       Subscriptions.Webhook
     ]
