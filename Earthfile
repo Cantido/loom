@@ -23,7 +23,7 @@ deps:
 build:
   FROM +deps
 
-  COPY --dir lib/ test/ config/ priv/ ./
+  COPY --dir lib/ test/ config/ priv/ assets/ rel/ ./
   RUN mix compile
 
 check:
@@ -43,6 +43,7 @@ test:
 release:
   FROM +build
 
+  RUN mix assets.deploy
   RUN mix release
 
   SAVE ARTIFACT _build/$MIX_ENV/rel
@@ -62,7 +63,6 @@ docker:
 
   COPY --dir --build-arg MIX_ENV=prod +release/rel .
 
-  ENTRYPOINT ["/app/rel/loom/bin/loom"]
-  CMD ["start"]
+  CMD /app/rel/loom/bin/server
 
   SAVE IMAGE --push ghcr.io/cantido/loom:latest

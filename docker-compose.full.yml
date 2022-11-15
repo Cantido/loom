@@ -1,0 +1,14 @@
+version: "3.2"
+services:
+  app:
+    image: ghcr.io/cantido/loom
+    environment:
+      - DATABASE_URL=ecto://postgres:postgres@postgres/loom_prod
+      - SECRET_KEY_BASE=HbCzE02NajZ8oFswHWeh1B1TuBL4UKplLPMdBcPqaqAA2+OM/MKgKo7PWA3ccKIl
+    ports:
+      - 4000:4000
+  postgres:
+    image: postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
