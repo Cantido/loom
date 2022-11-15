@@ -43,15 +43,14 @@ defmodule LoomWeb.EventController do
 
   def show(conn, %{"source_id" => source, "id" => id}) do
     with {:ok, event} <- Loom.fetch(source, id, conn.assigns[:current_team]) do
-      etag = Base.encode16(:crypto.hash(:sha256, Cloudevents.to_json(event)))
-      {:ok, timestamp, _} = DateTime.from_iso8601(event.time)
+      etag = Base.encode16(:crypto.hash(:sha256, Cloudevents.to_json(Loom.Store.Event.to_cloudevent(event))))
 
-      if not_modified?(conn, etag, timestamp) do
+      if not_modified?(conn, etag, event.time) do
         conn
         |> put_resp_header("cache-control", "public, max-age=31536000, immutable")
         |> resp(:not_modified, "")
       else
-        last_modified = Timex.format!(timestamp, "{RFC1123z}")
+        last_modified = Timex.format!(event.time, "{RFC1123z}")
 
         conn
         |> put_status(:ok)

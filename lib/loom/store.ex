@@ -113,7 +113,7 @@ defmodule Loom.Store do
         where: e.id == ^event_id
       )
     if event do
-      {:ok, Event.to_cloudevent(event)}
+      {:ok, event}
     else
       {:error, :not_found}
     end
@@ -182,6 +182,5 @@ defmodule Loom.Store do
         where: e.extensions["sequence"] in ^revision_range,
         order_by: [{^sort_dir, e.extensions["sequence"]}]
     )
-    |> Enum.map(&Event.to_cloudevent/1)
   end
 end
