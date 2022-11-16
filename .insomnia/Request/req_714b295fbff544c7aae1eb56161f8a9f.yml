@@ -1,0 +1,43 @@
+_id: req_714b295fbff544c7aae1eb56161f8a9f
+type: Request
+parentId: wrk_b9285b355c6744679aef4b74ad838c03
+modified: 1668610439387
+created: 1662342527978
+url: "{{ _.base_url }}/api/events"
+name: Create Event
+description: ""
+method: POST
+body:
+  mimeType: application/json
+  text: |-
+    {
+    	"specversion": "1.0",
+    	"type": "com.example.someevent",
+    	"source": "test-source",
+    	"id": "12",
+    	"time": "2018-04-05T17:31:00Z",
+    	"comexampleextension1": "value",
+    	"comexampleothervalue": 5,
+    	"unsetextension": null,
+    	"datacontenttype": "application/xml",
+    	"data": "<much wow=\"xml\"/>"
+    }
+parameters: []
+headers:
+  - name: Content-Type
+    value: application/json
+    id: pair_b65fe6ae0e2f4b54b2055265dd68ed6f
+authentication:
+  type: basic
+  useISO88591: false
+  disabled: false
+  username: AYR4v3FeeE-Lo5h9SxVHRw
+  password: HHpPDlwJq8EeUe5wdzH-urQYSEzpIKJyT2exe6lnQvc
+metaSortKey: -1662342527978
+isPrivate: false
+settingStoreCookies: true
+settingSendCookies: true
+settingDisableRenderRequestBody: false
+settingEncodeUrl: true
+settingRebuildPath: true
+settingFollowRedirects: global
