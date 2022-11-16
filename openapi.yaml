@@ -1,7 +1,29 @@
+# yaml-language-server $schema=https://raw.githubusercontent.com/OAI/OpenAPI-Specification/main/schemas/v3.1/schema-base.yaml
+
 openapi: 3.1.0
 info:
   title: Loom
-  description: "Loom is an event store for event-sourced systems."
+  summary: "Loom is an event store for event-sourced systems based on the CloudEvents specification."
+  description: >
+    Loom stores CloudEvents event data, and provides ways of accessing these events over HTTP according to the [CloudEvents specification](https://github.com/cloudevents/spec).
+    Additionally, to support event-sourced systems, Loom sequences all incoming events in an immutable order, and does not allow events to be modified.
+    Events can then be fetched in order from the beginning, or starting at a certain sequence number.
+
+    ## Sources and Sequences
+
+    Loom uses the `source` CloudEvents field to group events, and all events from a given source are assigned a monotonically increasing sequence number,
+    also known as a revision number, which is added to the event when it is first given to Loom. This number is added under the `sequence` key,
+    which is a documented CloudEvents extension. See more about this field in the [CloudEvents documentation for the `sequence` extension](https://github.com/cloudevents/spec/blob/main/cloudevents/extensions/sequence.md).
+
+    The CloudEvents spec recommends some form of absolute URI as your source, such as an internet-wide unique URI or a UUID in URN form, like `urn:uuid:6e8bc430-9c3a-11d9-9669-0800200c9a66`.
+    Loom checks that a source is owned by a team (see next section) before accepting it.
+
+    ## Teams
+
+    Every source must be owned by a team, which is a collection of users.
+    Any user may create a team and add users to it, and they can claim any source value they want.
+
+    Teams are also associated with tokens, which allow you to access the API documented here.
   version: 1.0.0
   license:
     name: MIT
@@ -29,7 +51,8 @@ paths:
       operationId: createEvent
       tags:
         - events
-      description: Create a new event
+      summary: Create a new event
+      description: Stores an event and assigns it a sequence number. The `source` field on the event *MUST* be registered with your account already, or else the event will be rejected.
       requestBody:
         description: The event to create
         required: true
@@ -40,17 +63,20 @@ paths:
             examples:
               event:
                 $ref: '#/components/examples/event'
+      responses:
+        '200':
+          $ref: '#/components/responses/event'
   /api/sources:
     get:
       operationId: getSources
       tags:
         - sources
-      description: Get a source
+      description: Returns all sources for the current team.
     post:
       operationId: createSource
       tags:
         - sources
-      description: Create a source
+      description: Associate a new source value with the current team.
   /api/sources/{sourceId}:
     get:
       operationId: getSource
@@ -62,8 +88,6 @@ paths:
       tags:
         - sources
       description: Update information about a source
-    parameters:
-      - $ref: '#/components/parameters/pathSource'
   /api/sources/{sourceId}/events:
     get:
       operationId: getSourceEvents
@@ -77,6 +101,38 @@ paths:
       description: Create a new event from a single source
     parameters:
       - $ref: '#/components/parameters/pathSource'
+      - name: limit
+        in: query
+        description: The count of events to return.
+        required: false
+        schema:
+          type: integer
+          default: 100
+          minimum: 0
+      - name: from_revision
+        in: query
+        description: The starting point, inclusive, of revision numbers to return in the request.
+        schema:
+          default: start
+          oneOf:
+            - type: integer
+              minimum: 1
+            - type: string
+              enum:
+                - start
+                - end
+      - name: direction
+        in: query
+        description: The ordering of events to return.
+        schema:
+          type: string
+          default: forward
+          enum:
+            - forward
+            - backward
+    responses:
+      '200':
+        $ref: '#/components/responses/eventBatch'
   /api/sources/{sourceId}/events/{eventId}:
     get:
       operationId: getEvent
@@ -84,15 +140,8 @@ paths:
         - events
       description: Get a single event
       responses:
-        '201':
-          description: The requested event
-          content:
-            application/cloudevents+json; charset=UTF-8:
-              schema:
-                $ref: 'https://raw.githubusercontent.com/cloudevents/spec/v1.0.2/cloudevents/formats/cloudevents.json'
-              examples:
-                event:
-                  $ref: '#/components/examples/event'
+        '200':
+          $ref: '#/components/responses/event'
     parameters:
       - $ref: '#/components/parameters/pathSource'
       - $ref: '#/components/parameters/pathEventId'
@@ -113,6 +162,33 @@ components:
           appinfoA: abc
           appinfoB: 123
           appinfoC: true
+    eventBatch:
+      summary: Many events
+      value:
+        - specversion: "1.0"
+          type: com.example.someevent
+          source: /mycontext
+          id: B234-1234-1234
+          time: 2018-04-05T17:31:00Z
+          comexampleextension1: value
+          comexampleothervalue: 5
+          datacontenttype: application/json
+          data:
+            appinfoA: abc
+            appinfoB: 123
+            appinfoC: true
+        - specversion: "1.0"
+          type: com.example.someevent
+          source: /mycontext
+          id: C234-1234-1234
+          time: 2018-04-05T17:31:00Z
+          comexampleextension1: value
+          comexampleothervalue: 5
+          datacontenttype: application/json
+          data:
+            appinfoA: abc
+            appinfoB: 123
+            appinfoC: true
   parameters:
     pathSource:
       name: sourceId
@@ -128,6 +204,27 @@ components:
       description: ID for an event
       schema:
         type: string
+  responses:
+    event:
+      description: A single event
+      content:
+        application/cloudevents+json; charset=UTF-8:
+          schema:
+            $ref: 'https://raw.githubusercontent.com/cloudevents/spec/v1.0.2/cloudevents/formats/cloudevents.json'
+          examples:
+            event:
+              $ref: '#/components/examples/event'
+    eventBatch:
+      description: A list of events
+      content:
+        application/cloudevents-batch+json; charset=UTF-8:
+          schema:
+            type: array
+            items:
+              $ref: 'https://raw.githubusercontent.com/cloudevents/spec/v1.0.2/cloudevents/formats/cloudevents.json'
+          examples:
+            event:
+              $ref: '#/components/examples/eventBatch'
   securitySchemes:
     basic:
       description: HTTP Basic Auth using a token username and password, created in Loom's web interface
