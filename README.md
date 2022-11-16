@@ -1,6 +1,6 @@
 # Loom
 
-![Elixir CI](https://github.com/Cantido/loom/workflows/Elixir%20CI/badge.svg)
+![Elixir CI](https://github.com/Cantido/loom/workflows/Elixir/badge.svg)
 
 An event store database that speaks the [CloudEvents specification](https://github.com/cloudevents/spec).
 
