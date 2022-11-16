@@ -94,6 +94,39 @@ paths:
       tags:
         - events
       description: Get all events from a single source
+      parameters:
+        - name: limit
+          in: query
+          description: The count of events to return.
+          required: false
+          schema:
+            type: integer
+            default: 100
+            minimum: 0
+        - name: from_revision
+          in: query
+          description: The starting point, inclusive, of revision numbers to return in the request.
+          schema:
+            default: start
+            oneOf:
+              - type: integer
+                minimum: 1
+              - type: string
+                enum:
+                  - start
+                  - end
+        - name: direction
+          in: query
+          description: The ordering of events to return.
+          schema:
+            type: string
+            default: forward
+            enum:
+              - forward
+              - backward
+      responses:
+        '200':
+          $ref: '#/components/responses/eventBatch'
     post:
       operationId: createSourceEvent
       tags:
@@ -101,38 +134,6 @@ paths:
       description: Create a new event from a single source
     parameters:
       - $ref: '#/components/parameters/pathSource'
-      - name: limit
-        in: query
-        description: The count of events to return.
-        required: false
-        schema:
-          type: integer
-          default: 100
-          minimum: 0
-      - name: from_revision
-        in: query
-        description: The starting point, inclusive, of revision numbers to return in the request.
-        schema:
-          default: start
-          oneOf:
-            - type: integer
-              minimum: 1
-            - type: string
-              enum:
-                - start
-                - end
-      - name: direction
-        in: query
-        description: The ordering of events to return.
-        schema:
-          type: string
-          default: forward
-          enum:
-            - forward
-            - backward
-    responses:
-      '200':
-        $ref: '#/components/responses/eventBatch'
   /api/sources/{sourceId}/events/{eventId}:
     get:
       operationId: getEvent
