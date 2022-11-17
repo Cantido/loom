@@ -42,12 +42,12 @@ defmodule LoomWeb.StreamChannelTest do
     tmp_dir: tmp_dir
   } do
     event =
-      Cloudevents.from_map!(%{
+      %{
         specversion: "1.0",
         type: "com.example.event",
         id: "stream-channel-test-event",
         source: "stream-channel-test"
-      })
+      }
 
     {:ok, _revision} = Loom.Store.append(event)
 

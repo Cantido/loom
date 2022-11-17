@@ -40,7 +40,7 @@ defmodule LoomWeb.EventControllerTest do
   describe "create event" do
     test "renders event when data is valid", %{conn: conn} do
       conn =
-        post(conn, Routes.event_path(conn, :create), event: @create_attrs, stream_id: "ohayo")
+        post(conn, Routes.event_path(conn, :create), @create_attrs)
 
       assert %{"id" => "some id"} = json_response(conn, 201)
     end
@@ -48,13 +48,12 @@ defmodule LoomWeb.EventControllerTest do
 
   describe "show event" do
     test "renders an event", %{conn: conn, team: team} do
-      event =
-        Cloudevents.from_map!(%{
-          specversion: "1.0",
-          id: "12345",
-          source: @source,
-          type: "com.example.event"
-        })
+      event = %{
+        specversion: "1.0",
+        id: "12345",
+        source: @source,
+        type: "com.example.event"
+      }
 
       {:ok, _revision} = Loom.append(event, team)
 
@@ -70,13 +69,12 @@ defmodule LoomWeb.EventControllerTest do
     end
 
     test "includes an etag header", %{conn: conn, team: team} do
-      event =
-        Cloudevents.from_map!(%{
-          specversion: "1.0",
-          id: "12345",
-          source: @source,
-          type: "com.example.event"
-        })
+      event = %{
+        specversion: "1.0",
+        id: "12345",
+        source: @source,
+        type: "com.example.event"
+      }
 
       {:ok, _revision} = Loom.append(event, team)
 
@@ -88,13 +86,12 @@ defmodule LoomWeb.EventControllerTest do
     end
 
     test "includes an last-modified header", %{conn: conn, team: team} do
-      event =
-        Cloudevents.from_map!(%{
-          specversion: "1.0",
-          id: "12345",
-          source: @source,
-          type: "com.example.event"
-        })
+      event = %{
+        specversion: "1.0",
+        id: "12345",
+        source: @source,
+        type: "com.example.event"
+      }
 
       {:ok, _revision} = Loom.append(event, team)
 
@@ -107,13 +104,12 @@ defmodule LoomWeb.EventControllerTest do
     end
 
     test "includes a cache-control header", %{conn: conn, team: team} do
-      event =
-        Cloudevents.from_map!(%{
-          specversion: "1.0",
-          id: "12345",
-          source: @source,
-          type: "com.example.event"
-        })
+      event = %{
+        specversion: "1.0",
+        id: "12345",
+        source: @source,
+        type: "com.example.event"
+      }
 
       {:ok, _revision} = Loom.append(event, team)
 
@@ -124,13 +120,12 @@ defmodule LoomWeb.EventControllerTest do
     end
 
     test "returns 304 if the etag is the same", %{conn: conn, team: team} do
-      event =
-        Cloudevents.from_map!(%{
-          specversion: "1.0",
-          id: "12345",
-          source: @source,
-          type: "com.example.event"
-        })
+      event = %{
+        specversion: "1.0",
+        id: "12345",
+        source: @source,
+        type: "com.example.event"
+      }
 
       {:ok, _revision} = Loom.append(event, team)
       conn1 = get(conn, Routes.source_event_path(conn, :show, @source, "12345"))
@@ -148,13 +143,12 @@ defmodule LoomWeb.EventControllerTest do
     end
 
     test "returns 304 if the modified time is before the if-modified-since header", %{conn: conn, team: team} do
-      event =
-        Cloudevents.from_map!(%{
-          specversion: "1.0",
-          id: "12345",
-          source: @source,
-          type: "com.example.event"
-        })
+      event = %{
+        specversion: "1.0",
+        id: "12345",
+        source: @source,
+        type: "com.example.event"
+      }
 
       {:ok, _revision} = Loom.append(event, team)
 
@@ -177,24 +171,22 @@ defmodule LoomWeb.EventControllerTest do
 
   describe "show stream" do
     test "returns all events in a stream", %{conn: conn, team: team} do
-      event1 =
-        Cloudevents.from_map!(%{
-          id: "uuid-1",
-          source: @source,
-          type: "com.example.event",
-          specversion: "1.0"
-        })
+      event1 = %{
+        id: "uuid-1",
+        source: @source,
+        type: "com.example.event",
+        specversion: "1.0"
+      }
 
-      event2 =
-        Cloudevents.from_map!(%{
-          id: "uuid-2",
-          source: @source,
-          type: "com.example.event",
-          specversion: "1.0"
-        })
+      event2 = %{
+        id: "uuid-2",
+        source: @source,
+        type: "com.example.event",
+        specversion: "1.0"
+      }
 
-      {:ok, 1} = Loom.append(event1, team)
-      {:ok, 2} = Loom.append(event2, team)
+      {:ok, _} = Loom.append(event1, team)
+      {:ok, _} = Loom.append(event2, team)
 
       conn = get(conn, Routes.source_event_path(conn, :index, @source))
 
@@ -204,24 +196,22 @@ defmodule LoomWeb.EventControllerTest do
     end
 
     test "returns events in a stream when limited", %{conn: conn, team: team} do
-      event1 =
-        Cloudevents.from_map!(%{
-          id: "uuid-1",
-          source: @source,
-          type: "com.example.event",
-          specversion: "1.0"
-        })
+      event1 = %{
+        id: "uuid-1",
+        source: @source,
+        type: "com.example.event",
+        specversion: "1.0"
+      }
 
-      event2 =
-        Cloudevents.from_map!(%{
-          id: "uuid-2",
-          source: @source,
-          type: "com.example.event",
-          specversion: "1.0"
-        })
+      event2 = %{
+        id: "uuid-2",
+        source: @source,
+        type: "com.example.event",
+        specversion: "1.0"
+      }
 
-      {:ok, 1} = Loom.append(event1, team)
-      {:ok, 2} = Loom.append(event2, team)
+      {:ok, _} = Loom.append(event1, team)
+      {:ok, _} = Loom.append(event2, team)
 
       conn = get(conn, Routes.source_event_path(conn, :index, @source), limit: 1)
 
@@ -230,24 +220,22 @@ defmodule LoomWeb.EventControllerTest do
     end
 
     test "returns the stream from a given point", %{conn: conn, team: team} do
-      event1 =
-        Cloudevents.from_map!(%{
-          id: "uuid-1",
-          source: @source,
-          type: "com.example.event",
-          specversion: "1.0"
-        })
+      event1 = %{
+        id: "uuid-1",
+        source: @source,
+        type: "com.example.event",
+        specversion: "1.0"
+      }
 
-      event2 =
-        Cloudevents.from_map!(%{
-          id: "uuid-2",
-          source: @source,
-          type: "com.example.event",
-          specversion: "1.0"
-        })
+      event2 = %{
+        id: "uuid-2",
+        source: @source,
+        type: "com.example.event",
+        specversion: "1.0"
+      }
 
-      {:ok, 1} = Loom.append(event1, team)
-      {:ok, 2} = Loom.append(event2, team)
+      {:ok, _} = Loom.append(event1, team)
+      {:ok, _} = Loom.append(event2, team)
 
       conn = get(conn, Routes.source_event_path(conn, :index, @source), from_revision: 2)
 
@@ -256,24 +244,22 @@ defmodule LoomWeb.EventControllerTest do
     end
 
     test "returns the stream backwards", %{conn: conn, team: team} do
-      event1 =
-        Cloudevents.from_map!(%{
-          id: "uuid-1",
-          source: @source,
-          type: "com.example.event",
-          specversion: "1.0"
-        })
+      event1 = %{
+        id: "uuid-1",
+        source: @source,
+        type: "com.example.event",
+        specversion: "1.0"
+      }
 
-      event2 =
-        Cloudevents.from_map!(%{
-          id: "uuid-2",
-          source: @source,
-          type: "com.example.event",
-          specversion: "1.0"
-        })
+      event2 = %{
+        id: "uuid-2",
+        source: @source,
+        type: "com.example.event",
+        specversion: "1.0"
+      }
 
-      {:ok, 1} = Loom.append(event1, team)
-      {:ok, 2} = Loom.append(event2, team)
+      {:ok, _} = Loom.append(event1, team)
+      {:ok, _} = Loom.append(event2, team)
 
       conn =
         get(conn, Routes.source_event_path(conn, :index, @source),

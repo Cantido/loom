@@ -12,9 +12,11 @@ defmodule Loom.Store do
   require Logger
 
   def append(event, opts \\ []) do
+    source = Map.get(event, :source, Map.get(event, "source"))
+
     result =
       Ecto.Multi.new()
-      |> Ecto.Multi.one(:source, from(s in Source, where: s.source == ^event["source"], preload: [:counter]))
+      |> Ecto.Multi.one(:source, from(s in Source, where: s.source == ^source, preload: [:counter]))
       |> Ecto.Multi.run(:check_source, fn _, %{source: source} ->
         if is_nil(source) do
           {:error, :source_not_found}

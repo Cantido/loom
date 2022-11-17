@@ -117,13 +117,12 @@ defmodule Loom.SubscriptionsTest do
 
       {:ok, _} = Subscriptions.create_webhook(team, webhook_attrs)
 
-      event =
-        Cloudevents.from_map!(%{
-          id: "webhook-request-event",
-          source: @source,
-          type: "com.example.event",
-          specversion: "1.0"
-        })
+      event = %{
+        id: "webhook-request-event",
+        source: @source,
+        type: "com.example.event",
+        specversion: "1.0"
+      }
 
       {:ok, _} = Loom.append(event, team)
 
@@ -146,13 +145,12 @@ defmodule Loom.SubscriptionsTest do
         {:ok, _} = Subscriptions.create_webhook(team, webhook_attrs)
       end)
 
-      event =
-        Cloudevents.from_map!(%{
-          id: "webhook-request-event",
-          source: @source,
-          type: "com.example.event",
-          specversion: "1.0"
-        })
+      event = %{
+        id: "webhook-request-event",
+        source: @source,
+        type: "com.example.event",
+        specversion: "1.0"
+      }
 
       {:ok, _} = Loom.append(event, team)
     end

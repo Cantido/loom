@@ -16,15 +16,14 @@ defmodule LoomTest do
 
   describe "append/4 with no previous events" do
     test "creates a an event", %{team: team} do
-      {:ok, event} =
-        Cloudevents.from_map(%{
-          type: "test.event",
-          specversion: "1.0",
-          source: @source,
-          id: "basic-create-event"
-        })
+      event = %{
+        type: "test.event",
+        specversion: "1.0",
+        source: @source,
+        id: "basic-create-event"
+      }
 
-      {:ok, 1} = Loom.append(event, team)
+      {:ok, _} = Loom.append(event, team)
 
       {:ok, event} = Loom.fetch(@source, "basic-create-event", team)
     end
@@ -32,24 +31,22 @@ defmodule LoomTest do
 
   describe "read" do
     test "forward from start", %{team: team} do
-      {:ok, first_event} =
-        Cloudevents.from_map(%{
-          type: "test.event",
-          specversion: "1.0",
-          source: @source,
-          id: "first-to-read"
-        })
+      first_event = %{
+        type: "test.event",
+        specversion: "1.0",
+        source: @source,
+        id: "first-to-read"
+      }
 
-      {:ok, second_event} =
-        Cloudevents.from_map(%{
-          type: "test.event",
-          specversion: "1.0",
-          source: @source,
-          id: "second-to-read"
-        })
+      second_event = %{
+        type: "test.event",
+        specversion: "1.0",
+        source: @source,
+        id: "second-to-read"
+      }
 
-      {:ok, 1} = Loom.append(first_event, team)
-      {:ok, 2} = Loom.append(second_event, team)
+      {:ok, _} = Loom.append(first_event, team)
+      {:ok, _} = Loom.append(second_event, team)
 
       events = Loom.read(@source, team, direction: :forward, from_revision: :start)
 
@@ -59,24 +56,22 @@ defmodule LoomTest do
     end
 
     test "limit", %{team: team} do
-      {:ok, first_event} =
-        Cloudevents.from_map(%{
-          type: "test.event",
-          specversion: "1.0",
-          source: @source,
-          id: "before-limit"
-        })
+      first_event = %{
+        type: "test.event",
+        specversion: "1.0",
+        source: @source,
+        id: "before-limit"
+      }
 
-      {:ok, second_event} =
-        Cloudevents.from_map(%{
-          type: "test.event",
-          specversion: "1.0",
-          source: @source,
-          id: "after-limit"
-        })
+      second_event = %{
+        type: "test.event",
+        specversion: "1.0",
+        source: @source,
+        id: "after-limit"
+      }
 
-      {:ok, 1} = Loom.append(first_event, team)
-      {:ok, 2} = Loom.append(second_event, team)
+      {:ok, _} = Loom.append(first_event, team)
+      {:ok, _} = Loom.append(second_event, team)
 
       events = Loom.read(@source, team, direction: :forward, from_revision: :start, limit: 1)
 

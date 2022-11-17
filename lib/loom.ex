@@ -12,9 +12,8 @@ defmodule Loom do
 
       iex> team = team_fixture()
       iex> source = source_fixture(%{team: team, source: "loom-doctest"})
-      iex> {:ok, event} = Cloudevents.from_map(%{type: "com.example.event", specversion: "1.0", source: "loom-doctest", id: "a-uuid"})
+      iex> event = %{type: "com.example.event", specversion: "1.0", source: "loom-doctest", id: "a-uuid"}
       iex> Loom.append(event, team)
-      {:ok, 1}
       iex> Loom.read("loom-doctest", team) |> Enum.at(0) |> Map.get(:id)
       "a-uuid"
   """
@@ -35,6 +34,7 @@ defmodule Loom do
     ]
 
   alias Loom.Repo
+  alias Loom.Accounts.Team
 
   @type stream_id :: String.t()
   @type event_id :: String.t()
@@ -48,9 +48,11 @@ defmodule Loom do
           {:ok, revision}
           | {:error, :event_exists}
           | {:error, :revision_mismatch}
-  def append(event, team, opts \\ []) do
+  def append(event, %Team{} = team, opts \\ []) when is_map(event) and not is_struct(event) do
     team = Repo.preload(team, :sources)
-    if Enum.any?(team.sources, fn src -> src.source == event["source"] end) do
+    event_source = Map.get(event, :source, Map.get(event, "source"))
+
+    if Enum.any?(team.sources, fn src -> src.source == event_source end) do
       Loom.Store.append(event, opts)
     else
       {:error, :unauthorized}
