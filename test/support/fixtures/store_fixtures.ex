@@ -13,7 +13,7 @@ defmodule Loom.StoreFixtures do
     {:ok, source} =
       Loom.Store.create_source(
         Map.get(attrs, :team, team_fixture()),
-        Map.get(attrs, :source, "loom-test-fixture")
+        Map.get(attrs, :source, Uniq.UUID.uuid7(:urn))
       )
 
     source
