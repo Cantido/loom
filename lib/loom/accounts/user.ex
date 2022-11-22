@@ -1,12 +1,9 @@
 defmodule Loom.Accounts.User do
   use Loom.Schema
-  alias Loom.Accounts.Account
   alias Loom.Accounts.Role
   import Ecto.Changeset
 
   schema "users" do
-    many_to_many :accounts, Account, join_through: "users_accounts"
-
     has_many :roles, Role
     has_many :teams, through: [:roles, :team]
     field :email, :string

@@ -25,7 +25,7 @@ defmodule LoomTest do
 
       {:ok, _} = Loom.append(event, team)
 
-      {:ok, event} = Loom.fetch(@source, "basic-create-event", team)
+      {:ok, _event} = Loom.fetch(@source, "basic-create-event", team)
     end
   end
 

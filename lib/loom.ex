@@ -11,7 +11,7 @@ defmodule Loom do
   You can then read the event stream with `read/3`, which returns a `Stream` containing the requested events.
 
       iex> team = team_fixture()
-      iex> source = source_fixture(%{team: team, source: "loom-doctest"})
+      iex> _source = source_fixture(%{team: team, source: "loom-doctest"})
       iex> event = %{type: "com.example.event", specversion: "1.0", source: "loom-doctest", id: "a-uuid"}
       iex> Loom.append(event, team)
       iex> Loom.read("loom-doctest", team) |> Enum.at(0) |> Map.get(:id)

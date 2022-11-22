@@ -1,9 +1,6 @@
 defmodule LoomWeb.StreamChannelTest do
   use LoomWeb.ChannelCase
 
-  alias Loom.Accounts
-  alias Loom.Store
-
   import Loom.AccountsFixtures
   import Loom.StoreFixtures
 
@@ -36,11 +33,7 @@ defmodule LoomWeb.StreamChannelTest do
     assert_push "event", %{"some" => "data"}
   end
 
-  @tag :tmp_dir
-  test "broadcasts are pushed to the client when an event is pushed", %{
-    socket: socket,
-    tmp_dir: tmp_dir
-  } do
+  test "broadcasts are pushed to the client when an event is pushed" do
     event =
       %{
         specversion: "1.0",

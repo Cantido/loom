@@ -1,10 +1,6 @@
 defmodule LoomWeb.EventControllerTest do
   use LoomWeb.ConnCase
 
-  alias Loom.Accounts
-  alias Loom.Store
-  alias Loom.Repo
-
   import Loom.AccountsFixtures
   import Loom.StoreFixtures
 
@@ -16,7 +12,6 @@ defmodule LoomWeb.EventControllerTest do
     type: "com.example.event",
     specversion: "1.0"
   }
-  @invalid_attrs %{id: nil}
 
   require Logger
 

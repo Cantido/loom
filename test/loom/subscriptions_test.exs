@@ -102,7 +102,7 @@ defmodule Loom.SubscriptionsTest do
       test_pid = self()
       test_ref = make_ref()
 
-      mock(fn %{method: :post, url: url, body: body} = env ->
+      mock(fn %{method: :post, body: body} = env ->
         send(test_pid, test_ref)
 
         {:ok, event} = Cloudevents.from_json(body)
@@ -235,13 +235,13 @@ defmodule Loom.SubscriptionsTest do
       test_pid = self()
       test_ref = make_ref()
 
-      mock(fn %{method: :options} = env ->
+      mock(fn %{method: :options} ->
         send(test_pid, test_ref)
 
         %Tesla.Env{status: 200}
       end)
 
-      {:ok, %{id: id}} = Subscriptions.create_webhook(team, webhook_attrs, cleanup_after: 0)
+      {:ok, %{id: _id}} = Subscriptions.create_webhook(team, webhook_attrs, cleanup_after: 0)
 
       # We're in a test and Oban is set to inline jobs, so the validation was run synchronously after creating the webhook, and then cleanup ran to delete it.
 

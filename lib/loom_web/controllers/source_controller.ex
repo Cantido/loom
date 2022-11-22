@@ -1,8 +1,6 @@
 defmodule LoomWeb.SourceController do
   use LoomWeb, :controller
 
-  alias Loom.Accounts.Team
-
   action_fallback LoomWeb.FallbackController
 
   def index(conn, %{"team_id" => team_id}) do

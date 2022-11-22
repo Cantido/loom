@@ -77,7 +77,7 @@ defmodule Loom.Subscriptions.WebhookWorkerTest do
       allowed_rate: 100
     }
 
-    mock(fn env ->
+    mock(fn _env ->
       %Tesla.Env{status: 410}
     end)
 
@@ -112,7 +112,7 @@ defmodule Loom.Subscriptions.WebhookWorkerTest do
       allowed_rate: 100
     }
 
-    mock(fn env ->
+    mock(fn _env ->
       retry_after =
         Timex.now()
         |> Timex.shift(minutes: 1)
