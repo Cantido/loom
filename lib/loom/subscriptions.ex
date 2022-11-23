@@ -296,4 +296,30 @@ defmodule Loom.Subscriptions do
   def change_subscription(%Subscription{} = subscription, attrs \\ %{}) do
     Subscription.changeset(subscription, attrs)
   end
+
+  @doc """
+  Deliver an event to all matching subscriptions.
+  """
+  def deliver(event) do
+    subs_query =
+      from sub in Subscription,
+      join: source in assoc(sub, :source),
+      where: is_nil(sub.source) or source.source == ^event.source,
+      where: is_nil(sub.types) or ^event.type in sub.types,
+      where: sub.protocol == "HTTP"
+
+    subs = Repo.all(subs_query)
+
+    event_json = Cloudevents.to_json(event)
+
+    Enum.each(subs, fn subscription ->
+      %{
+        subscription_id: subscription.id,
+        event_json: event_json
+      }
+      |> Loom.Subscriptions.WebhookWorker.new()
+      |> Oban.insert()
+    end)
+
+  end
 end

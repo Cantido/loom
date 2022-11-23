@@ -30,4 +30,13 @@ defmodule Loom.Subscriptions.WebhookClient do
 
     post(webhook.url, event_json, headers: headers)
   end
+
+  def deliver(url, event_json, token) do
+    headers = [
+      {"content-type", "application/cloudevents+json; charset=utf-8"},
+      {"authorization", "Bearer #{token}"}
+    ]
+
+    post(url, event_json, headers: headers)
+  end
 end
