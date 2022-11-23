@@ -30,6 +30,7 @@ defmodule Loom do
       Store.Source,
       Store.Event,
       Subscriptions,
+      Subscriptions.Subscription,
       Subscriptions.Webhook
     ]
 

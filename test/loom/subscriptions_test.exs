@@ -252,4 +252,74 @@ defmodule Loom.SubscriptionsTest do
       assert Enum.empty?(Subscriptions.list_webhooks(team))
     end
   end
+
+  describe "subscriptions" do
+    alias Loom.Subscriptions.Subscription
+
+    import Loom.SubscriptionsFixtures
+
+    @invalid_attrs %{config: nil, filters: nil, protocol: nil, protocolsettings: nil, sink: nil, sink_credential: nil, source: nil, types: nil}
+
+    test "list_subscriptions/0 returns all subscriptions" do
+      subscription = subscription_fixture()
+      assert List.first(Subscriptions.list_subscriptions()).id == subscription.id
+    end
+
+    test "get_subscription!/1 returns the subscription with given id" do
+      subscription = subscription_fixture()
+      assert Subscriptions.get_subscription!(subscription.id).id == subscription.id
+    end
+
+    test "create_subscription/1 with valid data creates a subscription" do
+      source = Uniq.UUID.uuid7(:urn)
+      valid_attrs = %{config: %{"rate" => "100"}, filters: %{}, protocol: "HTTPS", protocolsettings: %{"setting" => "a"}, sink: "some sink", sink_credential: %{"cred" => "a"}, source: %{source: source, team: %{name: Uniq.UUID.uuid7()}}, types: []}
+
+      assert {:ok, %Subscription{} = subscription} = Subscriptions.create_subscription(valid_attrs)
+      assert subscription.config == %{"rate" => "100"}
+      assert subscription.filters == %{}
+      assert subscription.protocol == "HTTPS"
+      assert subscription.protocolsettings == %{"setting" => "a"}
+      assert subscription.sink == "some sink"
+      assert subscription.sink_credential == %{"cred" => "a"}
+      assert subscription.source.source == source
+      assert subscription.types == []
+    end
+
+    test "create_subscription/1 with invalid data returns error changeset" do
+      assert {:error, %Ecto.Changeset{}} = Subscriptions.create_subscription(@invalid_attrs)
+    end
+
+    test "update_subscription/2 with valid data updates the subscription" do
+      source = Uniq.UUID.uuid7(:urn)
+      subscription = subscription_fixture()
+      update_attrs = %{config: %{"rate" => "200"}, filters: %{}, protocol: "KAFKA", protocolsettings: %{"setting" => "b"}, sink: "some updated sink", sink_credential: %{"cred" => "b"}, source: %{source: source, team: %{name: Uniq.UUID.uuid4()}}, types: []}
+
+      assert {:ok, %Subscription{} = subscription} = Subscriptions.update_subscription(subscription, update_attrs)
+      assert subscription.config == %{"rate" => "200"}
+      assert subscription.filters == %{}
+      assert subscription.protocol == "KAFKA"
+      assert subscription.protocolsettings == %{"setting" => "b"}
+      assert subscription.sink == "some updated sink"
+      assert subscription.sink_credential == %{"cred" => "b"}
+      assert subscription.source.source == source
+      assert subscription.types == []
+    end
+
+    test "update_subscription/2 with invalid data returns error changeset" do
+      subscription = subscription_fixture()
+      assert {:error, %Ecto.Changeset{}} = Subscriptions.update_subscription(subscription, @invalid_attrs)
+      assert subscription.id == Subscriptions.get_subscription!(subscription.id).id
+    end
+
+    test "delete_subscription/1 deletes the subscription" do
+      subscription = subscription_fixture()
+      assert {:ok, %Subscription{}} = Subscriptions.delete_subscription(subscription)
+      assert_raise Ecto.NoResultsError, fn -> Subscriptions.get_subscription!(subscription.id) end
+    end
+
+    test "change_subscription/1 returns a subscription changeset" do
+      subscription = subscription_fixture()
+      assert %Ecto.Changeset{} = Subscriptions.change_subscription(subscription)
+    end
+  end
 end
