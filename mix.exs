@@ -42,7 +42,7 @@ defmodule Loom.MixProject do
       {:ex_check, "~> 0.14.0", only: [:dev], runtime: false},
       {:ex_doc, "~> 0.27", only: :dev, runtime: false},
       {:faker, "~> 0.17", only: :test},
-      {:finch, "~> 0.13.0"},
+      {:finch, "~> 0.14.0"},
       {:hammer, "~> 6.1"},
       {:nebulex, "~> 2.4"},
       {:phoenix, "~> 1.6.11"},
