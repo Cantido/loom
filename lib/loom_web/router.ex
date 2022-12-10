@@ -20,18 +20,7 @@ defmodule LoomWeb.Router do
   end
 
   pipeline :require_token_auth do
-    plug :token_basic_auth
-  end
-
-  defp token_basic_auth(conn, _opts) do
-    with {user, pass} <- Plug.BasicAuth.parse_basic_auth(conn),
-         {:ok, %Token{} = token} <- Loom.Accounts.verify_token(user, pass) do
-      conn
-      |> assign(:current_token, token)
-      |> assign(:current_team, token.team)
-    else
-      _ -> conn |> Plug.BasicAuth.request_basic_auth() |> halt()
-    end
+    plug LoomWeb.TokenBearerAuthPipeline
   end
 
   scope "/", LoomWeb do
@@ -44,6 +33,10 @@ defmodule LoomWeb.Router do
     pipe_through :api
 
     post "/s3", AwsS3EventController, :create
+  end
+
+  scope "/auth", LoomWeb do
+    post "/tokens", OauthController, :grant
   end
 
   scope "/api", LoomWeb do

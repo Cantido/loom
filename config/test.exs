@@ -28,6 +28,8 @@ config :loom, LoomWeb.Endpoint,
 # In test we don't send emails.
 config :loom, Loom.Mailer, adapter: Swoosh.Adapters.Test
 
+config :loom, LoomWeb.Tokens, secret_key: "Ptb1BlnxoC0lmwRjo1QVIhk4zHqc3EZN40thOxIDeO957JX/BG/dMOEUCxGlA1c+"
+
 config :logger, level: :debug
 
 # Initialize plugs at runtime for faster test compilation
