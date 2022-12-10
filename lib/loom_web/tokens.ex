@@ -4,11 +4,17 @@ defmodule LoomWeb.Tokens do
   alias Loom.Accounts
   alias Loom.Accounts.Token
 
+  require Logger
+
   def subject_for_token(%Token{id: id}, _claims) do
+    Logger.info("making jwt for token #{id}")
+
     {:ok, id}
   end
 
   def resource_from_claims(%{"sub" => id}) do
+    Logger.info("getting token #{id}")
+
     token = Accounts.get_token!(id)
     {:ok, token}
   end

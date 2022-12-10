@@ -41,7 +41,7 @@ defmodule Loom.Accounts do
   end
 
   def get_token!(id) do
-    Repo.get!(Token, id)
+    Repo.one!(from t in Token, where: [id: ^id], preload: [team: [sources: []]])
   end
 
   def update_token(%Token{} = token, attrs) do

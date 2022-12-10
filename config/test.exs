@@ -14,7 +14,8 @@ config :loom, Loom.Repo,
   hostname: "localhost",
   database: "loom_test#{System.get_env("MIX_TEST_PARTITION")}",
   pool: Ecto.Adapters.SQL.Sandbox,
-  pool_size: 10
+  pool_size: 10,
+  log: false
 
 config :loom, Oban, testing: :inline
 

@@ -3,7 +3,7 @@ defmodule LoomWeb.Router do
 
   import LoomWeb.UserAuth
 
-  alias Loom.Accounts.Token
+  require Logger
 
   pipeline :browser do
     plug :accepts, ["html"]
@@ -21,6 +21,11 @@ defmodule LoomWeb.Router do
 
   pipeline :require_token_auth do
     plug LoomWeb.TokenBearerAuthPipeline
+    plug :load_team
+  end
+
+  defp load_team(conn, _) do
+    assign(conn, :current_team, Guardian.Plug.current_resource(conn).team)
   end
 
   scope "/", LoomWeb do
