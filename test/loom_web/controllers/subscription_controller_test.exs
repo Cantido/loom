@@ -9,22 +9,7 @@ defmodule LoomWeb.SubscriptionControllerTest do
 
   @invalid_attrs %{config: nil, filters: nil, protocol: nil, protocolsettings: nil, sink: nil, sink_credential: nil, source: nil, types: nil}
 
-  setup %{conn: conn} do
-    team = team_fixture()
-    source = source_fixture(%{team: team, source: Uniq.UUID.uuid7(:urn)})
-    token = token_fixture(%{team: team})
-
-    conn =
-      conn
-      |> put_req_header("accept", "application/json")
-      |> put_req_header("authorization", Plug.BasicAuth.encode_basic_auth(token.username, token.password))
-
-    %{
-      conn: conn,
-      team: team,
-      source: source
-    }
-  end
+  setup :log_in_api
 
   describe "index" do
     test "lists all subscriptions", %{conn: conn} do
