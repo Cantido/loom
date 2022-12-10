@@ -31,8 +31,7 @@ info:
 servers:
   - url: https://cantido.github.com/loom
 security:
-  - basic:
-    - basic
+  - loom_auth: []
 tags:
   - name: sources
   - name: events
@@ -227,7 +226,15 @@ components:
             event:
               $ref: '#/components/examples/eventBatch'
   securitySchemes:
-    basic:
-      description: HTTP Basic Auth using a token username and password, created in Loom's web interface
-      type: http
-      scheme: Basic
+    loom_auth:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: /auth/tokens
+          scopes:
+            write:events: write events to your sources
+            read:events: read your events
+            write:sources: create new sources
+            read:sources: read existing sources
+
+
