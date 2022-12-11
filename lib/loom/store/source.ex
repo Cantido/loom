@@ -12,6 +12,8 @@ defmodule Loom.Store.Source do
     belongs_to :team, Team, on_replace: :update
     has_one :counter, Counter
     field :source, :string
+
+    timestamps()
   end
 
   def changeset(model, params \\ %{}) do

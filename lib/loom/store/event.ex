@@ -17,6 +17,8 @@ defmodule Loom.Store.Event do
     field :dataschema, :string
     field :time, :utc_datetime_usec
     field :extensions, :map
+
+    timestamps()
   end
 
   def from_cloudevent(ce) do
@@ -37,7 +39,7 @@ defmodule Loom.Store.Event do
     event
     |> Loom.Repo.preload(:source)
     |> Map.from_struct()
-    |> Map.drop([:__meta__])
+    |> Map.take([:id, :type, :source, :data, :datacontenttype, :dataschema, :time, :extensions])
     |> Map.put(:specversion, "1.0")
     |> Map.update!(:source, fn s -> s.source end)
     |> Map.delete(:source_id)

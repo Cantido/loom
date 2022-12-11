@@ -11,6 +11,8 @@ defmodule Loom.Store.Counter do
   schema "counters" do
     belongs_to :source, Source, primary_key: true
     field :value, :integer, default: 0
+
+    timestamps()
   end
 
   def changeset(model, params \\ %{}) do
