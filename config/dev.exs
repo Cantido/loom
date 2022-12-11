@@ -64,6 +64,8 @@ config :loom, LoomWeb.Endpoint,
     ]
   ]
 
+config :loom, LoomWeb.Tokens, secret_key: "YPEeY8Z90MPFr9e09lHLgWVy0419eKS03/3l1s/kFmSWqF7m4XG2rIPbMseaLPbg"
+
 # Do not include metadata nor timestamps in development logs
 config :logger, :console, format: "[$level] $message\n"
 

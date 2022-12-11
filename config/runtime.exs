@@ -20,6 +20,7 @@ if System.get_env("PHX_SERVER") do
   config :loom, LoomWeb.Endpoint, server: true
 end
 
+
 if config_env() == :prod do
   database_url =
     System.get_env("DATABASE_URL") ||
@@ -80,4 +81,13 @@ if config_env() == :prod do
   #     config :swoosh, :api_client, Swoosh.ApiClient.Hackney
   #
   # See https://hexdocs.pm/swoosh/Swoosh.html#module-installation for details.
+
+  secret_key =
+    System.get_env("LOOM_TOKENS_SECRET_KEY") ||
+      raise """
+      environment variable LOOM_TOKENS_SECRET_KEY is missing.
+      Generate one with `mix guardian.gen.secret`
+      """
+
+  config :loom, LoomWeb.Tokens, secret_key: secret_key
 end

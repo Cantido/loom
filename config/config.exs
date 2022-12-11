@@ -39,6 +39,8 @@ config :loom, Oban,
 # at the `config/runtime.exs`.
 config :loom, Loom.Mailer, adapter: Swoosh.Adapters.Local
 
+config :loom, LoomWeb.Tokens, issuer: "loom"
+
 # Swoosh API client is needed for adapters other than SMTP.
 config :swoosh, :api_client, false
 

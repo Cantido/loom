@@ -3,7 +3,7 @@ defmodule LoomWeb.Router do
 
   import LoomWeb.UserAuth
 
-  alias Loom.Accounts.Token
+  require Logger
 
   pipeline :browser do
     plug :accepts, ["html"]
@@ -20,18 +20,12 @@ defmodule LoomWeb.Router do
   end
 
   pipeline :require_token_auth do
-    plug :token_basic_auth
+    plug LoomWeb.TokenBearerAuthPipeline
+    plug :load_team
   end
 
-  defp token_basic_auth(conn, _opts) do
-    with {user, pass} <- Plug.BasicAuth.parse_basic_auth(conn),
-         {:ok, %Token{} = token} <- Loom.Accounts.verify_token(user, pass) do
-      conn
-      |> assign(:current_token, token)
-      |> assign(:current_team, token.team)
-    else
-      _ -> conn |> Plug.BasicAuth.request_basic_auth() |> halt()
-    end
+  defp load_team(conn, _) do
+    assign(conn, :current_team, Guardian.Plug.current_resource(conn).team)
   end
 
   scope "/", LoomWeb do
@@ -44,6 +38,10 @@ defmodule LoomWeb.Router do
     pipe_through :api
 
     post "/s3", AwsS3EventController, :create
+  end
+
+  scope "/auth", LoomWeb do
+    post "/tokens", OauthController, :grant
   end
 
   scope "/api", LoomWeb do

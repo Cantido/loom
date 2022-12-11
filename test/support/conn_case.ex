@@ -61,4 +61,28 @@ defmodule LoomWeb.ConnCase do
     |> Phoenix.ConnTest.init_test_session(%{})
     |> Plug.Conn.put_session(:user_token, token)
   end
+
+  @doc """
+  Sets up a team and source, and creates a Bearer token for them.
+  """
+  def log_in_api(%{conn: conn}) do
+    source = Uniq.UUID.uuid7(:urn)
+
+    team = Loom.AccountsFixtures.team_fixture()
+    Loom.StoreFixtures.source_fixture(%{team: team, source: source})
+    token = Loom.AccountsFixtures.token_fixture(%{team: team})
+
+    {:ok, jwt, _claims} = LoomWeb.Tokens.encode_and_sign(token)
+
+    conn =
+      conn
+      |> Plug.Conn.put_req_header("accept", "application/json")
+      |> Plug.Conn.put_req_header("authorization", "Bearer #{jwt}")
+
+    %{
+      conn: conn,
+      team: team,
+      source: source
+    }
+  end
 end

@@ -19,16 +19,7 @@ defmodule LoomWeb.WebhookControllerTest do
   }
   @invalid_attrs %{token: nil, type: nil, url: nil}
 
-  setup %{conn: conn} do
-    token = token_fixture()
-
-    conn =
-      conn
-      |> put_req_header("accept", "application/json")
-      |> put_req_header("authorization", Plug.BasicAuth.encode_basic_auth(token.username, token.password))
-
-    {:ok, %{conn: conn}}
-  end
+  setup :log_in_api
 
   describe "index" do
     test "lists all webhooks", %{conn: conn} do

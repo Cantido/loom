@@ -14,7 +14,8 @@ config :loom, Loom.Repo,
   hostname: "localhost",
   database: "loom_test#{System.get_env("MIX_TEST_PARTITION")}",
   pool: Ecto.Adapters.SQL.Sandbox,
-  pool_size: 10
+  pool_size: 10,
+  log: false
 
 config :loom, Oban, testing: :inline
 
@@ -27,6 +28,8 @@ config :loom, LoomWeb.Endpoint,
 
 # In test we don't send emails.
 config :loom, Loom.Mailer, adapter: Swoosh.Adapters.Test
+
+config :loom, LoomWeb.Tokens, secret_key: "Ptb1BlnxoC0lmwRjo1QVIhk4zHqc3EZN40thOxIDeO957JX/BG/dMOEUCxGlA1c+"
 
 config :logger, level: :debug
 
