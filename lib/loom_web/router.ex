@@ -8,6 +8,9 @@ defmodule LoomWeb.Router do
   pipeline :browser do
     plug :accepts, ["html"]
     plug :fetch_session
+    plug Cldr.Plug.AcceptLanguage
+    plug Cldr.Plug.PutLocale,
+      apps: [cldr: Loom.Cldr, gettext: Loom.Gettext]
     plug :fetch_live_flash
     plug :put_root_layout, {LoomWeb.LayoutView, :root}
     plug :protect_from_forgery

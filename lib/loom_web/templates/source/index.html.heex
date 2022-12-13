@@ -1,10 +1,10 @@
-<h1 class="uk-text-large">Listing Sources</h1>
+<h1 class="uk-text-large"><%= gettext("Listing Sources") %></h1>
 
 <table class="uk-table">
   <thead>
     <tr>
-      <th>Source</th>
-      <th>Events</th>
+      <th><%= gettext("source") %></th>
+      <th><%= gettext("event count") %></th>
 
       <th></th>
     </tr>
@@ -20,11 +20,11 @@
       </td>
 
       <td>
-        <span><%= link "Delete", to: Routes.team_source_path(@conn, :delete, @team, source), method: :delete, data: [confirm: "Are you sure?"] %></span>
+        <span><%= link gettext("Delete"), to: Routes.team_source_path(@conn, :delete, @team, source), method: :delete, data: [confirm: gettext("Are you sure?")] %></span>
       </td>
     </tr>
 <% end %>
   </tbody>
 </table>
 
-<span><%= link "New Source", to: Routes.team_source_path(@conn, :new, @team) %></span>
+<span><%= link gettext("New Source"), to: Routes.team_source_path(@conn, :new, @team) %></span>

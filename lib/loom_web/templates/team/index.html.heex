@@ -1,12 +1,12 @@
 <div>
-<h1 class="uk-inline uk-text-large">Teams</h1>
-<%= link "New Team", to: Routes.team_path(@conn, :new), class: "uk-button uk-button-primary uk-align-right" %>
+<h1 class="uk-inline uk-text-large"><%= gettext("Teams") %></h1>
+<%= link gettext("new team"), to: Routes.team_path(@conn, :new), class: "uk-button uk-button-primary uk-align-right" %>
 </div>
 
 <%= for team <- @teams do %>
   <div class="uk-card uk-card-small uk-card-default uk-card-hover uk-width-1-2">
     <%= if is_owner?(@current_user, team) do %>
-    <div class="uk-card-badge uk-label">Owner</div>
+    <div class="uk-card-badge uk-label"><%= gettext("owner") %></div>
     <% end %>
 
     <div class="uk-card-header">
@@ -17,7 +17,7 @@
           <span uk-icon="pencil" class="uk-icon-link"></span>
         <% end %>
 
-        <%= link to: Routes.team_path(@conn, :delete, team), method: :delete, data: [confirm: "Are you sure?"] do %>
+        <%= link to: Routes.team_path(@conn, :delete, team), method: :delete, data: [confirm: gettext("Are you sure?")] do %>
           <span uk-icon="trash" class="uk-icon-link"></span>
         <% end %>
       </ul>
@@ -26,15 +26,15 @@
     <div class="uk-card-body">
       <div>
         <span uk-icon="users" class="uk-icon-link"></span>
-        <%= link "#{Enum.count(team.users)} members", to: Routes.team_member_path(@conn, :index, team) %>
+        <%= link ngettext("1 member", "%{count} members", Enum.count(team.users)), to: Routes.team_member_path(@conn, :index, team) %>
       </div>
       <div>
         <span uk-icon="database" class="uk-icon-link"></span>
-        <%= link "#{Enum.count(team.sources)} sources", to: Routes.team_source_path(@conn, :index, team) %>
+        <%= link ngettext("1 source", "%{count} sources", Enum.count(team.sources)), to: Routes.team_source_path(@conn, :index, team) %>
       </div>
       <div>
         <span uk-icon="server" class="uk-icon-link"></span>
-        <%= link "#{Enum.count(team.tokens)} tokens", to: Routes.team_token_path(@conn, :index, team) %>
+        <%= link ngettext("1 token", "%{count} tokens", Enum.count(team.tokens)), to: Routes.team_token_path(@conn, :index, team) %>
       </div>
     </div>
   </div>

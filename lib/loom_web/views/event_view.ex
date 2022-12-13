@@ -16,10 +16,14 @@ defmodule LoomWeb.EventView do
   end
 
   def data_size(nil) do
-    "0 Bytes"
+    byte_size_to_string(0)
   end
 
   def data_size(data) do
-    "#{byte_size(data)} Bytes"
+    byte_size_to_string(byte_size(data))
+  end
+
+  defp byte_size_to_string(size) do
+    Cldr.Unit.to_string! size, unit: :kibibyte
   end
 end

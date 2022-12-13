@@ -1,11 +1,11 @@
-<h1 class="uk-text-large">Events for <%= @source.source %></h1>
+<h1 class="uk-text-large"><%= gettext("Events for %{source}", source: @source.source) %></h1>
 <table class="uk-table uk-table-striped uk-table-small uk-table-hover">
   <thead>
     <tr>
       <th>#</th>
-      <th>time</th>
-      <th>id</th>
-      <th>type</th>
+      <th><%= gettext "time" %></th>
+      <th><%= gettext "id" %></th>
+      <th><%= gettext "type" %></th>
     </tr>
   </thead>
   <tbody>
@@ -14,7 +14,7 @@
     <% event_link = Routes.team_source_event_path(@conn, :show, @team, @source.source, event) %>
     <tr>
       <td class="uk-table-link"><%= link event.extensions["sequence"], to: event_link, class: "uk-link-reset" %></td>
-      <td class="uk-table-link"><%= link event.time, to: event_link, class: "uk-link-reset" %></td>
+      <td class="uk-table-link"><%= link Loom.Cldr.DateTime.to_string!(event.time), to: event_link, class: "uk-link-reset" %></td>
       <td class="uk-table-link"><%= link event.id, to: event_link, class: "uk-link-reset" %></td>
       <td class="uk-table-link"><%= link event.type, to: event_link, class: "uk-link-reset" %></td>
     </tr>
@@ -22,4 +22,4 @@
   </tbody>
 </table>
 
-<span><%= link "New Event", to: Routes.team_source_event_path(@conn, :new, @team, @source.source) %></span>
+<span><%= link gettext("New Event"), to: Routes.team_source_event_path(@conn, :new, @team, @source.source) %></span>
