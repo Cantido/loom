@@ -15,8 +15,8 @@ docker run -e DATABASE_URL=ecto://username:password@host/db -e SECRET_KEY_BASE=$
 ## Usage
 
 To use Loom, you must first create an account and an API token via the web interface.
-Then you can make API calls using basic auth.
-See the OpenAPI spec at `postman/schemas/openapi.yaml` for API documentation.
+Then you can retriev an access token starting an OAuth Client Credentials flow to the authorization endpoint.
+See the OpenAPI spec at [`openapi.yaml`](https://github.com/Cantido/loom/blob/main/openapi.yaml) for API documentation.
 
 ## Maintainer
 
