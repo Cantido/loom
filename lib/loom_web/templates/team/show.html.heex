@@ -1,24 +1,46 @@
 <ul class="uk-breadcrumb">
-  <li><%= link "Teams", to: Routes.team_path(@conn, :index) %></li>
+  <li><%= link gettext("Teams"), to: Routes.team_path(@conn, :index) %></li>
   <li><span><%= @team.name %></span></li>
 </ul>
 
 
-<span><%= link "Change name", to: Routes.team_path(@conn, :edit, @team), class: "uk-button uk-button-primary" %></span>
+<span><%= link gettext("Change team name"), to: Routes.team_path(@conn, :edit, @team), class: "uk-button" %></span>
 
-<h2 class="uk-text-large">Tokens</h2>
+<h2 class="uk-text-large"><%= gettext "Tokens" %></h2>
 
-  <p><%= ngettext("This team has 1 token", "This team has %{count} tokens", Enum.count(@team.tokens)) %></p>
+<%= if Enum.any?(@team.tokens) do %>
+  <table class="uk-table uk-table-small">
+    <thead>
+      <th><%= gettext "client id" %></th>
+    </thead>
+    <tbody>
+      <%= for token <- @team.tokens do %>
+        <tr>
+          <td><%= token.username %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% else %>
+  <p><%= gettext "This team does not have any tokens." %></p>
+<% end %>
 
-<h2 class="uk-text-large">Members</h2>
+<h2 class="uk-text-large"><%= gettext "Members" %></h2>
 
 <%= if Enum.any?(@team.users) do %>
-  <ul>
-  <%= for user <- @team.users do %>
-    <li><%= user.email %></li>
-  <% end %>
-  </ul>
+  <table class="uk-table uk-table-small">
+    <thead>
+      <th><%= gettext "email" %></th>
+    </thead>
+    <tbody>
+      <%= for user <- @team.users do %>
+        <tr>
+          <td><%= user.email %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
 <% else %>
-  <p>This team does not have any members</p>
+  <p><%= gettext "This team does not have any members" %></p>
 <% end %>
 

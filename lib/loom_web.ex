@@ -101,6 +101,7 @@ defmodule LoomWeb do
 
       import LoomWeb.ErrorHelpers
       import LoomWeb.Gettext
+      import LoomWeb.Gravatar
       alias LoomWeb.Router.Helpers, as: Routes
     end
   end
