@@ -11,6 +11,7 @@ defmodule Loom.Repo.Migrations.CreateEvents do
       add :dataschema, :string
       add :datacontenttype, :string
       add :time, :utc_datetime_usec
+      add :subject, :string
       add :extensions, {:map, :string}
     end
 

@@ -16,6 +16,7 @@ defmodule Loom.Store.Event do
     field :datacontenttype, :string
     field :dataschema, :string
     field :time, :utc_datetime_usec
+    field :subject, :string
     field :extensions, :map
 
     timestamps()
@@ -39,7 +40,7 @@ defmodule Loom.Store.Event do
     event
     |> Loom.Repo.preload(:source)
     |> Map.from_struct()
-    |> Map.take([:id, :type, :source, :data, :datacontenttype, :dataschema, :time, :extensions])
+    |> Map.take([:id, :type, :source, :data, :datacontenttype, :dataschema, :time, :subject, :extensions])
     |> Map.put(:specversion, "1.0")
     |> Map.update!(:source, fn s -> s.source end)
     |> Map.delete(:source_id)
@@ -67,6 +68,7 @@ defmodule Loom.Store.Event do
       :datacontenttype,
       :dataschema,
       :time,
+      :subject,
       :extensions
     ])
     |> validate_required([:id, :type])
@@ -75,6 +77,8 @@ defmodule Loom.Store.Event do
     |> validate_length(:type, min: 1)
     |> validate_format(:datacontenttype, ~r(/))
     |> validate_length(:dataschema, min: 1)
+    |> validate_length(:subject, min: 1)
+    |> assoc_constraint(:source)
     |> unique_constraint([:source_id, :id], error_key: :id)
   end
 end
