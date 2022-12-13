@@ -54,16 +54,7 @@ defmodule Loom.Store do
         Ecto.build_assoc(source, :events, time: DateTime.utc_now(), extensions: extensions)
         |> Loom.Store.Event.changeset(event)
       end)
-      |> Ecto.Multi.run(:webhook, fn _, %{event: event} ->
-        event = Event.to_cloudevent(event)
-        Loom.Subscriptions.send_webhooks(event)
-        #Loom.Subscriptions.deliver(event)
-
-        broadcast_endpoint = Application.fetch_env!(:loom, :broadcast_endpoint)
-
-        broadcast_endpoint.broadcast!("stream:" <> event.source, "event", event)
-        {:ok, nil}
-      end)
+      |> Loom.Subscriptions.send_webhooks_multi()
       |> Repo.transaction()
 
     case result do

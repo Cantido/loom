@@ -5,6 +5,7 @@ defmodule Loom.Subscriptions do
 
   alias Loom.Repo
   alias Loom.Subscriptions.Webhook
+  alias Loom.Store.Event
 
   import Ecto.Query, warn: false
 
@@ -154,27 +155,24 @@ defmodule Loom.Subscriptions do
     Webhook.changeset(webhook, attrs)
   end
 
-  def send_webhooks(event) do
-    webhooks =
-      Loom.Repo.all(
+  def send_webhooks_multi(multi) do
+    multi
+    |> Ecto.Multi.all(:webhooks, fn %{event: event} ->
         from w in Webhook,
-        join: a in assoc(w, :team),
-        join: s in assoc(a, :sources),
-        where: s.source == ^event.source,
-        where: w.type == ^event.type,
-        where: w.validated
-      )
-    Logger.info("Got #{Enum.count(webhooks)} webhooks for type #{event.type}")
-
-    event_json = Cloudevents.to_json(event)
-
-    Enum.each(webhooks, fn webhook ->
-      %{
-        webhook_id: webhook.id,
-        event_json: event_json
-      }
-      |> Loom.Subscriptions.WebhookWorker.new()
-      |> Oban.insert()
+          join: a in assoc(w, :team),
+          join: s in assoc(a, :sources),
+          where: s.id == ^event.source_id,
+          where: w.type == ^event.type,
+          where: w.validated
+      end)
+    |> Oban.insert_all(:jobs, fn %{webhooks: webhooks, event: event} ->
+      event_json = Cloudevents.to_json(Event.to_cloudevent(event))
+      Enum.map(webhooks, fn webhook ->
+        Loom.Subscriptions.WebhookWorker.new(%{
+          webhook_id: webhook.id,
+          event_json: event_json
+        })
+      end)
     end)
   end
 
