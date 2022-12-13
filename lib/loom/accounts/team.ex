@@ -10,7 +10,9 @@ defmodule Loom.Accounts.Team do
 
   schema "teams" do
     field :name, :string
+    field :stripe_subscription_item_id, :string
 
+    belongs_to :billing_user, User
     has_many :sources, Source
     has_many :roles, Role
     has_many :users, through: [:roles, :user]

@@ -26,6 +26,7 @@ defmodule Loom do
       Accounts.Token,
       Accounts.User,
       Adapters,
+      Billing,
       Store,
       Store.Source,
       Store.Event,
