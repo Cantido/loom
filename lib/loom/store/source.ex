@@ -2,12 +2,14 @@ defmodule Loom.Store.Source do
   use Loom.Schema
 
   alias Loom.Accounts.Team
+  alias Loom.Store.Event
   alias Loom.Store.Counter
   alias Loom.Subscriptions.Subscription
 
   import Ecto.Changeset
 
   schema "sources" do
+    has_many :events, Event
     has_many :subscriptions, Subscription
     belongs_to :team, Team, on_replace: :update
     has_one :counter, Counter

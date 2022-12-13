@@ -66,7 +66,9 @@ defmodule LoomWeb.Router do
 
     resources "/teams", TeamController do
       resources "/members", MemberController
-      resources "/sources", SourceController
+      resources "/sources", SourceController do
+        resources "/events", EventController
+      end
       resources "/tokens", TokenController
     end
   end

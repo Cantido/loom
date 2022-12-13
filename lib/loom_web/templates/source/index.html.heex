@@ -1,9 +1,10 @@
-<h1>Listing Sources</h1>
+<h1 class="uk-text-large">Listing Sources</h1>
 
-<table>
+<table class="uk-table">
   <thead>
     <tr>
       <th>Source</th>
+      <th>Events</th>
 
       <th></th>
     </tr>
@@ -11,16 +12,19 @@
   <tbody>
 <%= for source <- @sources do %>
     <tr>
-      <td><%= source.source %></td>
+      <td>
+        <%= link source.source, to: Routes.team_source_path(@conn, :show, @team, source) %>
+      </td>
+      <td>
+        <%= link @event_counts[source.source], to: Routes.team_source_event_path(@conn, :index, @team, source.source) %>
+      </td>
 
       <td>
-        <span><%= link "Show", to: Routes.source_path(@conn, :show, source) %></span>
-        <span><%= link "Edit", to: Routes.source_path(@conn, :edit, source) %></span>
-        <span><%= link "Delete", to: Routes.source_path(@conn, :delete, source), method: :delete, data: [confirm: "Are you sure?"] %></span>
+        <span><%= link "Delete", to: Routes.team_source_path(@conn, :delete, @team, source), method: :delete, data: [confirm: "Are you sure?"] %></span>
       </td>
     </tr>
 <% end %>
   </tbody>
 </table>
 
-<span><%= link "New Source", to: Routes.source_path(@conn, :new) %></span>
+<span><%= link "New Source", to: Routes.team_source_path(@conn, :new, @team) %></span>

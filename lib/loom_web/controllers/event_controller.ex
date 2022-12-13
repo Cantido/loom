@@ -1,21 +1,38 @@
 defmodule LoomWeb.EventController do
   use LoomWeb, :controller
 
+  alias Loom.Store
+
   action_fallback LoomWeb.FallbackController
 
-  def create(conn, event_params) do
-    case Loom.append(event_params, conn.assigns[:current_team]) do
+  def create(conn, params) do
+    # This will let us handle CloudEvents requests as well as Phoenix forms
+    {:ok, source} = Store.fetch_source(params["source_id"])
+
+    event_params =
+      Map.get(params, "event", params)
+      |> Map.put("source", source.source)
+
+    case Loom.append(event_params, source.team) do
       {:ok, event} ->
         conn
         |> put_status(:created)
-        |> put_resp_content_type("application/cloudevents+json")
-        |> put_resp_header("location", Routes.source_event_path(conn, :show, event.source.source, event.id))
-        |> render("show.json", event: event)
+        #|> put_resp_content_type("application/cloudevents+json")
+        #|> put_resp_header("location", Routes.source_event_path(conn, :show, event.source.source, event.id))
+        |> render(:show, team: source.team, source: source, event: event)
       err -> err
     end
   end
 
+  def new(conn, %{"source_id" => id}) do
+    {:ok, source} = Loom.Store.fetch_source(id)
+    changeset = Store.new_event_changeset(source)
+    render(conn, "new.html", team: source.team, source: source, changeset: changeset)
+  end
+
   def index(conn, %{"source_id" => id} = params) do
+    {:ok, source} = Loom.Store.fetch_source(id)
+
     opts =
       Map.take(params, ["limit", "from_revision", "direction"])
       |> Map.new(fn {k, v} ->
@@ -34,32 +51,33 @@ defmodule LoomWeb.EventController do
       end)
       |> Enum.to_list()
 
-    events = Loom.read(id, conn.assigns[:current_team], opts) |> Enum.to_list()
+    events = Loom.read(source.source, source.team, opts) |> Enum.to_list()
 
     conn
-    |> put_resp_content_type("application/cloudevents-batch+json")
-    |> render("stream.json", events: events)
+#    |> put_resp_content_type("application/cloudevents-batch+json")
+    |> render(:index, team: source.team, source: source, events: events)
   end
 
-  def show(conn, %{"source_id" => source, "id" => id}) do
-    with {:ok, event} <- Loom.fetch(source, id, conn.assigns[:current_team]) do
+  def show(conn, %{"source_id" => source_id, "id" => id}) do
+    {:ok, source} = Loom.Store.fetch_source(source_id)
+    with {:ok, event} <- Loom.fetch(source_id, id, source.team) do
       etag = Base.encode16(:crypto.hash(:sha256, Cloudevents.to_json(Loom.Store.Event.to_cloudevent(event))))
 
-      if not_modified?(conn, etag, event.time) do
-        conn
-        |> put_resp_header("cache-control", "public, max-age=31536000, immutable")
-        |> resp(:not_modified, "")
-      else
+#      if not_modified?(conn, etag, event.time) do
+#        conn
+#        |> put_resp_header("cache-control", "public, max-age=31536000, immutable")
+#        |> resp(:not_modified, "")
+#      else
         last_modified = Timex.format!(event.time, "{RFC1123z}")
 
         conn
         |> put_status(:ok)
-        |> put_resp_content_type("application/cloudevents+json")
+#        |> put_resp_content_type("application/cloudevents+json")
         |> put_resp_header("etag", ~s("#{etag}"))
         |> put_resp_header("last-modified", last_modified)
         |> put_resp_header("cache-control", "public, max-age=31536000, immutable")
-        |> render("show.json", event: event)
-      end
+        |> render(:show, team: source.team, source: source, event: event)
+#      end
     end
   end
 

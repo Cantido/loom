@@ -79,6 +79,13 @@ defmodule Loom do
     end
   end
 
+  def last_sequences(%Team{} = team) do
+    team = Repo.preload(team, :sources)
+
+    Enum.map(team.sources, &(&1.source))
+    |> Loom.Store.last_revisions()
+  end
+
   @doc """
   Returns the most recent sequence number from a source.
   """

@@ -51,12 +51,8 @@ defmodule Loom.Store do
           |> Map.reject(fn {_key, val} -> is_nil(val) end)
           |> Map.put("sequence", Integer.to_string(current_counter.value))
 
-        %Event{
-          time: DateTime.utc_now(),
-          extensions: extensions
-        }
+        Ecto.build_assoc(source, :events, time: DateTime.utc_now(), extensions: extensions)
         |> Loom.Store.Event.changeset(event)
-        |> Ecto.Changeset.put_assoc(:source, source)
       end)
       |> Ecto.Multi.run(:webhook, fn _, %{event: event} ->
         event = Event.to_cloudevent(event)
@@ -93,6 +89,16 @@ defmodule Loom.Store do
   defp revision_match?(x, x), do: true
   defp revision_match?(_, _), do: false
 
+  def last_revisions(sources) do
+    Repo.all(
+      from s in Loom.Store.Source,
+      left_join: c in assoc(s, :counter),
+      where: s.source in ^sources,
+      select: {s.source, coalesce(c.value, 0)}
+    )
+    |> Map.new()
+  end
+
   def last_revision(source) do
     counter =
       Repo.one(
@@ -114,7 +120,8 @@ defmodule Loom.Store do
         from e in Event,
         join: s in assoc(e, :source),
         where: s.source == ^source,
-        where: e.id == ^event_id
+        where: e.id == ^event_id,
+        preload: [:source]
       )
     if event do
       {:ok, event}
@@ -123,14 +130,25 @@ defmodule Loom.Store do
     end
   end
 
+  def new_event_changeset(source) do
+    Ecto.build_assoc(source, :events)
+    |> Ecto.Changeset.change(%{
+      id: Uniq.UUID.uuid4()
+    })
+  end
+
   def create_source(team, source_value) do
     Source.changeset(%Source{}, %{source: source_value})
     |> Ecto.Changeset.put_assoc(:team, team)
     |> Repo.insert()
   end
 
+  def get_source!(source_id) do
+    Repo.one!(from s in Source, where: [id: ^source_id], preload: [:team])
+  end
+
   def fetch_source(source) do
-    if source = Repo.one(from s in Source, where: s.source == ^source, preload: [:team, :source]) do
+    if source = Repo.one(from s in Source, where: s.source == ^source, preload: [:team]) do
       {:ok, source}
     else
       :error

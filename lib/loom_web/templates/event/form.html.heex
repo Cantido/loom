@@ -1,0 +1,65 @@
+<.form let={f} for={@changeset} action={@action} class="uk-form-horizontal">
+  <%= if @changeset.action do %>
+    <div class="alert alert-danger">
+      <p>Oops, something went wrong! Please check the errors below.</p>
+    </div>
+  <% end %>
+
+  <div class="uk-margin">
+    <%= label f, :specversion, class: "uk-form-label" %>
+    <div class="uk-form-controls">
+      <%= text_input f, :specversion, disabled: true, value: "1.0", class: "uk-input" %>
+    </div>
+  </div>
+
+  <div class="uk-margin">
+    <%= label f, :source, class: "uk-form-label" %>
+    <div class="uk-form-controls">
+      <%= text_input f, :source, disabled: true, value: @source.source, class: "uk-input" %>
+    </div>
+  </div>
+
+  <div class="uk-margin">
+    <%= label f, :id, class: "uk-form-label" %>
+    <div class="uk-form-controls">
+      <%= text_input f, :id, class: "uk-input" %>
+    </div>
+    <%= error_tag f, :id %>
+  </div>
+
+  <div class="uk-margin">
+    <%= label f, :type, class: "uk-form-label" %>
+    <div class="uk-form-controls">
+      <%= text_input f, :type, class: "uk-input" %>
+    </div>
+    <%= error_tag f, :type %>
+  </div>
+
+  <div class="uk-margin">
+    <%= label f, :data, class: "uk-form-label" %>
+    <div class="uk-form-controls">
+      <%= text_input f, :data, class: "uk-input" %>
+    </div>
+    <%= error_tag f, :data %>
+  </div>
+
+  <div class="uk-margin">
+    <%= label f, :datacontenttype, class: "uk-form-label" %>
+    <div class="uk-form-controls">
+      <%= text_input f, :datacontenttype, class: "uk-input" %>
+    </div>
+    <%= error_tag f, :datacontenttype %>
+  </div>
+
+  <div class="uk-margin">
+    <%= label f, :dataschema, class: "uk-form-label" %>
+    <div class="uk-form-controls">
+      <%= text_input f, :dataschema, class: "uk-input" %>
+    </div>
+    <%= error_tag f, :dataschema %>
+  </div>
+
+  <div class="uk-margin">
+    <%= submit "Publish", class: "uk-button uk-button-primary" %>
+  </div>
+</.form>

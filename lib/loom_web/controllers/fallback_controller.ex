@@ -6,6 +6,8 @@ defmodule LoomWeb.FallbackController do
   """
   use LoomWeb, :controller
 
+  require Logger
+
   def call(conn, {:error, %Ecto.Changeset{} = changeset}) do
     conn
     |> put_status(:unprocessable_entity)
@@ -20,7 +22,8 @@ defmodule LoomWeb.FallbackController do
     |> render(:"404")
   end
 
-  def call(conn, _err) do
+  def call(conn, error) do
+    Logger.error("Unhandled error: #{inspect error, pretty: true}")
     conn
     |> put_status(:internal_server_error)
     |> put_view(LoomWeb.ErrorView)

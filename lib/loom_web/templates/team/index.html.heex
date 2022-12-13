@@ -1,5 +1,5 @@
 <div>
-<h1 class="uk-inline">Teams</h1>
+<h1 class="uk-inline uk-text-large">Teams</h1>
 <%= link "New Team", to: Routes.team_path(@conn, :new), class: "uk-button uk-button-primary uk-align-right" %>
 </div>
 
@@ -12,8 +12,7 @@
     <div class="uk-card-header">
       <%= link team.name, to: Routes.team_path(@conn, :show, team), class: "uk-card-title" %>
 
-      <div class="uk-inline">
-
+      <ul class="uk-iconnav">
         <%= link to: Routes.team_path(@conn, :edit, team) do %>
           <span uk-icon="pencil" class="uk-icon-link"></span>
         <% end %>
@@ -21,7 +20,7 @@
         <%= link to: Routes.team_path(@conn, :delete, team), method: :delete, data: [confirm: "Are you sure?"] do %>
           <span uk-icon="trash" class="uk-icon-link"></span>
         <% end %>
-      </div>
+      </ul>
     </div>
 
     <div class="uk-card-body">

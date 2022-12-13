@@ -1,0 +1,38 @@
+<h1 class="uk-text-large">Event <%= @source.source %> / <%= @event.id %></h1>
+
+<table class="uk-table uk-table-small">
+  <tbody>
+    <tr>
+      <th>type</th>
+      <td><%= @event.type %></td>
+    </tr>
+    <tr>
+      <th>time</th>
+      <td><%= @event.time %></td>
+    </tr>
+    <tr>
+      <th>subject</th>
+      <td><%= @event.subject %></td>
+    </tr>
+    <tr>
+      <th>datacontenttype</th>
+      <td><%= @event.datacontenttype %></td>
+    </tr>
+    <tr>
+      <th>dataschema</th>
+      <td><%= @event.dataschema %></td>
+    </tr>
+    <tr>
+      <th>data</th>
+      <td><%= data_size(@event.data) %></td>
+    </tr>
+  </tbody>
+</table>
+
+
+<h2 class="uk-text-large">CloudEvents JSON</h2>
+
+<pre>
+<%= render(LoomWeb.EventView, "event.json", event: @event) |> Jason.encode!() %>
+</pre>
+
