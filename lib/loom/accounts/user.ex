@@ -6,6 +6,7 @@ defmodule Loom.Accounts.User do
   schema "users" do
     has_many :roles, Role
     has_many :teams, through: [:roles, :team]
+    field :stripe_customer_id, :string
     field :email, :string
     field :password, :string, virtual: true, redact: true
     field :hashed_password, :string, redact: true
@@ -68,6 +69,11 @@ defmodule Loom.Accounts.User do
     else
       changeset
     end
+  end
+
+  def customer_id_changeset(user, attrs) do
+    user
+    |> cast(attrs, [:stripe_customer_id])
   end
 
   @doc """

@@ -34,6 +34,12 @@ defmodule LoomWeb.Router do
     get "/", PageController, :index
   end
 
+  scope "/integrations", LoomWeb do
+    pipe_through :api
+
+    post "/stripe", StripeController, :event
+  end
+
   scope "/adapters/aws", LoomWeb do
     pipe_through :api
 

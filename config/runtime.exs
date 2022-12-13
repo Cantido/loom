@@ -20,6 +20,11 @@ if System.get_env("PHX_SERVER") do
   config :loom, LoomWeb.Endpoint, server: true
 end
 
+config :loom,
+  tier_one_price_id: System.get_env("LOOM_TIER_ONE_PRICE_ID")
+
+config :stripity_stripe,
+  api_key: System.get_env("STRIPE_API_KEY")
 
 if config_env() == :prod do
   database_url =
