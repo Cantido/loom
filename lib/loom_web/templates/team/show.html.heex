@@ -6,15 +6,11 @@
 
 <span><%= link "Change name", to: Routes.team_path(@conn, :edit, @team), class: "uk-button uk-button-primary" %></span>
 
-<h2 class="uk-heading-small">Tokens</h2>
+<h2 class="uk-text-large">Tokens</h2>
 
-<%= if Enum.any?(@team.tokens) do %>
-  <p>This team has tokens</p>
-<% else %>
-  <p>This team does not have any tokens</p>
-<% end %>
+  <p><%= ngettext("This team has 1 token", "This team has %{count} tokens", Enum.count(@team.tokens)) %></p>
 
-<h2 class="uk-heading-small">Members</h2>
+<h2 class="uk-text-large">Members</h2>
 
 <%= if Enum.any?(@team.users) do %>
   <ul>
