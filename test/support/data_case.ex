@@ -18,6 +18,8 @@ defmodule Loom.DataCase do
 
   using do
     quote do
+      use Oban.Testing, repo: Loom.Repo
+
       alias Loom.Repo
 
       import Ecto

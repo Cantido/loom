@@ -1,6 +1,5 @@
 defmodule Loom.Subscriptions.WebhookWorkerTest do
   use Loom.DataCase, async: true
-  use Oban.Testing, repo: Loom.Repo
 
   alias Loom.Subscriptions
 

@@ -78,6 +78,9 @@ defmodule Loom.SubscriptionsTest do
   end
 
   describe "webhook behaviour" do
+    alias Loom.Subscriptions.WebhookWorker
+    alias Loom.Subscriptions.ValidationWorker
+
     import Loom.AccountsFixtures
     import Loom.StoreFixtures
 
@@ -99,21 +102,27 @@ defmodule Loom.SubscriptionsTest do
         allowed_rate: 100
       }
 
-      test_pid = self()
-      test_ref = make_ref()
+      {:ok, _} = Subscriptions.create_webhook(team, webhook_attrs)
 
-      mock(fn %{method: :post, body: body} = env ->
-        send(test_pid, test_ref)
+      event = %{
+        id: "webhook-request-event",
+        source: @source,
+        type: "com.example.event",
+        specversion: "1.0"
+      }
 
-        {:ok, event} = Cloudevents.from_json(body)
-        assert event.id == "webhook-request-event"
+      {:ok, _} = Loom.append(event, team)
 
-        assert "application/cloudevents+json; charset=utf-8" ==
-                 Tesla.get_header(env, "content-type")
+      assert_enqueued worker: WebhookWorker
+    end
 
-        assert "Bearer some token" == Tesla.get_header(env, "authorization")
-        %Tesla.Env{status: 200}
-      end)
+    test "a webhook is not triggered when it is not yet validated", %{team: team} do
+      webhook_attrs = %{
+        token: "some token",
+        type: "com.example.event",
+        url: "https://example.com/events/hook",
+        validated: false
+      }
 
       {:ok, _} = Subscriptions.create_webhook(team, webhook_attrs)
 
@@ -126,33 +135,7 @@ defmodule Loom.SubscriptionsTest do
 
       {:ok, _} = Loom.append(event, team)
 
-      assert_receive ^test_ref
-    end
-
-    test "a webhook is not triggered when it is not yet validated", %{team: team} do
-      webhook_attrs = %{
-        token: "some token",
-        type: "com.example.event",
-        url: "https://example.com/events/hook",
-        validated: false
-      }
-
-      mock(fn
-        %{method: :put} -> flunk("This webhook shouldn't have been published to")
-      end)
-
-      Oban.Testing.with_testing_mode(:manual, fn ->
-        {:ok, _} = Subscriptions.create_webhook(team, webhook_attrs)
-      end)
-
-      event = %{
-        id: "webhook-request-event",
-        source: @source,
-        type: "com.example.event",
-        specversion: "1.0"
-      }
-
-      {:ok, _} = Loom.append(event, team)
+      refute_enqueued worker: WebhookWorker
     end
 
     test "a webhook is validated before being created" do
@@ -164,33 +147,9 @@ defmodule Loom.SubscriptionsTest do
         url: "https://example.com/events/hook"
       }
 
-      test_pid = self()
-      test_ref = make_ref()
-
-      mock(fn %{method: :options} = env ->
-        send(test_pid, test_ref)
-
-        origin = Tesla.get_header(env, "webhook-request-origin")
-
-        assert origin == "localhost"
-
-        %Tesla.Env{
-          status: 200,
-          headers: [{"webhook-allowed-origin", origin}, {"webhook-allowed-rate", 100}]
-        }
-      end)
-
       {:ok, %{id: id}} = Subscriptions.create_webhook(team, webhook_attrs)
 
-      # We're in a test and Oban is set to inline jobs, so the validation was run synchronously after creating the webhook
-
-      # But we do have to fetch the webhook again, since create_webhook only returns the webhook it created, before the job ran
-
-      assert_receive ^test_ref
-
-      webhook = Subscriptions.get_webhook!(id)
-
-      assert webhook.validated
+      assert_enqueued worker: ValidationWorker
     end
 
     test "a webhook can be validated asynchronously", %{team: team} do
@@ -209,20 +168,20 @@ defmodule Loom.SubscriptionsTest do
         %Tesla.Env{status: 200}
       end)
 
-      {:ok, %{id: id}} = Subscriptions.create_webhook(team, webhook_attrs, cleanup_after: :never)
+      Oban.Testing.with_testing_mode(:inline, fn ->
+        {:ok, %{id: id}} = Subscriptions.create_webhook(team, webhook_attrs, cleanup_after: :never)
 
-      # We're in a test and Oban is set to inline jobs, so the validation was run synchronously after creating the webhook
+        # we do have to fetch the webhook again, since create_webhook only returns the webhook it created, before the job ran
 
-      # But we do have to fetch the webhook again, since create_webhook only returns the webhook it created, before the job ran
+        assert_receive {^test_ref, callback_url}
 
-      assert_receive {^test_ref, callback_url}
+        assert callback_url =~ "http://localhost:4002/api/webhooks/#{id}/confirm"
 
-      assert callback_url =~ "http://localhost:4002/api/webhooks/#{id}/confirm"
+        {:ok, webhook} =
+          Subscriptions.get_webhook!(id) |> Subscriptions.validate_webhook("localhost")
 
-      {:ok, webhook} =
-        Subscriptions.get_webhook!(id) |> Subscriptions.validate_webhook("localhost")
-
-      assert webhook.validated
+        assert webhook.validated
+      end)
     end
 
     test "a webhook is cleaned up after an amount of time if it isn't validated", %{team: team} do
@@ -241,11 +200,9 @@ defmodule Loom.SubscriptionsTest do
         %Tesla.Env{status: 200}
       end)
 
-      {:ok, %{id: _id}} = Subscriptions.create_webhook(team, webhook_attrs, cleanup_after: 0)
-
-      # We're in a test and Oban is set to inline jobs, so the validation was run synchronously after creating the webhook, and then cleanup ran to delete it.
-
-      # But we do have to fetch the webhook again, since create_webhook only returns the webhook it created, before the job ran
+      Oban.Testing.with_testing_mode(:inline, fn ->
+        {:ok, %{id: _id}} = Subscriptions.create_webhook(team, webhook_attrs, cleanup_after: 0)
+      end)
 
       assert_receive ^test_ref
 
