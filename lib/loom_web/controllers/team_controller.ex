@@ -6,7 +6,16 @@ defmodule LoomWeb.TeamController do
 
   def index(conn, _params) do
     teams = Accounts.list_teams(conn.assigns[:current_user])
-    render(conn, "index.html", teams: teams)
+
+    event_counts =
+      Map.new(teams, fn team ->
+        stats = Accounts.team_stats(team)
+        count = Map.values(stats[:event_counts]) |> Enum.sum()
+
+        {team.id, count}
+      end)
+
+    render(conn, "index.html", teams: teams, event_counts: event_counts)
   end
 
   def new(conn, _params) do

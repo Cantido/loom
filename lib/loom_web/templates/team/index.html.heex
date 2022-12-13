@@ -30,10 +30,14 @@
       </div>
       <div>
         <span uk-icon="database" class="uk-icon-link"></span>
+        <%= link ngettext("1 event", "%{count} events", @event_counts[team.id]), to: Routes.team_source_path(@conn, :index, team) %>
+      </div>
+      <div>
+        <span uk-icon="tag" class="uk-icon-link"></span>
         <%= link ngettext("1 source", "%{count} sources", Enum.count(team.sources)), to: Routes.team_source_path(@conn, :index, team) %>
       </div>
       <div>
-        <span uk-icon="server" class="uk-icon-link"></span>
+        <span uk-icon="code" class="uk-icon-link"></span>
         <%= link ngettext("1 token", "%{count} tokens", Enum.count(team.tokens)), to: Routes.team_token_path(@conn, :index, team) %>
       </div>
     </div>

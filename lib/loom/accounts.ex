@@ -414,6 +414,14 @@ defmodule Loom.Accounts do
     |> Repo.preload([:users, :tokens, :sources])
   end
 
+  def team_stats(%Team{} = team) do
+    event_counts =
+      Enum.map(team.sources, &(&1.source))
+      |> Loom.Store.count_events()
+
+    %{event_counts: event_counts}
+  end
+
   @doc """
   Gets a single team.
 
