@@ -6,6 +6,9 @@ defmodule LoomWeb.Router do
   require Logger
 
   pipeline :browser do
+    plug Hammer.Plug, [
+      rate_limit: {"browser", 1_000, 100}
+    ]
     plug :accepts, ["html"]
     plug :fetch_session
     plug Cldr.Plug.AcceptLanguage
@@ -19,6 +22,9 @@ defmodule LoomWeb.Router do
   end
 
   pipeline :api do
+    plug Hammer.Plug, [
+      rate_limit: {"api", 1_000, 500}
+    ]
     plug :accepts, ["json"]
   end
 

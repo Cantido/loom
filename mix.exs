@@ -55,6 +55,7 @@ defmodule Loom.MixProject do
       {:finch, "~> 0.14.0"},
       {:guardian, "~> 2.0"},
       {:hammer, "~> 6.1"},
+      {:hammer_plug, "~> 3.0"},
       {:nebulex, "~> 2.4"},
       {:phoenix, "~> 1.6.11"},
       {:phoenix_ecto, "~> 4.4"},
