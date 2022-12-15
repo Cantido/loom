@@ -37,3 +37,5 @@ tmp/
 bench/snapshots
 
 .envrc
+
+volume

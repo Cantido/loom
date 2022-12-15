@@ -20,6 +20,11 @@ if System.get_env("PHX_SERVER") do
   config :loom, LoomWeb.Endpoint, server: true
 end
 
+config :ex_aws, :s3,
+  scheme: System.fetch_env!("S3_SCHEME"),
+  host: System.fetch_env!("S3_HOST"),
+  port: System.fetch_env!("S3_PORT")
+
 
 if config_env() == :prod do
   database_url =

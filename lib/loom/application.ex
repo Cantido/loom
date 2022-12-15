@@ -32,6 +32,9 @@ defmodule Loom.Application do
 
         Application.put_env(:loom, :broadcast_endpoint, LoomWeb.Endpoint)
 
+        ExAws.S3.put_bucket("events", "us-east-1")
+        |> ExAws.request!()
+
         {:ok, pid}
 
       err ->

@@ -59,6 +59,8 @@ defmodule Loom.Store.Event do
     |> then(fn {:ok, ce} -> ce end)
   end
 
+  def to_cloudevent(%Cloudevents.Format.V_1_0.Event{} = event), do: event
+
   def changeset(model, params \\ %{}) do
     model
     |> cast(params, [

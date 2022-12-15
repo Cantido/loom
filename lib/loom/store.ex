@@ -54,6 +54,11 @@ defmodule Loom.Store do
         Ecto.build_assoc(source, :events, time: DateTime.utc_now(), extensions: extensions)
         |> Loom.Store.Event.changeset(event)
       end)
+      |> Ecto.Multi.run(:s3, fn _, %{event: event, source: source} ->
+        event_json = Event.to_cloudevent(event) |> Cloudevents.to_json()
+
+        ExAws.S3.put_object("events", source.source <> "/" <> event.id, event_json) |> ExAws.request()
+      end)
       |> Loom.Subscriptions.send_webhooks_multi()
       |> Repo.transaction()
 
@@ -199,12 +204,32 @@ defmodule Loom.Store do
         :backward -> :desc
       end
 
-    Repo.all(
-      from e in Event,
-        join: s in assoc(e, :source),
-        where: s.source == ^stream_id,
-        where: e.extensions["sequence"] in ^revision_range,
-        order_by: [{^sort_dir, e.extensions["sequence"]}]
-    )
+    events =
+      Repo.all(
+        from e in Event,
+          join: s in assoc(e, :source),
+          where: s.source == ^stream_id,
+          where: e.extensions["sequence"] in ^revision_range,
+          order_by: [{^sort_dir, e.extensions["sequence"]}],
+          select: e.id
+      )
+      |> Task.async_stream(fn id ->
+        ExAws.S3.get_object("events", stream_id <> "/" <> id) |> ExAws.request()
+      end)
+      |> Enum.map(fn {:ok, s3_result} ->
+        case s3_result do
+          {:ok, success_response} -> Cloudevents.from_json!(success_response[:body])
+          err -> err
+        end
+      end)
+
+
+    failures = Enum.filter(events, fn event -> match?({:error, _}, event) end)
+
+    if Enum.any?(failures) do
+      {:error, {:storage_failure, failures}}
+    else
+      events
+    end
   end
 end
