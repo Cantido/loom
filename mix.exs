@@ -71,7 +71,7 @@ defmodule Loom.MixProject do
       {:swoosh, "~> 1.3"},
       {:telemetry_metrics, "~> 0.6"},
       {:telemetry_poller, "~> 1.0"},
-      {:tesla, "~> 1.4.0"},
+      {:tesla, "~> 1.5.0"},
       {:timex, "~> 3.0"},
       {:gettext, "~> 0.18"},
       {:jason, "~> 1.2"},
