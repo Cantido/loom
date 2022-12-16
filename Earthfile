@@ -17,8 +17,7 @@ deps:
       && apt upgrade -y \
       && mix local.rebar --force \
       && mix local.hex --force \
-      && mix deps.get \
-      && mix deps.compile
+      && mix deps.get
 
 build:
   FROM +deps
@@ -65,4 +64,4 @@ docker:
 
   CMD /app/rel/loom/bin/server
 
-  SAVE IMAGE --push ghcr.io/cantido/loom:latest
+  SAVE IMAGE --push registry.digitalocean.com/cosmicrose-loom/loom:latest
