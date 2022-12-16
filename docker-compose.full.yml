@@ -5,6 +5,9 @@ services:
     environment:
       - DATABASE_URL=ecto://postgres:postgres@postgres/loom_prod
       - SECRET_KEY_BASE=HbCzE02NajZ8oFswHWeh1B1TuBL4UKplLPMdBcPqaqAA2+OM/MKgKo7PWA3ccKIl
+      - S3_SCHEME=http://
+      - S3_HOST=localhost
+      - S3_PORT=4566
     ports:
       - 4000:4000
   postgres:
@@ -12,3 +15,16 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
+  localstack:
+    container_name: "${LOCALSTACK_DOCKER_NAME-localstack_main}"
+    image: localstack/localstack
+    ports:
+      - "127.0.0.1:4566:4566"            # LocalStack Gateway
+      - "127.0.0.1:4510-4559:4510-4559"  # external services port range
+    environment:
+      - DEBUG=${DEBUG-}
+      - LAMBDA_EXECUTOR=${LAMBDA_EXECUTOR-}
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    volumes:
+      - "${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
