@@ -57,6 +57,7 @@ defmodule Loom.MixProject do
       {:hammer, "~> 6.1"},
       {:hammer_plug, "~> 3.0"},
       {:nebulex, "~> 2.4"},
+      {:nimble_options, "~> 0.4"},
       {:phoenix, "~> 1.6.11"},
       {:phoenix_ecto, "~> 4.4"},
       {:ecto_sql, "~> 3.6"},

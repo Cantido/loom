@@ -35,6 +35,45 @@ defmodule Loom do
   @type event_source :: String.t()
   @type revision :: non_neg_integer()
 
+  @append_options_schema NimbleOptions.new!([
+    expected_revision: [
+      type: {:or, [
+        {:in, [:any, :no_stream, :stream_exists]},
+        :non_neg_integer
+      ]},
+      default: :any,
+      doc: """
+      The expected state of the event stream.
+      If `:any`, then the event will be appended to the stream regardless of the stream's state,
+      If `:no_stream`, then the stream must not exist in order for the event to be appended.
+      If `:stream_exists`, then there must be at least one event in the stream.
+      If a positive integer, then there must be that many events in the stream.
+
+      This is used for optimistic concurrency.
+      The `append/3` function will return `{:error, :revision_mismatch}`
+      if the provided option does not match the current state of the stream.
+      """
+    ]
+  ])
+
+  @read_options_schema NimbleOptions.new!([
+    direction: [
+      type: {:in, [:forward, :backward]},
+      default: :backward
+    ],
+    from_revision: [
+      type: {:or, [
+        {:in, [:start, :end]},
+        :non_neg_integer
+      ]},
+      default: :start
+    ],
+    limit: [
+      type: {:in, 0..1_000},
+      default: 1_000
+    ]
+  ])
+
   @doc """
   Append an event to an event stream.
   """
@@ -43,6 +82,8 @@ defmodule Loom do
           | {:error, :event_exists}
           | {:error, :revision_mismatch}
   def append(event, %Team{} = team, opts \\ []) when is_map(event) and not is_struct(event) do
+    opts = NimbleOptions.validate!(opts, @append_options_schema)
+
     team = Repo.preload(team, :sources)
     event_source = Map.get(event, :source, Map.get(event, "source"))
 
@@ -104,6 +145,8 @@ defmodule Loom do
   - `:limit` - the maximum number of events to return. Default: `1000`, and cannot be set higher.
   """
   def read(source, team, opts \\ []) do
+    opts = NimbleOptions.validate!(opts, @read_options_schema)
+
     team = Repo.preload(team, :sources)
     if Enum.any?(team.sources, fn src -> src.source == source end) do
       Loom.Store.read(source, opts)
