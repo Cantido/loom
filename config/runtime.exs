@@ -25,6 +25,8 @@ config :ex_aws, :s3,
   host: System.fetch_env!("S3_HOST"),
   port: System.fetch_env!("S3_PORT")
 
+config :loom,
+  :redis_url, System.fetch_env!("REDIS_URL")
 
 if config_env() == :prod do
   database_url =

@@ -11,6 +11,7 @@ defmodule Loom.Application do
     children = [
       Loom.Cache,
       Loom.Repo,
+      {Redix, {Application.fetch_env!(:loom, :redis_url), [name: :redix]}},
       LoomWeb.Telemetry,
       {Finch, name: Loom.Finch},
       {Phoenix.PubSub, name: Loom.PubSub},

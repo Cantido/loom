@@ -5,7 +5,6 @@ defmodule Loom.Store do
   alias Loom.Store.Event
   alias Loom.Repo
   alias Loom.Store.Source
-  alias Loom.Store.Counter
 
   import Ecto.Query
 
@@ -26,28 +25,17 @@ defmodule Loom.Store do
           {:ok, true}
         end
       end)
-      |> Ecto.Multi.run(:current_counter, fn repo, %{source: source} ->
-        counter =
-          if is_nil(source.counter) do
-            Counter.changeset(%Counter{})
-            |> Ecto.Changeset.put_assoc(:source, source)
-          else
-            Ecto.Changeset.change(source.counter)
-          end
-
-        counter_value = Ecto.Changeset.get_field(counter, :value)
-
-        if revision_match?(counter_value, Keyword.get(opts, :expected_revision, :any)) do
-          cs = Ecto.Changeset.change(counter, %{value: counter_value + 1})
-          repo.insert_or_update(cs)
-        else
-          {:error, :revision_mismatch}
+      |> Ecto.Multi.run(:current_counter, fn _repo, %{source: source} ->
+        expected_sequence = Keyword.get(opts, :expected_revision, :any)
+        case Redix.command(:redix, ["FCALL", "revision_match_increment", "1", "loom:source:#{source.source}:last_sequence", expected_sequence]) do
+          {:ok, "MISMATCH"} -> {:error, :revision_mismatch}
+          {:ok, revision} -> {:ok, revision}
         end
       end)
       |> Ecto.Multi.run(:cloudevent, fn _, %{current_counter: current_counter} ->
         case Cloudevents.from_map(event_params) do
           {:ok, ce} ->
-            ce = struct(ce, extensions: Map.put(ce.extensions, :sequence, Integer.to_string(current_counter.value)))
+            ce = struct(ce, extensions: Map.put(ce.extensions, :sequence, Integer.to_string(current_counter)))
 
             ce =
               if is_nil(ce.time) do
@@ -74,6 +62,9 @@ defmodule Loom.Store do
 
         ExAws.S3.put_object("events", event_key(cloudevent.source, cloudevent.id), event_json) |> ExAws.request()
       end)
+      |> Ecto.Multi.run(:redis, fn _, %{current_counter: current_counter, cloudevent: cloudevent} ->
+        Redix.command(:redix, ["HSET", "loom:source:#{cloudevent.source}:sequences", current_counter, cloudevent.id])
+      end)
       |> Loom.Subscriptions.send_webhooks_multi()
       |> Repo.transaction()
 
@@ -95,14 +86,6 @@ defmodule Loom.Store do
     end
   end
 
-  defp revision_match?(_, :any), do: true
-  defp revision_match?(0, :no_stream), do: true
-  defp revision_match?(_, :no_stream), do: false
-  defp revision_match?(0, :stream_exists), do: false
-  defp revision_match?(_, :stream_exists), do: true
-  defp revision_match?(x, x), do: true
-  defp revision_match?(_, _), do: false
-
   def last_revisions(sources) do
     Repo.all(
       from s in Loom.Store.Source,
@@ -114,21 +97,13 @@ defmodule Loom.Store do
   end
 
   def last_revision(source) do
-    counter =
-      Repo.one(
-        from c in Loom.Store.Counter,
-        join: s in assoc(c, :source),
-        where: s.source == ^source
-      )
-
-    if counter do
-      counter.value
-    else
-      0
+    case Redix.command(:redix, ["GET", "loom:source:#{source}:last_sequence"]) do
+      {:ok, nil} -> 0
+      {:ok, sequence} -> String.to_integer(sequence)
     end
   end
 
-  def fetch_event(source, event_id, opts \\ []) do
+  def fetch_event(source, event_id, opts \\ []) when is_binary(source) and is_binary(event_id) do
     req = ExAws.S3.get_object("events", event_key(source, event_id))
 
     case ExAws.request(req) do
@@ -193,6 +168,9 @@ defmodule Loom.Store do
       where: s.source == ^source
     )
 
+    Redix.command!(:redix, ["DEL", "loom:source:#{source}:last_sequence"])
+    Redix.command!(:redix, ["DEL", "loom:source:#{source}:sequences"])
+
     stream = ExAws.S3.list_objects("events", prefix: source) |> ExAws.stream!() |> Stream.map(& &1.key)
     req = ExAws.S3.delete_all_objects("events", stream)
 
@@ -207,6 +185,8 @@ defmodule Loom.Store do
     Repo.all(query)
   end
 
+  require Logger
+
   def read(stream_id, opts \\ []) do
     direction = Keyword.get(opts, :direction, :forward)
     from_revision = Keyword.get(opts, :from_revision, :start)
@@ -219,56 +199,64 @@ defmodule Loom.Store do
 
         {:forward, :start} ->
           range_end = min(last_revision(stream_id), limit)
-          1..range_end
+          if range_end < 1 do
+            []
+          else
+            1..range_end
+          end
 
         {:forward, range_start} ->
-          range_end = min(last_revision(stream_id), range_start + limit)
-          range_start..range_end
+          range_end = min(last_revision(stream_id), range_start + limit - 1)
+          if range_end < range_start do
+            []
+          else
+            range_start..range_end
+          end
 
         {:backward, :start} ->
           []
 
         {:backward, :end} ->
           range_start = min(last_revision(stream_id), limit)
-          range_start..0
+          if range_start < 1 do
+            []
+          else
+            range_start..1
+          end
 
         {:backward, range_start} ->
-          range_end = max(last_revision(stream_id), range_start - limit)
-          range_start..range_end
+          range_end = max(last_revision(stream_id), range_start - limit + 1)
+          if range_start < range_end do
+            []
+          else
+            range_start..range_end
+          end
       end
       |> Enum.map(&Integer.to_string/1)
 
-    sort_dir =
-      case direction do
-        :forward -> :asc
-        :backward -> :desc
-      end
-
-    events =
-      Repo.all(
-        from e in Event,
-          join: s in assoc(e, :source),
-          where: s.source == ^stream_id,
-          where: e.extensions["sequence"] in ^revision_range,
-          order_by: [{^sort_dir, e.extensions["sequence"]}],
-          select: e.id
-      )
-      |> Task.async_stream(fn id ->
-        fetch_event(stream_id, id, format: :native)
-      end)
-      |> Enum.map(fn {:ok, event} ->
-        case event do
-          {:ok, event} -> event
-          error -> error
-        end
-      end)
-
-    failures = Enum.filter(events, fn event -> match?({:error, _}, event) end)
-
-    if Enum.any?(failures) do
-      {:error, {:storage_failure, failures}}
+    if Enum.empty?(revision_range) do
+      []
     else
-      events
+      events =
+        Redix.command!(:redix, ["HMGET", "loom:source:#{stream_id}:sequences"] ++ revision_range)
+        |> tap(fn ids -> Logger.error("revision range: #{inspect revision_range} opts: #{inspect opts}, ids: #{inspect ids}") end)
+        |> Task.async_stream(fn id ->
+          fetch_event(stream_id, id, format: :native)
+        end)
+        |> Enum.map(fn {:ok, event} ->
+          case event do
+            {:ok, event} -> event
+            error -> error
+          end
+        end)
+
+      failures = Enum.filter(events, fn event -> match?({:error, _}, event) end)
+
+      if Enum.any?(failures) do
+        {:error, {:storage_failure, failures}}
+      else
+        events
+      end
     end
   end
 end

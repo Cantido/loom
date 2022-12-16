@@ -7,6 +7,10 @@ services:
       - POSTGRES_PASSWORD=postgres
     ports:
       - 5432:5432
+  redis:
+    image: redis
+    ports:
+      - 6379:6379
   localstack:
     container_name: "${LOCALSTACK_DOCKER_NAME-localstack_main}"
     image: localstack/localstack
