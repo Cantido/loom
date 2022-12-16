@@ -3,16 +3,27 @@ defmodule StoreBench do
 
 
   setup_all do
-    Application.ensure_all_started(:loom)
+    {:ok, _} = Application.ensure_all_started(:loom)
+
+    benchmark_id = Uniq.UUID.uuid7(:slug)
+
+    {:ok, user} = Loom.Accounts.register_user(%{email: "#{benchmark_id}@example.com", password: "benchfella is nice"})
+    {:ok, team} = Loom.Accounts.create_team(%{name: benchmark_id}, user)
+
+    {:ok, %{user: user, team: team}}
+  end
+
+  before_each_bench context do
+    {:ok, context}
   end
 
   bench "write event", [event: random_event(), stream: random_stream(), revision: random_revision()] do
-    _ = Loom.append(event, expected_revision: revision)
+    _ = Loom.append(event, bench_context[:team], expected_revision: revision)
     :ok
   end
 
   bench "read event", [stream: random_stream()] do
-    _ = Loom.read(stream)
+    _ = Loom.read(stream, bench_context[:team])
     :ok
   end
 
@@ -34,13 +45,13 @@ defmodule StoreBench do
     data_size = Enum.random(10..4_000)
     data = :rand.bytes(data_size) |> Base.encode64()
 
-    Cloudevents.from_map!(%{
+    %{
       id: id,
       source: source,
       type: type,
       data: data,
       specversion: "1.0"
-    })
+    }
   end
 
   defp random_stream do
