@@ -42,7 +42,7 @@ defmodule Loom.MixProject do
       {:ex_aws, "~> 2.0"},
       {:ex_aws_s3, "~> 2.0"},
       {:hackney, "~> 1.9"},
-      {:sweet_xml, "~> 0.6.6"},
+      {:sweet_xml, "~> 0.7.3"},
       {:ex_check, "~> 0.15.0", only: [:dev], runtime: false},
       {:ex_cldr, "~> 2.33"},
       {:ex_cldr_calendars, "~> 1.21"},
