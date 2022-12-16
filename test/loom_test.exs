@@ -25,6 +25,31 @@ defmodule LoomTest do
 
       {:ok, _event} = Loom.fetch(source, "basic-create-event", team)
     end
+
+    test "doesn't create an event if the source doesn't exist", %{team: team} do
+      event = %{
+        type: "test.event",
+        specversion: "1.0",
+        source: Uniq.UUID.uuid7(:urn),
+        id: "basic-create-event"
+      }
+
+      {:error, :unauthorized} = Loom.append(event, team)
+    end
+
+    test "creates a new source when the :create_source option is true", %{team: team} do
+      source = Uniq.UUID.uuid7(:urn)
+      event = %{
+        type: "test.event",
+        specversion: "1.0",
+        source: source,
+        id: "basic-create-event"
+      }
+
+      {:ok, event} = Loom.append(event, team, create_source: true)
+
+      assert event.source == source
+    end
   end
 
   describe "read" do

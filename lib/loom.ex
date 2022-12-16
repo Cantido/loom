@@ -53,6 +53,10 @@ defmodule Loom do
       The `append/3` function will return `{:error, :revision_mismatch}`
       if the provided option does not match the current state of the stream.
       """
+    ],
+    create_source: [
+      type: :boolean,
+      default: false
     ]
   ])
 
@@ -87,7 +91,11 @@ defmodule Loom do
     team = Repo.preload(team, :sources)
     event_source = Map.get(event, :source, Map.get(event, "source"))
 
-    if Enum.any?(team.sources, fn src -> src.source == event_source end) do
+    if opts[:create_source] do
+      {:ok, _source} = Loom.Store.create_source(team, event_source)
+    end
+
+    if opts[:create_source] or Enum.any?(team.sources, fn src -> src.source == event_source end) do
       Loom.Store.append(event, opts)
     else
       {:error, :unauthorized}
