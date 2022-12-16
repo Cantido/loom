@@ -111,4 +111,22 @@ defmodule Loom do
       {:error, :unauthorized}
     end
   end
+
+  def delete_source(source, team) do
+    team = Repo.preload(team, :sources)
+    if Enum.any?(team.sources, fn src -> src.source == source end) do
+      Loom.Store.delete_source(source)
+    else
+      {:error, :unauthorized}
+    end
+  end
+
+  def delete_all_events(source, team) do
+    team = Repo.preload(team, :sources)
+    if Enum.any?(team.sources, fn src -> src.source == source end) do
+      Loom.Store.delete_all_events(source)
+    else
+      {:error, :unauthorized}
+    end
+  end
 end

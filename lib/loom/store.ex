@@ -189,6 +189,27 @@ defmodule Loom.Store do
     end
   end
 
+  def delete_source(source) when is_binary(source) do
+    Loom.Repo.delete_all(from s in Source, where: s.source == ^source)
+
+    delete_all_events(source)
+
+    :ok
+  end
+
+  def delete_all_events(source) when is_binary(source) do
+    Loom.Repo.delete_all(
+      from e in Event,
+      join: s in assoc(e, :source),
+      where: s.source == ^source
+    )
+
+    stream = ExAws.S3.list_objects("events", prefix: source) |> ExAws.stream!() |> Stream.map(& &1.key)
+    ExAws.S3.delete_all_objects("events", stream) |> ExAws.request!()
+
+    :ok
+  end
+
   def list_streams do
     query = from e in Event, order_by: e.source, select: e.source
     Repo.all(query)

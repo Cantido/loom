@@ -77,4 +77,38 @@ defmodule LoomTest do
       assert List.first(events).id == "before-limit"
     end
   end
+
+  describe "delete sources" do
+    test "all events go away", %{team: team, source: source} do
+      event = %{
+        type: "test.event",
+        specversion: "1.0",
+        source: source,
+        id: "deleteme"
+      }
+
+      {:ok, _} = Loom.append(event, team)
+
+      :ok = Loom.delete_source(source, team)
+
+      assert {:error, :unauthorized} == Loom.read(source, team)
+    end
+  end
+
+  describe "delete all events in a source" do
+    test "all events go away", %{team: team, source: source} do
+      event = %{
+        type: "test.event",
+        specversion: "1.0",
+        source: source,
+        id: "deleteme"
+      }
+
+      {:ok, _} = Loom.append(event, team)
+
+      :ok = Loom.delete_all_events(source, team)
+
+      assert [] == Loom.read(source, team)
+    end
+  end
 end
