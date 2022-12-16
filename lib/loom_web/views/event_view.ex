@@ -11,8 +11,7 @@ defmodule LoomWeb.EventView do
   end
 
   def render("event.json", %{event: event}) do
-    Loom.Store.Event.to_cloudevent(event)
-    |> Cloudevents.to_map()
+    Cloudevents.to_map(event)
   end
 
   def data_size(nil) do

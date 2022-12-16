@@ -12,6 +12,6 @@ defmodule LoomWeb.AwsS3EventControllerTest do
 
     assert response(conn, 200)
 
-    {:ok, _event} = Loom.Store.fetch(source_name, "Amazon S3 generated request ID.Amazon S3 host that processed the request")
+    {:ok, _event} = Loom.Store.fetch_event(source_name, "Amazon S3 generated request ID.Amazon S3 host that processed the request")
   end
 end

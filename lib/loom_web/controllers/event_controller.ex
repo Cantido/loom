@@ -3,11 +3,12 @@ defmodule LoomWeb.EventController do
 
   alias Loom.Store
 
+  require Logger
+
   action_fallback LoomWeb.FallbackController
 
-  def create(conn, params) do
-    # This will let us handle CloudEvents requests as well as Phoenix forms
-    {:ok, source} = Store.fetch_source(params["source_id"])
+  def create(conn, %{"source" => source} = params) do
+    {:ok, source} = Store.fetch_source(source)
 
     event_params =
       Map.get(params, "event", params)
@@ -61,14 +62,15 @@ defmodule LoomWeb.EventController do
   def show(conn, %{"source_id" => source_id, "id" => id}) do
     {:ok, source} = Loom.Store.fetch_source(source_id)
     with {:ok, event} <- Loom.fetch(source_id, id, source.team) do
-      etag = Base.encode16(:crypto.hash(:sha256, Cloudevents.to_json(Loom.Store.Event.to_cloudevent(event))))
+      etag = Base.encode16(:crypto.hash(:sha256, Cloudevents.to_json(event)))
 
 #      if not_modified?(conn, etag, event.time) do
 #        conn
 #        |> put_resp_header("cache-control", "public, max-age=31536000, immutable")
 #        |> resp(:not_modified, "")
 #      else
-        last_modified = Timex.format!(event.time, "{RFC1123z}")
+        {:ok, datetime, 0} = DateTime.from_iso8601(event.time)
+        last_modified = Timex.format!(datetime, "{RFC1123z}")
 
         conn
         |> put_status(:ok)

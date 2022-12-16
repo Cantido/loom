@@ -165,8 +165,8 @@ defmodule Loom.Subscriptions do
           where: w.type == ^event.type,
           where: w.validated
       end)
-    |> Oban.insert_all(:jobs, fn %{webhooks: webhooks, event: event} ->
-      event_json = Cloudevents.to_json(Event.to_cloudevent(event))
+    |> Oban.insert_all(:jobs, fn %{webhooks: webhooks, cloudevent: cloudevent} ->
+      event_json = Cloudevents.to_json(cloudevent)
       Enum.map(webhooks, fn webhook ->
         Loom.Subscriptions.WebhookWorker.new(%{
           webhook_id: webhook.id,

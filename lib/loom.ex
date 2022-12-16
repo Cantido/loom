@@ -9,13 +9,6 @@ defmodule Loom do
   Write a new event to the store with the `append/4` function.
   This will return an `:ok` tuple with the revision number of that event.
   You can then read the event stream with `read/3`, which returns a `Stream` containing the requested events.
-
-      iex> team = team_fixture()
-      iex> _source = source_fixture(%{team: team, source: "loom-doctest"})
-      iex> event = %{type: "com.example.event", specversion: "1.0", source: "loom-doctest", id: "a-uuid"}
-      iex> Loom.append(event, team)
-      iex> Loom.read("loom-doctest", team) |> Enum.at(0) |> Map.get(:id)
-      "a-uuid"
   """
 
   use Boundary,
@@ -73,7 +66,7 @@ defmodule Loom do
   def fetch(source, event_id, team) do
     team = Repo.preload(team, :sources)
     if Enum.any?(team.sources, fn src -> src.source == source end) do
-      Loom.Store.fetch(source, event_id)
+      Loom.Store.fetch_event(source, event_id, format: :native)
     else
       {:error, :unauthorized}
     end

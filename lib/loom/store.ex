@@ -9,14 +9,16 @@ defmodule Loom.Store do
 
   import Ecto.Query
 
-  require Logger
+  def append(event_params, opts \\ []) do
+    source_param = Map.get(event_params, :source, Map.get(event_params, "source"))
 
-  def append(event, opts \\ []) do
-    source = Map.get(event, :source, Map.get(event, "source"))
+    unless String.valid?(source_param) do
+      raise ArgumentError, "Parameter :source must be a valid string"
+    end
 
     result =
       Ecto.Multi.new()
-      |> Ecto.Multi.one(:source, from(s in Source, where: s.source == ^source, preload: [:counter]))
+      |> Ecto.Multi.one(:source, from(s in Source, where: s.source == ^source_param, preload: [:counter]))
       |> Ecto.Multi.run(:check_source, fn _, %{source: source} ->
         if is_nil(source) do
           {:error, :source_not_found}
@@ -42,29 +44,45 @@ defmodule Loom.Store do
           {:error, :revision_mismatch}
         end
       end)
-      |> Ecto.Multi.insert(:event, fn %{current_counter: current_counter, source: source} ->
+      |> Ecto.Multi.run(:cloudevent, fn _, %{current_counter: current_counter} ->
+        case Cloudevents.from_map(event_params) do
+          {:ok, ce} ->
+            ce = struct(ce, extensions: Map.put(ce.extensions, :sequence, Integer.to_string(current_counter.value)))
 
-        extensions =
-          event
-          |> Map.drop(~w(id source type data datacontenttype dataschema time subject)a)
-          |> Map.drop(~w(id source type data datacontenttype dataschema time subject))
-          |> Map.reject(fn {_key, val} -> is_nil(val) end)
-          |> Map.put("sequence", Integer.to_string(current_counter.value))
+            ce =
+              if is_nil(ce.time) do
+                struct(ce, time: DateTime.utc_now())
+              else
+                ce
+              end
 
-        Ecto.build_assoc(source, :events, time: DateTime.utc_now(), extensions: extensions)
-        |> Loom.Store.Event.changeset(event)
+            {:ok, ce}
+          error ->
+            error
+        end
       end)
-      |> Ecto.Multi.run(:s3, fn _, %{event: event, source: source} ->
-        event_json = Event.to_cloudevent(event) |> Cloudevents.to_json()
+      |> Ecto.Multi.insert(:event, fn %{cloudevent: cloudevent, source: source} ->
+        event_params =
+          Cloudevents.to_map(cloudevent)
+          |> Map.put(:extensions, cloudevent.extensions)
 
-        ExAws.S3.put_object("events", source.source <> "/" <> event.id, event_json) |> ExAws.request()
+        Ecto.build_assoc(source, :events)
+        |> Loom.Store.Event.changeset(event_params)
+      end)
+      |> Ecto.Multi.run(:s3, fn _, %{cloudevent: cloudevent} ->
+        event_json = Cloudevents.to_json(cloudevent)
+
+        ExAws.S3.put_object("events", event_key(cloudevent.source, cloudevent.id), event_json) |> ExAws.request()
       end)
       |> Loom.Subscriptions.send_webhooks_multi()
       |> Repo.transaction()
 
     case result do
       {:ok, results} ->
-        {:ok, results[:event]}
+        {:ok, results[:cloudevent]}
+
+      {:error, :cloudevent, reason, _changes} ->
+        {:error, reason}
 
       {:error, :check_source, :source_not_found, _changes} ->
         {:error, :source_not_found}
@@ -121,20 +139,29 @@ defmodule Loom.Store do
     end
   end
 
-  def fetch(source, event_id) do
-    event =
-      Repo.one(
-        from e in Event,
-        join: s in assoc(e, :source),
-        where: s.source == ^source,
-        where: e.id == ^event_id,
-        preload: [:source]
-      )
-    if event do
-      {:ok, event}
-    else
-      {:error, :not_found}
+  def fetch_event(source, event_id, opts \\ []) do
+    req = ExAws.S3.get_object("events", event_key(source, event_id))
+
+    case ExAws.request(req) do
+      {:ok, resp} ->
+        event = resp[:body]
+
+        event =
+          case Keyword.get(opts, :format, :json) do
+            :json -> event
+            :native -> Cloudevents.from_json!(event)
+          end
+
+        {:ok, event}
+      {:error, {:http_error, 404, _}} ->
+        {:error, :not_found}
+      error ->
+        error
     end
+  end
+
+  def event_key(source, event_id) do
+    source <> "/" <> event_id <> ".json"
   end
 
   def new_event_changeset(source) do
@@ -154,7 +181,7 @@ defmodule Loom.Store do
     Repo.one!(from s in Source, where: [id: ^source_id], preload: [:team])
   end
 
-  def fetch_source(source) do
+  def fetch_source(source) when is_binary(source) do
     if source = Repo.one(from s in Source, where: s.source == ^source, preload: [:team]) do
       {:ok, source}
     else
@@ -214,15 +241,14 @@ defmodule Loom.Store do
           select: e.id
       )
       |> Task.async_stream(fn id ->
-        ExAws.S3.get_object("events", stream_id <> "/" <> id) |> ExAws.request()
+        fetch_event(stream_id, id, format: :native)
       end)
-      |> Enum.map(fn {:ok, s3_result} ->
-        case s3_result do
-          {:ok, success_response} -> Cloudevents.from_json!(success_response[:body])
-          err -> err
+      |> Enum.map(fn {:ok, event} ->
+        case event do
+          {:ok, event} -> event
+          error -> error
         end
       end)
-
 
     failures = Enum.filter(events, fn event -> match?({:error, _}, event) end)
 
