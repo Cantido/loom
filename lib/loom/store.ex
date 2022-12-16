@@ -103,17 +103,6 @@ defmodule Loom.Store do
   defp revision_match?(x, x), do: true
   defp revision_match?(_, _), do: false
 
-  def count_events(sources) when is_list(sources) do
-    events_for_sources_query =
-      from e in Event,
-      join: s in assoc(e, :source),
-      where: s.source in ^sources,
-      group_by: s.source,
-      select: {s.source, count()}
-
-    Repo.all(events_for_sources_query) |> Map.new()
-  end
-
   def last_revisions(sources) do
     Repo.all(
       from s in Loom.Store.Source,

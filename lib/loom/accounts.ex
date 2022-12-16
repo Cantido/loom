@@ -417,7 +417,7 @@ defmodule Loom.Accounts do
   def team_stats(%Team{} = team) do
     event_counts =
       Enum.map(team.sources, &(&1.source))
-      |> Loom.Store.count_events()
+      |> Loom.Store.last_revisions()
 
     %{event_counts: event_counts}
   end
