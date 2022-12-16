@@ -1,13 +1,23 @@
-<h1>Show Source</h1>
-
-<ul>
-
-  <li>
-    <strong>Source:</strong>
-    <%= @source.source %>
-  </li>
-
+<ul class="uk-breadcrumb">
+  <li><%= link gettext("Teams"), to: Routes.team_path(@conn, :index) %></li>
+  <li><%= link @team.name, to: Routes.team_path(@conn, :show, @team) %></li>
+  <li><%= link gettext("Sources"), to: Routes.team_source_path(@conn, :index, @team) %></li>
+  <li><span><%= @source.source %></span></li>
 </ul>
 
-<span><%= link "Edit", to: Routes.source_path(@conn, :edit, @source) %></span> |
-<span><%= link "Back", to: Routes.source_path(@conn, :index) %></span>
+<h1 class="uk-text-large">Event source <%= @source.source %></h1>
+
+<table class="uk-table">
+  <tbody>
+    <tr>
+      <th>Name</th>
+      <td><%= @source.source %></td>
+    </tr>
+    <tr>
+      <th>Event count</th>
+      <td><%= @last_sequence %></td>
+    </tr>
+  </tbody>
+</table>
+
+<%= link "Delete", to: Routes.team_source_path(@conn, :delete, @team, @source), method: :delete, data: [confirm: "Are you sure? This will delete all associated events."], class: "uk-button uk-button-danger" %>

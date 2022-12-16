@@ -194,9 +194,12 @@ defmodule Loom.Store do
     )
 
     stream = ExAws.S3.list_objects("events", prefix: source) |> ExAws.stream!() |> Stream.map(& &1.key)
-    ExAws.S3.delete_all_objects("events", stream) |> ExAws.request!()
+    req = ExAws.S3.delete_all_objects("events", stream)
 
-    :ok
+    case ExAws.request(req) do
+      {:ok, _} -> :ok
+      err -> err
+    end
   end
 
   def list_streams do
