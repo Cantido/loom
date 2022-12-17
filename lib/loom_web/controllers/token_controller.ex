@@ -20,7 +20,7 @@ defmodule LoomWeb.TokenController do
     case Accounts.create_token(team, token_params) do
       {:ok, token} ->
         conn
-        |> put_flash(:info, "Token created successfully.")
+        |> put_flash(:success, "Token created successfully.")
         |> redirect(to: Routes.team_token_path(conn, :show, team, token))
 
       {:error, %Ecto.Changeset{} = changeset} ->
@@ -48,7 +48,7 @@ defmodule LoomWeb.TokenController do
     case Accounts.update_token(token, token_params) do
       {:ok, token} ->
         conn
-        |> put_flash(:info, "Token updated successfully.")
+        |> put_flash(:success, "Token updated successfully.")
         |> redirect(to: Routes.team_token_path(conn, :show, team, token))
 
       {:error, %Ecto.Changeset{} = changeset} ->
@@ -62,7 +62,7 @@ defmodule LoomWeb.TokenController do
     {:ok, _token} = Accounts.delete_token(token)
 
     conn
-    |> put_flash(:info, "Token deleted successfully.")
+    |> put_flash(:success, "Token deleted successfully.")
     |> redirect(to: Routes.team_token_path(conn, :index, team))
   end
 end

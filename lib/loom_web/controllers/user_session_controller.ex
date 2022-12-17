@@ -15,13 +15,15 @@ defmodule LoomWeb.UserSessionController do
       UserAuth.log_in_user(conn, user, user_params)
     else
       # In order to prevent user enumeration attacks, don't disclose whether the email is registered.
-      render(conn, "new.html", error_message: "Invalid email or password")
+      conn
+      |> put_flash(:danger, "Invalid email or password")
+      |> render("new.html")
     end
   end
 
   def delete(conn, _params) do
     conn
-    |> put_flash(:info, "Logged out successfully.")
+    |> put_flash(:success, "Logged out successfully.")
     |> UserAuth.log_out_user()
   end
 end

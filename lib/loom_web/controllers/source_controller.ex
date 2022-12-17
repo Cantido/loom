@@ -49,13 +49,13 @@ defmodule LoomWeb.SourceController do
     case Loom.delete_source(source.source, team) do
       :ok ->
         conn
-        |> put_flash(:info, gettext("Source \"%{source}\" successfully deleted.", source: source.source))
+        |> put_flash(:success, gettext("Source \"%{source}\" successfully deleted.", source: source.source))
         |> redirect(to: Routes.team_source_path(conn, :index, team))
       err ->
 
         Logger.error("Could not delete source #{id} (source value: #{source.source}) due to error: #{inspect err}")
         conn
-        |> put_flash(:warning, gettext("Source \"%{source}\" could not be deleted due to an unexpected issue.", source: source.source))
+        |> put_flash(:danger, gettext("Source \"%{source}\" could not be deleted due to an unexpected issue.", source: source.source))
         |> redirect(to: Routes.team_source_path(conn, :index, team))
     end
   end

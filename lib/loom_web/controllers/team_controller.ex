@@ -27,7 +27,7 @@ defmodule LoomWeb.TeamController do
     case Accounts.create_team(team_params, conn.assigns[:current_user]) do
       {:ok, team} ->
         conn
-        |> put_flash(:info, "Team created successfully.")
+        |> put_flash(:success, "Team created successfully.")
         |> redirect(to: Routes.team_path(conn, :show, team))
       {:error, :team, %Ecto.Changeset{} = changeset, _changes} ->
         render(conn, "new.html", changeset: changeset)
@@ -51,7 +51,7 @@ defmodule LoomWeb.TeamController do
     case Accounts.update_team(team, team_params) do
       {:ok, team} ->
         conn
-        |> put_flash(:info, "Team updated successfully.")
+        |> put_flash(:success, "Team updated successfully.")
         |> redirect(to: Routes.team_path(conn, :show, team))
 
       {:error, %Ecto.Changeset{} = changeset} ->
@@ -64,7 +64,7 @@ defmodule LoomWeb.TeamController do
     {:ok, _team} = Accounts.delete_team(team)
 
     conn
-    |> put_flash(:info, "Team deleted successfully.")
+    |> put_flash(:success, "Team deleted successfully.")
     |> redirect(to: Routes.team_path(conn, :index))
   end
 end

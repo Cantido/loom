@@ -1,5 +1,7 @@
 <main class="uk-container">
-  <p class="alert alert-info" role="alert"><%= get_flash(@conn, :info) %></p>
-  <p class="alert alert-danger" role="alert"><%= get_flash(@conn, :error) %></p>
+  <.alert conn={@conn} type={:primary} />
+  <.alert conn={@conn} type={:success} />
+  <.alert conn={@conn} type={:warning} />
+  <.alert conn={@conn} type={:danger} />
   <%= @inner_content %>
 </main>

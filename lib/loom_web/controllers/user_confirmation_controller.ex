@@ -17,7 +17,7 @@ defmodule LoomWeb.UserConfirmationController do
 
     conn
     |> put_flash(
-      :info,
+      :primary,
       "If your email is in our system and it has not been confirmed yet, " <>
         "you will receive an email with instructions shortly."
     )
@@ -34,7 +34,7 @@ defmodule LoomWeb.UserConfirmationController do
     case Accounts.confirm_user(token) do
       {:ok, _} ->
         conn
-        |> put_flash(:info, "User confirmed successfully.")
+        |> put_flash(:success, "User confirmed successfully.")
         |> redirect(to: "/")
 
       :error ->
@@ -48,7 +48,7 @@ defmodule LoomWeb.UserConfirmationController do
 
           %{} ->
             conn
-            |> put_flash(:error, "User confirmation link is invalid or it has expired.")
+            |> put_flash(:danger, "User confirmation link is invalid or it has expired.")
             |> redirect(to: "/")
         end
     end
