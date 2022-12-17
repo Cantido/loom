@@ -7,6 +7,10 @@
       <td><%= @event.type %></td>
     </tr>
     <tr>
+      <th><%= gettext "source" %></th>
+      <td><%= link @event.source, to: Routes.team_source_path(@conn, :show, @team, @source) %></td>
+    </tr>
+    <tr>
       <th><%= gettext "time" %></th>
       <td><%= Loom.Cldr.DateTime.to_string! @event.time %></td>
     </tr>
@@ -29,6 +33,26 @@
   </tbody>
 </table>
 
+
+<h2 class="uk-text-default"><%= gettext "Extension fields" %></h2>
+
+
+<table class="uk-table uk-table-small">
+  <thead>
+    <tr>
+      <th><%= gettext "Key" %></th>
+      <th><%= gettext "Value" %></th>
+    </tr>
+  </thead>
+  <tbody>
+    <%= for {key, value} <- @event.extensions do %>
+      <tr>
+        <td><%= key %></td>
+        <td><%= value %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
 
 <h2 class="uk-text-large"><%= gettext "CloudEvents JSON" %></h2>
 
