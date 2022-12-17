@@ -138,7 +138,12 @@ defmodule Loom.Store do
         event =
           case Keyword.get(opts, :format, :json) do
             :json -> event
-            :native -> Cloudevents.from_json!(event)
+            :native ->
+              Cloudevents.from_json!(event)
+              |> Map.update!(:time, fn time ->
+                {:ok, datetime, _} = DateTime.from_iso8601(time)
+                datetime
+              end)
           end
 
         {:ok, event}

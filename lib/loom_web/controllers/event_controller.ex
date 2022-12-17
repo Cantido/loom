@@ -7,12 +7,15 @@ defmodule LoomWeb.EventController do
 
   action_fallback LoomWeb.FallbackController
 
-  def create(conn, %{"source" => source} = params) do
+  def create(conn, %{"source_id" => source} = params) do
     {:ok, source} = Store.fetch_source(source)
 
     event_params =
       Map.get(params, "event", params)
       |> Map.put("source", source.source)
+      |> Map.put("specversion", "1.0")
+      |> Enum.reject(fn {key, val} -> String.length(val) == 0 end)
+      |> Map.new()
 
     case Loom.append(event_params, source.team) do
       {:ok, event} ->
@@ -21,7 +24,8 @@ defmodule LoomWeb.EventController do
         #|> put_resp_content_type("application/cloudevents+json")
         #|> put_resp_header("location", Routes.source_event_path(conn, :show, event.source.source, event.id))
         |> render(:show, team: source.team, source: source, event: event)
-      err -> err
+      {:error, changeset} ->
+        render(conn, "new.html", changeset: changeset, team: source.team, source: source)
     end
   end
 
@@ -69,8 +73,7 @@ defmodule LoomWeb.EventController do
 #        |> put_resp_header("cache-control", "public, max-age=31536000, immutable")
 #        |> resp(:not_modified, "")
 #      else
-        {:ok, datetime, 0} = DateTime.from_iso8601(event.time)
-        last_modified = Timex.format!(datetime, "{RFC1123z}")
+        last_modified = Timex.format!(event.time, "{RFC1123z}")
 
         conn
         |> put_status(:ok)
