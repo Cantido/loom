@@ -1,34 +1,30 @@
-<h1>Log in</h1>
+<h1 class="uk-text-large uk-text-center">Log in</h1>
 
+<div class="uk-width-large uk-margin-auto">
 <.form let={f} for={@conn} action={Routes.user_session_path(@conn, :create)} as={:user} class="uk-form-stacked">
-  <%= if @error_message do %>
-    <div class="alert alert-danger">
-      <p><%= @error_message %></p>
-    </div>
-  <% end %>
-
   <div class="uk-margin">
-  <%= label f, :email, class: "uk-form-label" %>
-  <%= email_input f, :email, required: true, class: "uk-input uk-form-controls" %>
+    <%= label f, :email, class: "uk-form-label" %>
+    <%= email_input f, :email, required: true, class: "uk-input uk-form-controls" %>
   </div>
 
 
   <div class="uk-margin">
-  <%= label f, :password, class: "uk-form-label" %>
-  <%= password_input f, :password, required: true, class: "uk-input uk-form-controls" %>
+    <%= label f, :password, class: "uk-form-label" %>
+    <%= password_input f, :password, required: true, class: "uk-input uk-form-controls" %>
   </div>
 
   <div class="uk-margin">
-  <%= label f, :remember_me, "Keep me logged in for 60 days", class: "uk-form-label" %>
-  <%= checkbox f, :remember_me, class: "uk_checkbox uk-form-controls"  %>
+    <%= label f, :remember_me, "Keep me logged in for 60 days", class: "uk-form-label" %>
+    <%= checkbox f, :remember_me, class: "uk-checkbox uk-form-controls"  %>
   </div>
 
-  <div class="uk-margin">
-    <%= submit "Log in", class: "uk-button uk-button-primary" %>
+  <div class="uk-width-small uk-margin-auto">
+    <%= submit "Log in", class: "uk-button uk-button-primary uk-width-1-1" %>
   </div>
 </.form>
-
-<p>
-  <%= link "Register", to: Routes.user_registration_path(@conn, :new) %> |
-  <%= link "Forgot your password?", to: Routes.user_reset_password_path(@conn, :new) %>
+<p class="uk-text-center">
+  <%= link "Register", to: Routes.user_registration_path(@conn, :new), class: "uk-button uk-button-link" %> &middot;
+  <%= link "Forgot your password?", to: Routes.user_reset_password_path(@conn, :new), class: "uk-button uk-button-link" %>
 </p>
+</div>
+
