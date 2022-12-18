@@ -6,11 +6,23 @@ defmodule LoomWeb.EventView do
     render_many(events, EventView, "event.json")
   end
 
+  def render("index.json-cloudevents-batch", %{events: events}) do
+    render_many(events, EventView, "event.json")
+  end
+
   def render("show.json", %{event: event}) do
     render_one(event, EventView, "event.json")
   end
 
+  def render("show.json-cloudevents", %{event: event}) do
+    render_one(event, EventView, "event.json")
+  end
+
   def render("event.json", %{event: event}) do
+    Cloudevents.to_map(event)
+  end
+
+  def render("event.json-cloudevents", %{event: event}) do
     Cloudevents.to_map(event)
   end
 

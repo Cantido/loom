@@ -21,7 +21,18 @@ defmodule Loom.Store.Event do
     timestamps()
   end
 
-  def changeset(model, params \\ %{}) do
+  def changeset(model, params \\ %{})
+
+  def changeset(model, %Cloudevents.Format.V_1_0.Event{} = ce) do
+    params =
+      Cloudevents.to_map(ce)
+      |> Map.take([:id, :type, :datacontenttype, :dataschema, :time, :subject])
+      |> Map.put(:extensions, ce.extensions)
+
+    changeset(model, params)
+  end
+
+  def changeset(model, params) do
     model
     |> cast(params, [
       :id,

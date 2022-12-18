@@ -25,7 +25,7 @@ defmodule LoomWeb.Router do
     plug Hammer.Plug, [
       rate_limit: {"api", 1_000, 500}
     ]
-    plug :accepts, ["json"]
+    plug :accepts, ["json", "json-cloudevents", "json-cloudevents-batch"]
   end
 
   pipeline :require_token_auth do
@@ -59,7 +59,7 @@ defmodule LoomWeb.Router do
     post "/events", EventController, :create
 
     resources "/sources", SourceController do
-      resources "/events", EventController
+      resources "/events", EventController, only: [:index, :show]
     end
 
     resources "/subscriptions", SubscriptionController, except: [:new, :edit]

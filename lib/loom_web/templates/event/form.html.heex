@@ -9,6 +9,7 @@
     <%= label f, :specversion, class: "uk-form-label" %>
     <div class="uk-form-controls">
       <%= text_input f, :specversion, disabled: true, value: "1.0", class: "uk-input" %>
+      <%= hidden_input f, :specversion, value: "1.0" %>
     </div>
   </div>
 
@@ -16,6 +17,7 @@
     <%= label f, :source, class: "uk-form-label" %>
     <div class="uk-form-controls">
       <%= text_input f, :source, disabled: true, value: @source.source, class: "uk-input" %>
+      <%= hidden_input f, :source, value: @source.source %>
     </div>
   </div>
 

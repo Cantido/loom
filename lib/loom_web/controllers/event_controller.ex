@@ -7,25 +7,30 @@ defmodule LoomWeb.EventController do
 
   action_fallback LoomWeb.FallbackController
 
-  def create(conn, %{"source_id" => source} = params) do
-    {:ok, source} = Store.fetch_source(source)
+  def create(conn, params) do
+    team = Map.get_lazy(conn.assigns, :current_team, fn -> Loom.Accounts.get_team!(params["team_id"]) end)
+
+    source_value = Map.get(params, "source", params["source_id"])
+
+    {:ok, source} = Store.fetch_source(source_value)
 
     event_params =
-      Map.get(params, "event", params)
-      |> Map.put("source", source.source)
-      |> Map.put("specversion", "1.0")
-      |> Enum.reject(fn {key, val} -> String.length(val) == 0 end)
-      |> Map.new()
+      if Map.has_key?(params, "event") do
+        params["event"]
+      else
+        params
+      end
 
-    case Loom.append(event_params, source.team) do
-      {:ok, event} ->
-        conn
-        |> put_status(:created)
-        #|> put_resp_content_type("application/cloudevents+json")
-        #|> put_resp_header("location", Routes.source_event_path(conn, :show, event.source.source, event.id))
-        |> render(:show, team: source.team, source: source, event: event)
-      {:error, changeset} ->
-        render(conn, "new.html", changeset: changeset, team: source.team, source: source)
+    event_params = Enum.reject(event_params, fn {_key, val} -> val == "" end) |> Map.new()
+
+    with {:ok, event} <- Loom.append(event_params, team) do
+      conn
+      |> put_status(:created)
+      |> put_resp_header(
+        "location",
+        Routes.source_event_path(conn, :show, event.source, event.id)
+      )
+      |> render(:show, team: source.team, source: source, event: event)
     end
   end
 
@@ -59,30 +64,39 @@ defmodule LoomWeb.EventController do
     events = Loom.read(source.source, source.team, opts) |> Enum.to_list()
 
     conn
-#    |> put_resp_content_type("application/cloudevents-batch+json")
     |> render(:index, team: source.team, source: source, events: events)
   end
 
   def show(conn, %{"source_id" => source_id, "id" => id}) do
-    {:ok, source} = Loom.Store.fetch_source(source_id)
-    with {:ok, event} <- Loom.fetch(source_id, id, source.team) do
+    with {:ok, source} <- Loom.Store.fetch_source(source_id),
+         {:ok, event} <- Loom.fetch(source_id, id, source.team) do
       etag = Base.encode16(:crypto.hash(:sha256, Cloudevents.to_json(event)))
 
-#      if not_modified?(conn, etag, event.time) do
-#        conn
-#        |> put_resp_header("cache-control", "public, max-age=31536000, immutable")
-#        |> resp(:not_modified, "")
-#      else
+      if not_modified?(conn, etag, event.time) do
+        conn
+        |> put_cache_control()
+        |> resp(:not_modified, "")
+      else
         last_modified = Timex.format!(event.time, "{RFC1123z}")
 
         conn
         |> put_status(:ok)
-#        |> put_resp_content_type("application/cloudevents+json")
         |> put_resp_header("etag", ~s("#{etag}"))
         |> put_resp_header("last-modified", last_modified)
-        |> put_resp_header("cache-control", "public, max-age=31536000, immutable")
+        |> put_cache_control()
         |> render(:show, team: source.team, source: source, event: event)
-#      end
+      end
+    end
+  end
+
+  defp put_cache_control(conn) do
+    # I want the HTML version of the page to have a much lower cache time because other things besides the event may change
+    case get_format(conn) do
+      "json" ->
+        put_resp_header(conn, "cache-control", "public, max-age=31536000, immutable")
+
+      "html" ->
+        put_resp_header(conn, "cache-control", "public, max-age=86400, immutable")
     end
   end
 

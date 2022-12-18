@@ -62,12 +62,8 @@ defmodule Loom.Store do
         end
       end)
       |> Ecto.Multi.insert(:event, fn %{cloudevent: cloudevent, source: source} ->
-        event_params =
-          Cloudevents.to_map(cloudevent)
-          |> Map.put(:extensions, cloudevent.extensions)
-
         Ecto.build_assoc(source, :events)
-        |> Loom.Store.Event.changeset(event_params)
+        |> Loom.Store.Event.changeset(cloudevent)
       end)
       |> Ecto.Multi.run(:s3, fn _, %{cloudevent: cloudevent} ->
         event_json = Cloudevents.to_json(cloudevent)
@@ -179,7 +175,7 @@ defmodule Loom.Store do
     if source = Repo.one(from s in Source, where: s.source == ^source, preload: [:team]) do
       {:ok, source}
     else
-      :error
+      {:error, :not_found}
     end
   end
 

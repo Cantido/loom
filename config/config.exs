@@ -76,6 +76,11 @@ config :ex_cldr_units,
 config :gettext,
   default_locale: "en"
 
+config :mime, :types, %{
+  "application/cloudevents+json" => ["json-cloudevents"],
+  "application/cloudevents-batch+json" => ["json-cloudevents-batch"]
+}
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{config_env()}.exs"
