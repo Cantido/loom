@@ -92,7 +92,7 @@ defmodule Loom.Subscriptions do
       args = %{webhook_id: webhook.id}
 
       Loom.Subscriptions.ValidationWorker.new(args)
-      |> Oban.insert!()
+      |> OpentelemetryOban.insert!()
 
       cleanup_after =
         Keyword.get(
@@ -103,7 +103,7 @@ defmodule Loom.Subscriptions do
 
       unless cleanup_after == :never do
         Loom.Subscriptions.CleanupWorker.new(args, schedule_in: cleanup_after)
-        |> Oban.insert!()
+        |> OpentelemetryOban.insert!()
       end
     end
   end
@@ -165,7 +165,7 @@ defmodule Loom.Subscriptions do
           where: w.type == ^event.type,
           where: w.validated
       end)
-    |> Oban.insert_all(:jobs, fn %{webhooks: webhooks, cloudevent: cloudevent} ->
+    |> OpentelemetryOban.insert_all(:jobs, fn %{webhooks: webhooks, cloudevent: cloudevent} ->
       event_json = Cloudevents.to_json(cloudevent)
       Enum.map(webhooks, fn webhook ->
         Loom.Subscriptions.WebhookWorker.new(%{
@@ -316,7 +316,7 @@ defmodule Loom.Subscriptions do
         event_json: event_json
       }
       |> Loom.Subscriptions.WebhookWorker.new()
-      |> Oban.insert()
+      |> OpentelemetryOban.insert()
     end)
 
   end

@@ -8,6 +8,10 @@ defmodule Loom.Application do
 
   @impl true
   def start(_type, _args) do
+    OpentelemetryEcto.setup([:loom, :repo])
+    OpentelemetryOban.setup()
+    OpentelemetryPhoenix.setup()
+
     children = [
       Loom.Cache,
       Loom.Repo,
