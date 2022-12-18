@@ -12,103 +12,103 @@ defmodule Loom.Store do
   require OpenTelemetry.Tracer
 
   def append(event_params, opts \\ []) do
-    source_param = Map.get(event_params, :source, Map.get(event_params, "source"))
+    with {:ok, cloudevent} <- Cloudevents.from_map(event_params) do
+      set_otel_attributes(cloudevent)
 
-    unless String.valid?(source_param) do
-      raise ArgumentError, "Parameter :source must be a valid string"
-    end
+      result =
+        Loom.Cloudevents.put_new_time(cloudevent, DateTime.utc_now())
+        |> set_traceparent()
+        |> insert_event_multi(opts)
+        |> Repo.transaction()
 
-    result =
-      Ecto.Multi.new()
-      |> Ecto.Multi.one(:source, from(s in Source, where: s.source == ^source_param, preload: [:counter]))
-      |> Ecto.Multi.run(:check_source, fn _, %{source: source} ->
-        if is_nil(source) do
+      case result do
+        {:ok, results} ->
+          {:ok, results[:cloudevent]}
+
+        {:error, :cloudevent, reason, _changes} ->
+          {:error, reason}
+
+        {:error, :check_source, :source_not_found, _changes} ->
           {:error, :source_not_found}
-        else
-          {:ok, true}
-        end
-      end)
-      |> Ecto.Multi.run(:current_counter, fn repo, %{source: source} ->
-        counter =
-          if is_nil(source.counter) do
-            Counter.changeset(%Counter{})
-            |> Ecto.Changeset.put_assoc(:source, source)
-          else
-            Ecto.Changeset.change(source.counter)
-          end
 
-        counter_value = Ecto.Changeset.get_field(counter, :value)
-
-        if revision_match?(counter_value, Keyword.get(opts, :expected_revision, :any)) do
-          cs = Ecto.Changeset.change(counter, %{value: counter_value + 1})
-          repo.insert_or_update(cs)
-        else
+        {:error, :current_counter, :revision_mismatch, _changes} ->
           {:error, :revision_mismatch}
-        end
-      end)
-      |> Ecto.Multi.run(:cloudevent, fn _, %{current_counter: current_counter} ->
-        case Cloudevents.from_map(event_params) do
-          {:ok, ce} ->
-            OpenTelemetry.Tracer.set_attribute("cloudevents.event_id", ce.id)
-            OpenTelemetry.Tracer.set_attribute("cloudevents.event_source", ce.source)
-            OpenTelemetry.Tracer.set_attribute("cloudevents.event_event_spec_version", ce.specversion)
-            OpenTelemetry.Tracer.set_attribute("cloudevents.event_type", ce.type)
-            OpenTelemetry.Tracer.set_attribute("cloudevents.event_subject", ce.subject)
 
-            traceparent =
-              :otel_propagator_text_map.inject([])
-              |> Map.new()
-              |> Map.fetch!("traceparent")
-
-            extensions =
-              %{traceparent: traceparent}
-              |> Map.merge(ce.extensions)
-              |> Map.put(:sequence, Integer.to_string(current_counter.value))
-
-            ce = struct(ce, extensions: extensions)
-
-            ce =
-              if is_nil(ce.time) do
-                struct(ce, time: DateTime.utc_now())
-              else
-                ce
-              end
-
-            {:ok, ce}
-          error ->
-            error
-        end
-      end)
-      |> Ecto.Multi.insert(:event, fn %{cloudevent: cloudevent, source: source} ->
-        Ecto.build_assoc(source, :events)
-        |> Loom.Store.Event.changeset(cloudevent)
-      end)
-      |> Ecto.Multi.run(:s3, fn _, %{cloudevent: cloudevent} ->
-        event_json = Cloudevents.to_json(cloudevent)
-
-        OpenTelemetry.Tracer.with_span "loom.s3:put_object" do
-          ExAws.S3.put_object("events", event_key(cloudevent.source, cloudevent.id), event_json) |> ExAws.request()
-        end
-      end)
-      |> Loom.Subscriptions.send_webhooks_multi()
-      |> Repo.transaction()
-
-    case result do
-      {:ok, results} ->
-        {:ok, results[:cloudevent]}
-
-      {:error, :cloudevent, reason, _changes} ->
-        {:error, reason}
-
-      {:error, :check_source, :source_not_found, _changes} ->
-        {:error, :source_not_found}
-
-      {:error, :current_counter, :revision_mismatch, _changes} ->
-        {:error, :revision_mismatch}
-
-      {:error, :event, changeset, _changes} ->
-        {:error, changeset}
+        {:error, :event, changeset, _changes} ->
+          {:error, changeset}
+      end
     end
+  end
+
+  defp set_otel_attributes(cloudevent) do
+    OpenTelemetry.Tracer.set_attribute("cloudevents.event_id", cloudevent.id)
+    OpenTelemetry.Tracer.set_attribute("cloudevents.event_source", cloudevent.source)
+    OpenTelemetry.Tracer.set_attribute("cloudevents.event_event_spec_version", cloudevent.specversion)
+    OpenTelemetry.Tracer.set_attribute("cloudevents.event_type", cloudevent.type)
+    OpenTelemetry.Tracer.set_attribute("cloudevents.event_subject", cloudevent.subject)
+    :ok
+  end
+
+  defp set_traceparent(cloudevent) do
+    context = Map.new(:otel_propagator_text_map.inject([]))
+
+    if Map.has_key?(context, "traceparent") do
+      Loom.Cloudevents.put_new_extension(cloudevent, "traceparent", context["traceparent"])
+    else
+      cloudevent
+    end
+  end
+
+  defp insert_event_multi(cloudevent, opts) do
+    Ecto.Multi.new()
+    |> Ecto.Multi.one(
+      :source,
+      from(s in Source, where: s.source == ^cloudevent.source, preload: [:counter])
+    )
+    |> Ecto.Multi.run(:check_source, fn _, %{source: source} ->
+      if is_nil(source) do
+        {:error, :source_not_found}
+      else
+        {:ok, true}
+      end
+    end)
+    |> Ecto.Multi.run(:current_counter, fn repo, %{source: source} ->
+      counter =
+        if is_nil(source.counter) do
+          Counter.changeset(%Counter{})
+          |> Ecto.Changeset.put_assoc(:source, source)
+        else
+          Ecto.Changeset.change(source.counter)
+        end
+
+      counter_value = Ecto.Changeset.get_field(counter, :value)
+
+      if revision_match?(counter_value, Keyword.get(opts, :expected_revision, :any)) do
+        cs = Ecto.Changeset.change(counter, %{value: counter_value + 1})
+        repo.insert_or_update(cs)
+      else
+        {:error, :revision_mismatch}
+      end
+    end)
+    |> Ecto.Multi.run(:cloudevent, fn _, %{current_counter: current_counter} ->
+      ce = Loom.Cloudevents.put_extension(cloudevent, "sequence", Integer.to_string(current_counter.value))
+
+
+      {:ok, ce}
+    end)
+    |> Ecto.Multi.insert(:event, fn %{cloudevent: cloudevent, source: source} ->
+      Ecto.build_assoc(source, :events)
+      |> Loom.Store.Event.changeset(cloudevent)
+    end)
+    |> Ecto.Multi.run(:s3, fn _, %{cloudevent: cloudevent} ->
+      event_json = Cloudevents.to_json(cloudevent)
+
+      OpenTelemetry.Tracer.with_span "loom.s3:put_object" do
+        ExAws.S3.put_object("events", event_key(cloudevent.source, cloudevent.id), event_json)
+        |> ExAws.request()
+      end
+    end)
+    |> Loom.Subscriptions.send_webhooks_multi()
   end
 
   defp revision_match?(_, :any), do: true
@@ -122,9 +122,9 @@ defmodule Loom.Store do
   def last_revisions(sources) do
     Repo.all(
       from s in Loom.Store.Source,
-      left_join: c in assoc(s, :counter),
-      where: s.source in ^sources,
-      select: {s.source, coalesce(c.value, 0)}
+        left_join: c in assoc(s, :counter),
+        where: s.source in ^sources,
+        select: {s.source, coalesce(c.value, 0)}
     )
     |> Map.new()
   end
@@ -133,8 +133,8 @@ defmodule Loom.Store do
     counter =
       Repo.one(
         from c in Loom.Store.Counter,
-        join: s in assoc(c, :source),
-        where: s.source == ^source
+          join: s in assoc(c, :source),
+          where: s.source == ^source
       )
 
     if counter do
@@ -153,7 +153,9 @@ defmodule Loom.Store do
 
         event =
           case Keyword.get(opts, :format, :json) do
-            :json -> event
+            :json ->
+              event
+
             :native ->
               Cloudevents.from_json!(event)
               |> Map.update!(:time, fn time ->
@@ -163,8 +165,10 @@ defmodule Loom.Store do
           end
 
         {:ok, event}
+
       {:error, {:http_error, 404, _}} ->
         {:error, :not_found}
+
       error ->
         error
     end
@@ -210,11 +214,13 @@ defmodule Loom.Store do
   def delete_all_events(source) when is_binary(source) do
     Loom.Repo.delete_all(
       from e in Event,
-      join: s in assoc(e, :source),
-      where: s.source == ^source
+        join: s in assoc(e, :source),
+        where: s.source == ^source
     )
 
-    stream = ExAws.S3.list_objects("events", prefix: source) |> ExAws.stream!() |> Stream.map(& &1.key)
+    stream =
+      ExAws.S3.list_objects("events", prefix: source) |> ExAws.stream!() |> Stream.map(& &1.key)
+
     req = ExAws.S3.delete_all_objects("events", stream)
 
     case ExAws.request(req) do
