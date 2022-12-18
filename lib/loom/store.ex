@@ -9,6 +9,8 @@ defmodule Loom.Store do
 
   import Ecto.Query
 
+  require OpenTelemetry.Tracer
+
   def append(event_params, opts \\ []) do
     source_param = Map.get(event_params, :source, Map.get(event_params, "source"))
 
@@ -47,7 +49,23 @@ defmodule Loom.Store do
       |> Ecto.Multi.run(:cloudevent, fn _, %{current_counter: current_counter} ->
         case Cloudevents.from_map(event_params) do
           {:ok, ce} ->
-            ce = struct(ce, extensions: Map.put(ce.extensions, :sequence, Integer.to_string(current_counter.value)))
+            OpenTelemetry.Tracer.set_attribute("cloudevents.event_id", ce.id)
+            OpenTelemetry.Tracer.set_attribute("cloudevents.event_source", ce.source)
+            OpenTelemetry.Tracer.set_attribute("cloudevents.event_event_spec_version", ce.specversion)
+            OpenTelemetry.Tracer.set_attribute("cloudevents.event_type", ce.type)
+            OpenTelemetry.Tracer.set_attribute("cloudevents.event_subject", ce.subject)
+
+            traceparent =
+              :otel_propagator_text_map.inject([])
+              |> Map.new()
+              |> Map.fetch!("traceparent")
+
+            extensions =
+              %{traceparent: traceparent}
+              |> Map.merge(ce.extensions)
+              |> Map.put(:sequence, Integer.to_string(current_counter.value))
+
+            ce = struct(ce, extensions: extensions)
 
             ce =
               if is_nil(ce.time) do
@@ -68,7 +86,9 @@ defmodule Loom.Store do
       |> Ecto.Multi.run(:s3, fn _, %{cloudevent: cloudevent} ->
         event_json = Cloudevents.to_json(cloudevent)
 
-        ExAws.S3.put_object("events", event_key(cloudevent.source, cloudevent.id), event_json) |> ExAws.request()
+        OpenTelemetry.Tracer.with_span "loom.s3:put_object" do
+          ExAws.S3.put_object("events", event_key(cloudevent.source, cloudevent.id), event_json) |> ExAws.request()
+        end
       end)
       |> Loom.Subscriptions.send_webhooks_multi()
       |> Repo.transaction()
