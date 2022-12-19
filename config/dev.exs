@@ -26,7 +26,7 @@ config :loom, LoomWeb.Endpoint,
   secret_key_base: "hyS/XPB+mOIRJlAI3/WSwu4LTy1b0IVFqLV3aOh9DdpjaALIkvwEPh30GJTGm8PF",
   watchers: [
     # Start the esbuild watcher by calling Esbuild.install_and_run(:default, args)
-    esbuild: {Esbuild, :install_and_run, [:default, ~w(--sourcemap=inline --watch)]}
+    node: ["build.js", "--watch", cd: Path.expand("../assets", __DIR__)]
   ]
 
 # ## SSL Support
