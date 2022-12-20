@@ -39,3 +39,5 @@ bench/snapshots
 .envrc
 
 volume
+
+site/.hugo_build.lock
