@@ -1,0 +1,25 @@
+baseURL: https://cantido.github.io/loom
+languageCode: en-us
+title: Loom
+theme: PaperMod
+
+params:
+  editPost:
+    URL: https://github.com/Cantido/loom/tree/main/site/content
+    Text: Suggest changes
+    appendFilePath: true
+  homeInfoParams:
+    Title: Never lose data
+    Content: Loom is an event database built specifically for event-sourced systems, and speaks the CloudEvents specification for maximum compatibility with other systems.
+  socialIcons:
+    - name: github
+      url: https://github.com/Cantido/loom
+
+menu:
+  main:
+    - name: API Docs
+      url: apidocs.html
+      weight: 5
+    - name: GitHub
+      url: https://github.com/Cantido/loom
+      weight: 10
