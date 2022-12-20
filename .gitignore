@@ -41,3 +41,4 @@ bench/snapshots
 volume
 
 site/.hugo_build.lock
+site/public
