@@ -1,4 +1,7 @@
 <h1 class="uk-text-large"><%= gettext("Events for %{source}", source: @source.source) %></h1>
+
+<.chart events={@events} />
+
 <table class="uk-table uk-table-striped uk-table-small uk-table-hover">
   <thead>
     <tr>
