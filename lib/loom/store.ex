@@ -100,13 +100,10 @@ defmodule Loom.Store do
       Ecto.build_assoc(source, :events)
       |> Loom.Store.Event.changeset(cloudevent)
     end)
-    |> Ecto.Multi.run(:s3, fn _, %{cloudevent: cloudevent} ->
+    |> Oban.insert(:s3, fn %{cloudevent: cloudevent} ->
       event_json = Cloudevents.to_json(cloudevent)
 
-      OpenTelemetry.Tracer.with_span "loom.s3:put_object" do
-        ExAws.S3.put_object("events", event_key(cloudevent.source, cloudevent.id), event_json)
-        |> ExAws.request()
-      end
+      Loom.Store.S3InsertWorker.new(%{event_source: cloudevent.source, event_id: cloudevent.id, event_json: event_json})
     end)
     |> Loom.Subscriptions.send_webhooks_multi()
   end
