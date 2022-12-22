@@ -235,53 +235,27 @@ defmodule Loom.Store do
   end
 
   def read(stream_id, opts \\ []) do
-    direction = Keyword.get(opts, :direction, :forward)
-    from_revision = Keyword.get(opts, :from_revision, :start)
-    limit = Keyword.get(opts, :limit, 1_000) |> min(1_000)
+    ids =
+      Loom.Store.EventQueries.query_by_sequence(stream_id, opts)
+      |> select([event], event.id)
+      |> Repo.all()
 
-    revision_range =
-      case {direction, from_revision} do
-        {:forward, :end} ->
-          []
+    fetch_events(stream_id, ids)
+  end
 
-        {:forward, :start} ->
-          range_end = min(last_revision(stream_id), limit)
-          1..range_end
+  def recent_events(source, opts \\ []) do
+    ids =
+      Loom.Store.EventQueries.query_by_time(source, opts)
+      |> select([event], event.id)
+      |> Repo.all()
 
-        {:forward, range_start} ->
-          range_end = min(last_revision(stream_id), range_start + limit)
-          range_start..range_end
+    fetch_events(source, ids)
+  end
 
-        {:backward, :start} ->
-          []
-
-        {:backward, :end} ->
-          range_start = min(last_revision(stream_id), limit)
-          range_start..0
-
-        {:backward, range_start} ->
-          range_end = max(last_revision(stream_id), range_start - limit)
-          range_start..range_end
-      end
-      |> Enum.map(&Integer.to_string/1)
-
-    sort_dir =
-      case direction do
-        :forward -> :asc
-        :backward -> :desc
-      end
-
+  def fetch_events(source, ids) do
     events =
-      Repo.all(
-        from e in Event,
-          join: s in assoc(e, :source),
-          where: s.source == ^stream_id,
-          where: e.extensions["sequence"] in ^revision_range,
-          order_by: [{^sort_dir, e.extensions["sequence"]}],
-          select: e.id
-      )
-      |> Task.async_stream(fn id ->
-        fetch_event(stream_id, id, format: :native)
+      Task.async_stream(ids, fn id ->
+        fetch_event(source, id, format: :native)
       end)
       |> Enum.map(fn {:ok, event} ->
         case event do

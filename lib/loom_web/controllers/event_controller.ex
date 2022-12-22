@@ -43,28 +43,32 @@ defmodule LoomWeb.EventController do
   def index(conn, %{"source_id" => id} = params) do
     {:ok, source} = Loom.Store.fetch_source(id)
 
-    opts =
-      Map.take(params, ["limit", "from_revision", "direction"])
-      |> Map.new(fn {k, v} ->
-        {String.to_existing_atom(k), v}
-      end)
-      |> Map.update(:limit, 100, &String.to_integer/1)
-      |> Map.update(:from_revision, :start, fn rev ->
-        if rev in ["start", "end"] do
-          String.to_existing_atom(rev)
-        else
-          String.to_integer(rev)
-        end
-      end)
-      |> Map.update(:direction, :forward, fn dir ->
-        String.to_existing_atom(dir)
-      end)
-      |> Enum.to_list()
+    opts = parse_sequence_opts(params)
 
     events = Loom.read(source.source, source.team, opts) |> Enum.to_list()
 
     conn
     |> render(:index, team: source.team, source: source, events: events)
+  end
+
+
+  defp parse_sequence_opts(params) do
+    Map.take(params, ["limit", "from_revision", "direction"])
+    |> Map.new(fn {k, v} ->
+      {String.to_existing_atom(k), v}
+    end)
+    |> Map.update(:limit, 100, &String.to_integer/1)
+    |> Map.update(:from_revision, :start, fn rev ->
+      if rev in ["start", "end"] do
+        String.to_existing_atom(rev)
+      else
+        String.to_integer(rev)
+      end
+    end)
+    |> Map.update(:direction, :forward, fn dir ->
+      String.to_existing_atom(dir)
+    end)
+    |> Enum.to_list()
   end
 
   def show(conn, %{"source_id" => source_id, "id" => id}) do
