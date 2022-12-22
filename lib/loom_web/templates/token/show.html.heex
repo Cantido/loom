@@ -1,8 +1,5 @@
 <h1>Show Token</h1>
 
-<ul>
+<p><%= @token.username %></p>
 
-</ul>
-
-<span><%= link "Edit", to: Routes.team_token_path(@conn, :edit, @team, @token) %></span> |
 <span><%= link "Back", to: Routes.team_token_path(@conn, :index, @team) %></span>

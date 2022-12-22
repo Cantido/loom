@@ -4,16 +4,18 @@
   <thead>
     <tr>
 
+      <th>Client ID</th>
       <th></th>
     </tr>
   </thead>
   <tbody>
 <%= for token <- @tokens do %>
     <tr>
-
+      <td>
+        <%= token.username %>
+      </td>
       <td>
         <span><%= link "Show", to: Routes.team_token_path(@conn, :show, @team, token) %></span>
-        <span><%= link "Edit", to: Routes.team_token_path(@conn, :edit, @team, token) %></span>
         <span><%= link "Delete", to: Routes.team_token_path(@conn, :delete, @team, token), method: :delete, data: [confirm: "Are you sure?"] %></span>
       </td>
     </tr>
