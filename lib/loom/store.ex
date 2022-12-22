@@ -142,12 +142,14 @@ defmodule Loom.Store do
   end
 
   def fetch_event(source, event_id, opts \\ []) do
-    req =
+    req = ExAws.S3.get_object("events", event_key(source, event_id))
+
+    result =
       OpenTelemetry.Tracer.with_span "loom.s3:get_object" do
-        ExAws.S3.get_object("events", event_key(source, event_id))
+        ExAws.request(req)
       end
 
-    case ExAws.request(req) do
+    case result do
       {:ok, resp} ->
         event = resp[:body]
 
