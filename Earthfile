@@ -62,6 +62,18 @@ docker:
 
   COPY --dir --build-arg MIX_ENV=prod +release/rel .
 
+  ENV S3_SCHEME
+  ENV S3_HOST
+  ENV S3_PORT
+  ENV DATABASE_URL
+  ENV SECRET_KEY_BASE
+  ENV LOOM_TOKENS_SECRET_KEY
+  ENV AWS_ACCESS_KEY_ID
+  ENV AWS_SECRET_ACCESS_KEY
+
+  ENV OTEL_SERVICE_NAME=loom
+  ENV MIX_ENV=prod
+
   CMD /app/rel/loom/bin/server
 
   SAVE IMAGE --push registry.digitalocean.com/cosmicrose-loom/loom:latest
