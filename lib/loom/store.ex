@@ -2,6 +2,10 @@ defmodule Loom.Store do
   @moduledoc """
   Loom's event store.
   """
+
+  use Nebulex.Caching
+
+  alias Loom.Cache
   alias Loom.Store.Event
   alias Loom.Repo
   alias Loom.Store.Source
@@ -142,17 +146,10 @@ defmodule Loom.Store do
   end
 
   def fetch_event(source, event_id, opts \\ []) do
-    req = ExAws.S3.get_object("events", event_key(source, event_id))
+    event = fetch_event_from_s3(source, event_id)
 
-    result =
-      OpenTelemetry.Tracer.with_span "loom.s3:get_object" do
-        ExAws.request(req)
-      end
-
-    case result do
-      {:ok, resp} ->
-        event = resp[:body]
-
+    case event do
+      {:ok, event} ->
         event =
           case Keyword.get(opts, :format, :json) do
             :json ->
@@ -167,6 +164,27 @@ defmodule Loom.Store do
           end
 
         {:ok, event}
+
+      {:error, {:http_error, 404, _}} ->
+        {:error, :not_found}
+
+      error ->
+        error
+    end
+  end
+
+  @decorate cacheable(cache: Cache)
+  defp fetch_event_from_s3(source, event_id) do
+    req = ExAws.S3.get_object("events", event_key(source, event_id))
+
+    result =
+      OpenTelemetry.Tracer.with_span "loom.s3:get_object" do
+        ExAws.request(req)
+      end
+
+    case result do
+      {:ok, resp} ->
+        {:ok, resp[:body]}
 
       {:error, {:http_error, 404, _}} ->
         {:error, :not_found}

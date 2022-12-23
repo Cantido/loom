@@ -13,6 +13,7 @@ defmodule Loom.Application do
     OpentelemetryPhoenix.setup()
 
     children = [
+      Loom.Cache,
       Loom.Repo,
       LoomWeb.Telemetry,
       {Finch, name: Loom.Finch},
