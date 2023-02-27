@@ -70,7 +70,7 @@ defmodule Loom.MixProject do
       {:opentelemetry_exporter, "~> 1.0"},
       {:opentelemetry_oban, "~> 1.0"},
       {:opentelemetry_phoenix, "~> 1.0"},
-      {:phoenix, "~> 1.6.11"},
+      {:phoenix, "~> 1.7.0"},
       {:phoenix_ecto, "~> 4.4"},
       {:phoenix_html, "~> 3.0"},
       {:phoenix_live_reload, "~> 1.2", only: :dev},
