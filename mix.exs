@@ -63,7 +63,7 @@ defmodule Loom.MixProject do
       {:jason, "~> 1.2"},
       {:nebulex, "~> 2.4"},
       {:nimble_options, "~> 0.4"},
-      {:oban, "~> 2.14.1"},
+      {:oban, "~> 2.15.0"},
       {:opentelemetry, "~> 1.0"},
       {:opentelemetry_api, "~> 1.1"},
       {:opentelemetry_ecto, "~> 1.0"},
