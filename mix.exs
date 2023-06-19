@@ -38,7 +38,7 @@ defmodule Loom.MixProject do
       {:boundary, "~> 0.9", runtime: false},
       {:cloudevents, "~> 0.6.1"},
       {:credo, ">= 0.0.0", only: [:dev], runtime: false},
-      {:contex, "~> 0.4.0"},
+      {:contex, "~> 0.5.0"},
       {:decorator, "~> 1.4"},
       {:ecto_sql, "~> 3.6"},
       {:ex_aws, "~> 2.0"},
