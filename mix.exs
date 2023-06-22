@@ -62,7 +62,7 @@ defmodule Loom.MixProject do
       {:hammer_plug, "~> 3.0"},
       {:jason, "~> 1.2"},
       {:nebulex, "~> 2.4"},
-      {:nimble_options, "~> 0.4"},
+      {:nimble_options, "~> 1.0"},
       {:oban, "~> 2.15.0"},
       {:opentelemetry, "~> 1.0"},
       {:opentelemetry_api, "~> 1.1"},
