@@ -85,7 +85,7 @@ defmodule Loom.MixProject do
       {:telemetry_poller, "~> 1.0"},
       {:tesla, "~> 1.6.0"},
       {:timex, "~> 3.0"},
-      {:uniq, "~> 0.5.1", only: [:dev, :test]}
+      {:uniq, "~> 0.6.0", only: [:dev, :test]}
     ]
   end
 
