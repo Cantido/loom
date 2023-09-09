@@ -51,7 +51,7 @@ defmodule Loom.MixProject do
       {:ex_cldr_plugs, "~> 1.2"},
       {:ex_cldr_units, "~> 3.15"},
       {:ex_doc, "~> 0.27", only: :dev, runtime: false},
-      {:explorer, "~> 0.6.1"},
+      {:explorer, "~> 0.7.0"},
       {:faker, "~> 0.17", only: :test},
       {:finch, "~> 0.16.0"},
       {:floki, ">= 0.30.0", only: :test},
