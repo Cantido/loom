@@ -33,7 +33,7 @@ defmodule Loom.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
-      {:argon2_elixir, "~> 3.0"},
+      {:argon2_elixir, "~> 4.0"},
       {:benchfella, "~> 0.3.0"},
       {:boundary, "~> 0.9", runtime: false},
       {:cloudevents, "~> 0.6.1"},
