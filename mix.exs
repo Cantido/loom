@@ -53,7 +53,7 @@ defmodule Loom.MixProject do
       {:ex_doc, "~> 0.27", only: :dev, runtime: false},
       {:explorer, "~> 0.8.0"},
       {:faker, "~> 0.17", only: :test},
-      {:finch, "~> 0.17.0"},
+      {:finch, "~> 0.18.0"},
       {:floki, ">= 0.30.0", only: :test},
       {:gettext, "~> 0.18"},
       {:guardian, "~> 2.0"},
